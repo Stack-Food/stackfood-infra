@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stackfood-api
+  labels:
+    app.kubernetes.io/name: stackfood-api
+    app.kubernetes.io/instance: stackfood-api
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: stackfood
+    app.kubernetes.io/managed-by: argocd
+    app: stackfood-api
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: stackfood-api
+      app: stackfood-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: stackfood-api
+        app.kubernetes.io/instance: stackfood-api
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/part-of: stackfood
+        app: stackfood-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path:   "/metrics"
+        prometheus.io/port:   "5039"
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/stack-food/stackfood-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5039
+          name: http
+        - containerPort: 7189
+          name: https
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        envFrom:
+        - configMapRef:
+            name: stackfood-config
+        - secretRef:
+            name: stackfood-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+        volumeMounts:
+        - name: https-cert
+          mountPath: /https
+          readOnly: true
+      volumes:
+      - name: https-cert
+        secret:
+          secretName: stackfood-https-cert
