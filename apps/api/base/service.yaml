@@ -7,12 +7,12 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 80
-      targetPort: http
+    - port: 5039
+      targetPort: 5039
       protocol: TCP
       name: http
-    - port: 443
-      targetPort: https
+    - port: 7189
+      targetPort: 7189
       protocol: TCP
       name: https
   selector:
