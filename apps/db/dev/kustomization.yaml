@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: stackfood-dev
+
+resources:
+  - ../base
+  - configmap.yaml
+  - secret.yaml
+patches:
+  - path: patch-deployment.yaml
+
+configMapGenerator:
+  - name: stackfood-db-init-scripts
+    namespace: stackfood-dev
+    files:
+      - initial.sql=./sql/initial.sql
+    options:
+      disableNameSuffixHash: true

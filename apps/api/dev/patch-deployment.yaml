@@ -4,3 +4,10 @@ metadata:
   name: stackfood-api
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: stackfood-api
+  template:
+    metadata:
+      labels:
+        app: stackfood-api

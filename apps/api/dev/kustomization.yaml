@@ -1,7 +1,8 @@
 namespace: stackfood-dev
 resources:
-  - ../../base
+  - ../base
   - configmap.yaml
   - secret.yaml
+  - ghcr-secret.yaml
 patchesStrategicMerge:
   - patch-deployment.yaml

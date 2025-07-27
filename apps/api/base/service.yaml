@@ -4,6 +4,8 @@ metadata:
   name: stackfood-api
   labels:
     app: stackfood-api
+  annotations:
+    service.alpha.kubernetes.io/app-protocols: '{"http":"HTTP","https":"HTTPS"}'
 spec:
   type: ClusterIP
   ports:

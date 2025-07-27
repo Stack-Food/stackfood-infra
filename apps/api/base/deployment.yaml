@@ -55,23 +55,30 @@ spec:
               memory: "512Mi"
           envFrom:
             - configMapRef:
-                name: stackfood-config
+                name: stackfood-api-config
             - secretRef:
-                name: stackfood-secrets
+                name: stackfood-api-secrets
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stackfood-api-secrets
+                  key: POSTGRES_PASSWORD
           livenessProbe:
             httpGet:
               path: /swagger/index.html
-              port: https
-              scheme: HTTPS
-            initialDelaySeconds: 30
-            periodSeconds: 10
+              port: 5039
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 15
             timeoutSeconds: 10
-            failureThreshold: 3
+            failureThreshold: 5
           readinessProbe:
             httpGet:
               path: /swagger/index.html
-              port: https
-              scheme: HTTPS
-            initialDelaySeconds: 15
+              port: 5039
+              scheme: HTTP
+            initialDelaySeconds: 30
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: 5
+            failureThreshold: 3
