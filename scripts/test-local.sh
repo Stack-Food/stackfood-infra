@@ -110,55 +110,59 @@ echo "ConfigMaps:"
 kubectl get configmaps -n stackfood-dev
 echo ""
 
-# Configurar port-forward (método único para acessar a API)
-print_step "Configurando port-forward para acesso à API..."
+
+# Cores para formatação
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}==========================================${NC}"
+echo -e "${BLUE}    StackFood - Port Forward Helper       ${NC}"
+echo -e "${BLUE}==========================================${NC}"
+
+# Encerrar processos de port-forward existentes
+echo -e "${YELLOW}[INFO]${NC} Encerrando processos de port-forward existentes..."
+pkill -f "kubectl port-forward" &>/dev/null || true
 
 # Definir portas
-HTTP_PORT=8080
-HTTPS_PORT=8443
+HTTP_PORT=5039
+HTTPS_PORT=7189
 
 # Iniciar port-forward para HTTP
-print_info "Configurando port-forward HTTP na porta ${HTTP_PORT}..."
+echo -e "${YELLOW}[INFO]${NC} Configurando port-forward HTTP na porta ${HTTP_PORT}..."
 nohup kubectl port-forward svc/stackfood-api ${HTTP_PORT}:5039 -n stackfood-dev > /dev/null 2>&1 &
 HTTP_PID=$!
-sleep 2
+sleep 1
 
-# Iniciar port-forward para HTTPS (importante para swagger)
-print_info "Configurando port-forward HTTPS na porta ${HTTPS_PORT}..."
+# Iniciar port-forward para HTTPS
+echo -e "${YELLOW}[INFO]${NC} Configurando port-forward HTTPS na porta ${HTTPS_PORT}..."
 nohup kubectl port-forward svc/stackfood-api ${HTTPS_PORT}:7189 -n stackfood-dev > /dev/null 2>&1 &
 HTTPS_PID=$!
-sleep 2
+sleep 1
 
 # Verificar se os port-forwards estão funcionando
+echo -e "${YELLOW}[INFO]${NC} Verificando conectividade com a API..."
+
 if ps -p $HTTP_PID > /dev/null; then
-    print_success "Port-forward HTTP está rodando (PID: $HTTP_PID)"
+    echo -e "${GREEN}[SUCCESS]${NC} Port-forward HTTP está rodando (PID: $HTTP_PID)"
     echo -e "🌐 API HTTP: ${YELLOW}http://localhost:${HTTP_PORT}${NC}"
     echo -e "🌐 Swagger HTTP: ${YELLOW}http://localhost:${HTTP_PORT}/swagger/index.html${NC}"
 else
-    print_error "Port-forward HTTP falhou"
+    echo -e "${RED}[ERROR]${NC} Port-forward HTTP falhou"
 fi
 
 if ps -p $HTTPS_PID > /dev/null; then
-    print_success "Port-forward HTTPS está rodando (PID: $HTTPS_PID)"
+    echo -e "${GREEN}[SUCCESS]${NC} Port-forward HTTPS está rodando (PID: $HTTPS_PID)"
     echo -e "🌐 API HTTPS: ${YELLOW}https://localhost:${HTTPS_PORT}${NC}"
     echo -e "🌐 Swagger HTTPS: ${YELLOW}https://localhost:${HTTPS_PORT}/swagger/index.html${NC}"
 else
-    print_error "Port-forward HTTPS falhou"
+    echo -e "${RED}[ERROR]${NC} Port-forward HTTPS falhou"
 fi
 
-# Verificar conectividade HTTP
-print_step "Verificando conectividade com a API (HTTP)..."
-if curl -s -o /dev/null -w "%{http_code}" http://localhost:${HTTP_PORT}/swagger/index.html | grep -q "200"; then
-  print_success "API HTTP está acessível via port-forward!"
-else
-  print_error "Não foi possível acessar a API via HTTP. Verificando logs..."
-  kubectl logs -l app=stackfood-api -n stackfood-dev --tail=20
-fi
-
-echo -e "\n${BLUE}==========================================${NC}"
-echo -e "${GREEN}       AMBIENTE DE TESTES PRONTO!        ${NC}"
+echo -e ""
 echo -e "${BLUE}==========================================${NC}"
-
 echo -e "${YELLOW}EXEMPLO DE REQUISIÇÃO:${NC}"
 echo -e "${BLUE}curl -X 'POST' \\
 'http://localhost:${HTTP_PORT}/api/customers' \\
@@ -169,20 +173,4 @@ echo -e "${BLUE}curl -X 'POST' \\
 \"email\": \"teste@gmail.com\",
 \"cpf\": \"42226461647\"
 }'${NC}"
-echo -e "${BLUE}==========================================${NC}"
-echo -e ""
-echo -e "${YELLOW}[INFORMAÇÕES ÚTEIS]${NC}"
-echo -e "Para verificar logs da API:"
-echo -e "${BLUE}kubectl logs -l app=stackfood-api -n stackfood-dev --tail=50${NC}"
-echo -e ""
-echo -e "Para verificar logs do banco de dados:"
-echo -e "${BLUE}kubectl logs -l app=stackfood-db -n stackfood-dev --tail=50${NC}"
-echo -e ""
-echo -e "Para reiniciar os port-forwards:"
-echo -e "${BLUE}./port-forward.sh${NC}"
-echo -e ""
-echo -e "${YELLOW}[LIMPEZA DO AMBIENTE]${NC}"
-echo -e "Quando terminar os testes, execute:"
-echo -e "${BLUE}kubectl delete namespace stackfood-dev${NC}"
-echo -e "${BLUE}pkill -f \"kubectl port-forward\"${NC}"
 echo -e "${BLUE}==========================================${NC}"
