@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: stackfood-api
+  name: stackfood-worker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: stackfood-api
+      app: stackfood-worker
   template:
-    metadata:
-      labels:
-        app: stackfood-api
+    spec:
+      containers:
+        - name: worker

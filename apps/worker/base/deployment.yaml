@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stackfood-worker
+  labels:
+    app.kubernetes.io/name: stackfood-worker
+    app.kubernetes.io/instance: stackfood-worker
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: stackfood
+    app: stackfood-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stackfood-worker
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: stackfood-worker
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: worker
+          image: ghcr.io/stack-food/stackfood-api/worker
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          envFrom:
+            - configMapRef:
+                name: stackfood-worker-config
+            - secretRef:
+                name: stackfood-worker-secrets
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: stackfood-worker-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: stackfood-worker-config
+                  key: ConnectionStrings__DefaultConnection
+            - name: MercadoPago__AccessToken
+              valueFrom:
+                secretKeyRef:
+                  name: stackfood-worker-secrets
+                  key: MERCADOPAGO_ACCESS_TOKEN

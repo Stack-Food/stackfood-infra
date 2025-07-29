@@ -1,0 +1,11 @@
+namespace: stackfood-prod
+resources:
+  - ../base
+  - configmap.yaml
+  - secret.yaml
+  - ghcr-secret.yaml
+patchesStrategicMerge:
+  - patch-deployment.yaml
+images:
+  - name: ghcr.io/stack-food/stackfood-api/api
+    newTag: master
