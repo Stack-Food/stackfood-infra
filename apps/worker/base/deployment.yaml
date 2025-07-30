@@ -42,18 +42,8 @@ spec:
             - secretRef:
                 name: stackfood-worker-secrets
           env:
-            - name: ASPNETCORE_ENVIRONMENT
-              valueFrom:
-                configMapKeyRef:
-                  name: stackfood-worker-config
-                  key: ASPNETCORE_ENVIRONMENT
-            - name: ConnectionStrings__DefaultConnection
-              valueFrom:
-                configMapKeyRef:
-                  name: stackfood-worker-config
-                  key: ConnectionStrings__DefaultConnection
-            - name: MercadoPago__AccessToken
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: stackfood-worker-secrets
-                  key: MERCADOPAGO_ACCESS_TOKEN
+                  name: stackfood-api-secrets
+                  key: POSTGRES_PASSWORD

@@ -94,6 +94,22 @@ else
   print_info "Continuando mesmo assim..."
 fi
 
+
+# Aplicar manifestos do worker após API e DB estarem prontos
+print_step "Aplicando manifestos do Worker..."
+kubectl apply -k ../apps/worker/base -n stackfood-dev
+kubectl apply -k ../apps/worker/dev -n stackfood-dev
+check_success "Manifestos do Worker aplicados." "Falha ao aplicar manifestos do Worker."
+
+print_step "Aguardando pods do Worker ficarem prontos..."
+if kubectl wait --for=condition=ready pod -l app=stackfood-worker --timeout=180s -n stackfood-dev; then
+  print_success "Pods do Worker prontos!"
+else
+  print_info "Verificando status dos pods do Worker..."
+  kubectl describe pods -l app=stackfood-worker -n stackfood-dev | grep -A 10 "Events:"
+  print_info "Continuando mesmo assim..."
+fi
+
 # Mostrar recursos criados
 print_step "Recursos criados:"
 echo ""
@@ -160,6 +176,13 @@ if ps -p $HTTPS_PID > /dev/null; then
 else
     echo -e "${RED}[ERROR]${NC} Port-forward HTTPS falhou"
 fi
+
+# Verificar status do Worker
+echo -e ""
+echo -e "${YELLOW}[INFO]${NC} Status do Worker:"
+kubectl get pods -l app=stackfood-worker -n stackfood-dev
+kubectl logs --tail=10 -l app=stackfood-worker -n stackfood-dev
+
 
 echo -e ""
 echo -e "${BLUE}==========================================${NC}"

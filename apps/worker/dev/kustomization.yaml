@@ -8,10 +8,11 @@ resources:
   - configmap.yaml
   - secret.yaml
   - ghcr-secret.yaml
+  - postgres-service.yaml
 
 patchesStrategicMerge:
   - patch-deployment.yaml
 
 images:
   - name: ghcr.io/stack-food/stackfood-api/worker
-    newTag: develop
+    newTag: master
