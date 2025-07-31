@@ -52,7 +52,7 @@ sleep 2
 
 # Aplicar secrets
 print_step "Aplicando GitHub Container Registry Secret..."
-kubectl apply -f ../apps/shared/secrets/ghcr-secret.yaml -n stackfood-dev
+kubectl apply -f ../apps/api/dev/ghcr-secret.yaml -n stackfood-dev
 check_success "Secret aplicado com sucesso." "Falha ao aplicar secret."
 
 # Aplicar manifestos
@@ -175,6 +175,22 @@ if ps -p $HTTPS_PID > /dev/null; then
     echo -e "🌐 Swagger HTTPS: ${YELLOW}https://localhost:${HTTPS_PORT}/swagger/index.html${NC}"
 else
     echo -e "${RED}[ERROR]${NC} Port-forward HTTPS falhou"
+fi
+
+# Configurar port-forward para o banco de dados PostgreSQL
+echo -e "${YELLOW}[INFO]${NC} Configurando port-forward para o PostgreSQL na porta 5432..."
+nohup kubectl port-forward svc/stackfood-db 5432:5432 -n stackfood-dev > /dev/null 2>&1 &
+PG_PID=$!
+sleep 1
+
+if ps -p $PG_PID > /dev/null; then
+    print_success "Port-forward PostgreSQL está rodando (PID: $PG_PID)"
+    echo -e "🛢️ PostgreSQL: ${YELLOW}localhost:5432${NC}"
+    echo -e "   Database: ${YELLOW}stackfood${NC}"
+    echo -e "   Username: ${YELLOW}postgres${NC}"
+    echo -e "   Password: ${YELLOW}password${NC}"
+else
+    print_error "Port-forward PostgreSQL falhou"
 fi
 
 # Verificar status do Worker
