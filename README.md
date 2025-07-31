@@ -215,11 +215,21 @@ chmod +x scripts/*.sh
 
 ### Iniciando o Ambiente de Testes
 
-Para iniciar o ambiente de desenvolvimento completo, execute:
+Para iniciar o ambiente completo, execute o script e adicione o parameto a frente para executar o ambiente desejado
+
+**Ambientes disponíveis:**
+
+- `dev`: Configura ambiente de desenvolvimento
+- `prod`: Configura ambiente de produção
+
+#### Exemplos
 
 ```bash
-cd scripts
-./test-local.sh
+# Iniciar ambiente de desenvolvimento
+./test-local.sh dev
+
+# Iniciar ambiente de produção
+./test-local.sh prod
 ```
 
 Este script realiza as seguintes operações:
