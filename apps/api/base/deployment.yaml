@@ -32,6 +32,8 @@ spec:
         prometheus.io/path: "/metrics"
         prometheus.io/port: "5039"
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/api: "true"
       imagePullSecrets:
         - name: ghcr-secret
       containers:

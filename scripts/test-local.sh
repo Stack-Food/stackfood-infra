@@ -66,13 +66,49 @@ print_info "Processos anteriores encerrados."
 
 # Verificar Minikube
 print_step "Verificando status do Minikube..."
+EXPECTED_NODES=("minikube" "minikube-m02" "minikube-m03")
+RECREATE_CLUSTER=false
+
 if ! minikube status &>/dev/null; then
-  print_info "Minikube não está rodando. Iniciando..."
-  minikube start --driver=docker
+  print_info "Minikube não está rodando. Iniciando com 3 nodes..."
+  RECREATE_CLUSTER=true
+else
+  print_info "Minikube já está rodando. Verificando nodes..."
+  # Check if all expected nodes exist
+  for NODE in "${EXPECTED_NODES[@]}"; do
+    if ! kubectl get node "$NODE" &>/dev/null; then
+      print_info "Node $NODE não encontrado. Será necessário recriar o cluster."
+      RECREATE_CLUSTER=true
+      break
+    fi
+  done
+fi
+
+if [ "$RECREATE_CLUSTER" = true ]; then
+  # Stop and delete any existing cluster
+  if minikube status &>/dev/null; then
+    print_info "Parando e removendo cluster existente..."
+    minikube stop
+    minikube delete
+  fi
+  
+  # Create new cluster with 3 nodes
+  print_info "Criando cluster com 3 nodes..."
+  minikube start --driver=docker \
+  --cpus=4 \
+  --memory=8g \
+  --disk-size=40g \
+  --nodes=3 \
+  --addons=metrics-server,dashboard
   check_success "Minikube iniciado com sucesso." "Falha ao iniciar o Minikube."
 else
-  print_info "Minikube já está rodando."
+  print_info "Todos os nodes necessários estão presentes."
 fi
+
+print_step "Configurando labels para os nós..."
+kubectl label nodes minikube-m02 node-role.kubernetes.io/api=true
+kubectl label nodes minikube-m03 node-role.kubernetes.io/worker=true
+kubectl label nodes minikube node-role.kubernetes.io/database=true
 
 # Criar namespace
 print_step "Criando namespace ${NAMESPACE}..."

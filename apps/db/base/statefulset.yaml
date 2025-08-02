@@ -22,6 +22,8 @@ spec:
       labels:
         app: stackfood-db
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/database: "true"
       containers:
         - name: postgres
           image: postgres:15.3-alpine
