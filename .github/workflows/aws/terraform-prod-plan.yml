@@ -2,8 +2,6 @@ name: "3. AWS / PROD / Terraform Plan"
 
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - "terraform/aws/main/**"
       - "terraform/aws/env/prod.tfvars"
