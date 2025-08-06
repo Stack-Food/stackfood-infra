@@ -3,8 +3,7 @@ name: "3. AWS / PROD / Terraform Plan"
 on:
   pull_request:
     paths:
-      - "terraform/aws/main/**"
-      - "terraform/aws/env/**"
+      - "terraform/aws/**"
   workflow_dispatch:
 
 jobs:
