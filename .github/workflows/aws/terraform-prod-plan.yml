@@ -1,6 +1,9 @@
 name: "3. AWS / PROD / Terraform Plan"
 
 on:
+  push:
+    paths:
+      - "terraform/aws/**"
   pull_request:
     paths:
       - "terraform/aws/**"
