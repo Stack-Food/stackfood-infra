@@ -1,4 +1,4 @@
-name: "3. AWS / PROD / Terraform Plan"
+name: "AWS / PROD / Terraform Plan"
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   tflint:
-    name: Terraform Lint
+    name: Lint
     runs-on: ubuntu-latest
     environment:
       name: Production
@@ -52,7 +52,7 @@ jobs:
       - run: echo ${{ steps.tflint.outputs.exitcode }}
 
   plan:
-    name: Terraform Plan
+    name: Plan
     runs-on: ubuntu-latest
     environment:
       name: Production
