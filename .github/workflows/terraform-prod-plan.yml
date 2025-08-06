@@ -1,9 +1,10 @@
-name: "3. AWS / PROD / Terraform Plan"
+name: "AWS / PROD / Terraform Plan"
 
 on:
   push:
     paths:
       - "terraform/aws/**"
+      - ".github/workflows/**"
   pull_request:
     paths:
       - "terraform/aws/**"
@@ -11,7 +12,7 @@ on:
 
 jobs:
   tflint:
-    name: Terraform Lint
+    name: Lint
     runs-on: ubuntu-latest
     environment:
       name: Production
@@ -51,7 +52,7 @@ jobs:
       - run: echo ${{ steps.tflint.outputs.exitcode }}
 
   plan:
-    name: Terraform Plan
+    name: Plan
     runs-on: ubuntu-latest
     environment:
       name: Production
