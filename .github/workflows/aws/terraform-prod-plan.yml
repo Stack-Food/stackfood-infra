@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "terraform/aws/main/**"
-      - "terraform/aws/env/prod.tfvars"
+      - "terraform/aws/env/**"
   workflow_dispatch:
 
 jobs:
