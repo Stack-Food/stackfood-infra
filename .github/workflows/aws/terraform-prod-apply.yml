@@ -1,0 +1,124 @@
+name: "4. AWS / PROD / Terraform Apply"
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'terraform/aws/main/**'
+  #     - 'terraform/aws/env/prod.tfvars'
+  workflow_dispatch:
+
+jobs:
+  inform_about_apply:
+    name: Inform About Apply
+    runs-on: ubuntu-22.04
+    environment:
+      name: Production
+
+    steps:
+      - name: Inform on PR that Apply is Running
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            ***Running terraform apply***
+            Results will display here momentarily...
+
+  plan_and_apply:
+    name: Plan and Apply
+    runs-on: ubuntu-22.04
+    environment:
+      name: Production
+    defaults:
+      run:
+        working-directory: ./terraform/aws/main
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialise Terraform
+        run: terraform init -input=false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_WORKSPACE: "Production"
+
+      - name: Terraform Plan
+        id: plan
+        continue-on-error: true
+        run: |
+          terraform plan -var-file="../env/prod.tfvars" -input=false -no-color -out=tfplan \
+          && terraform show -no-color tfplan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_WORKSPACE: "Production"
+
+      - name: Reformat Plan
+        if: steps.plan.outcome == 'success'
+        run: |
+          echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
+          | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
+
+      - name: Put Plan in Env Var
+        if: steps.plan.outcome == 'success'
+        run: |
+          PLAN=$(cat plan.txt)
+          echo "PLAN<<EOF" >> $GITHUB_ENV
+          echo "$PLAN" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Terraform Apply
+        if: steps.plan.outcome == 'success'
+        id: apply
+        continue-on-error: true
+        run: terraform apply -input=false -no-color tfplan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_WORKSPACE: "Production"
+
+      - name: Post Plan and Apply to GitHub PR
+        if: steps.plan.outcome == 'success' && steps.apply.outcome == 'success'
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            Terraform Apply Output (Production):
+
+            ```diff
+            ${{ env.PLAN }}
+            ```
+
+            ```
+            ${{ steps.apply.outputs.stdout }}
+            ```
+
+      - name: Post Plan Failure
+        if: steps.plan.outcome == 'failure'
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            Terraform Plan **FAILED** (Production):
+
+            ```
+            ${{ steps.plan.outputs.stderr }}
+            ```
+
+      - name: Post Apply Failure
+        if: steps.apply.outcome == 'failure'
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            Terraform Apply **Failed** (Production):
+
+            ```
+            ${{ steps.apply.outputs.stderr }}
+            ```

@@ -1,0 +1,96 @@
+{
+  "security.workspace.trust.untrustedFiles": "open",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[azure-pipelines]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "github-actions.workflows.pinned.workflows": [
+    ".github/workflows/*.yml",
+    ".github/workflows/*.yaml",
+    ".github/workflows/*/*.yml",
+    ".github/workflows/*/*.yaml"
+  ],
+
+  "files.associations": {
+    ".github/workflows/*.yaml": "github-actions",
+    ".github/workflows/*.yml": "github-actions",
+    ".github/workflows/*/*.yaml": "github-actions",
+    ".github/workflows/*/*.yml": "github-actions",
+
+    "terragrunt.hcl": "terraform",
+    "*.tf": "terraform",
+    "*.tf.override": "terraform",
+    "*.tfstate": "terraform",
+    "*.tflint.hcl": "terraform"
+  },
+  "python.createEnvironment.trigger": "off",
+  "git.confirmSync": false,
+  "github.copilot.advanced": {},
+  "yaml.schemas": {
+    "file:///c%3A/Users/dtiDigital/.vscode/extensions/atlassian.atlascode-3.8.8/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+  },
+  "workbench.colorTheme": "Dracula Theme",
+  "workbench.iconTheme": "vscode-icons",
+
+  "editor.formatOnSave": true,
+
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.formatAll.terraform": "explicit"
+    }
+  },
+
+  "[terraform-vars]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.formatAll.terraform": "explicit"
+    }
+  },
+
+  "terraform.codelens.referenceCount": true,
+  "terraform.validation.enableEnhancedValidation": true,
+  "terraform.experimentalFeatures.prefillRequiredFields": true,
+  "terraform.experimentalFeatures.validateOnSave": true,
+  "terraform.languageServer.enable": true,
+  "terraform.languageServer.args": ["serve"],
+  "githubLocalActions.dockerDesktopPath": "C:/Program Files/Docker/Docker/Docker Desktop.exe",
+  "yaml.customTags": [
+    "!And",
+    "!And sequence",
+    "!If",
+    "!If sequence",
+    "!Not",
+    "!Not sequence",
+    "!Equals",
+    "!Equals sequence",
+    "!Or",
+    "!Or sequence",
+    "!FindInMap",
+    "!FindInMap sequence",
+    "!Base64",
+    "!Join",
+    "!Join sequence",
+    "!Cidr",
+    "!Ref",
+    "!Sub",
+    "!Sub sequence",
+    "!GetAtt",
+    "!GetAZs",
+    "!ImportValue",
+    "!ImportValue sequence",
+    "!Select",
+    "!Select sequence",
+    "!Split",
+    "!Split sequence"
+  ],
+  "docker.extension.enableComposeLanguageServer": false,
+  "github.copilot.nextEditSuggestions.enabled": true
+}
