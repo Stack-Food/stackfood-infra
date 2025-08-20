@@ -155,9 +155,6 @@ resource "aws_db_instance" "this" {
   storage_encrypted    = var.storage_encrypted
   kms_key_id           = var.storage_encrypted ? (var.kms_key_id != null ? var.kms_key_id : aws_kms_key.rds[0].arn) : null
 
-  db_name                 = var.db_name
-  username             = var.username
-  password             = var.password
   port                 = var.port
 
   vpc_security_group_ids = [aws_security_group.this.id]

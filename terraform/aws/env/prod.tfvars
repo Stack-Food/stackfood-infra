@@ -80,20 +80,29 @@ eks_node_groups = {
 ######################
 # RDS Configuration #
 ######################
-db_identifier = "stackfood-prod-postgres"
-db_name = "stackfood-db"
-db_username = "postgres" # Use AWS Secrets Manager in production
-db_password = "ChangeMe123!" # Use AWS Secrets Manager in production
-db_port = 5432
-db_engine_version = "14.5"
-db_instance_class = "db.t3.large"
-db_allocated_storage = 50
-db_max_allocated_storage = 500
-db_backup_retention_period = 30
-db_backup_window = "03:00-06:00"
-db_maintenance_window = "Mon:00:00-Mon:03:00"
-db_multi_az = true
-db_deletion_protection = true
+rds_instances = {
+  "stackfood-prod-db" = {
+    subnet_group_name = "stackfood-prod-db-subnet-group"
+    security_group_names = ["stackfood-prod-db-sg"]
+    allocated_storage = 50
+    storage_encrypted = true
+    db_instance_class = "db.t3.large"
+    engine = "postgres"
+    engine_version = "14.5"
+    identifier = "stackfood-prod-postgres"
+    publicly_accessible = false
+    multi_az = true
+    performance_insights_enabled = true
+    enable_backup_tagging = true
+    snapshot_identifier = true
+    username = "postgres" # Use AWS Secrets Manager in production
+    port = 5432
+    password = "ChangeMe123!" # Use AWS Secrets Manager in production
+    backup_window = "03:00-06:00"
+    maintenance_window = "Mon:00:00-Mon:03:00"
+    deletion_protection = false
+  }
+}
 
 ######################
 # Lambda Configuration #

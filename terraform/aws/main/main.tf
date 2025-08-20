@@ -49,11 +49,12 @@ module "eks" {
 # RDS Module
 module "rds" {
   source = "../modules/rds/"
+  for_each = var.rds_instances
 
   # General Settings
-  identifier   = var.db_identifier
+  identifier   = each.key
   engine       = "postgres"
-  engine_version = var.db_engine_version
+  engine_version = each.value.engine_version
   environment  = var.environment
   tags         = var.tags
 
@@ -63,16 +64,10 @@ module "rds" {
   allowed_security_groups = [module.eks.node_security_group_id]
 
   # Database Settings
-  instance_class       = var.db_instance_class
-  allocated_storage    = var.db_allocated_storage
-  max_allocated_storage = var.db_max_allocated_storage
+  instance_class       = each.value.instance_class
+  allocated_storage    = each.value.allocated_storage
+  max_allocated_storage = each.value.max_allocated_storage
   storage_encrypted    = true
-
-  # Credentials
-  db_name    = var.db_name
-  username   = var.db_username
-  password   = var.db_password
-  port       = var.db_port
 
   # Backup and Maintenance
   backup_retention_period = var.db_backup_retention_period

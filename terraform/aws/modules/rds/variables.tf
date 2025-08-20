@@ -28,22 +28,6 @@ variable "allocated_storage" {
   type        = number
 }
 
-variable "db_name" {
-  description = "The name of the database to create when the DB instance is created"
-  type        = string
-}
-
-variable "username" {
-  description = "Username for the master DB user"
-  type        = string
-}
-
-variable "password" {
-  description = "Password for the master DB user"
-  type        = string
-  sensitive   = true
-}
-
 variable "vpc_id" {
   description = "The ID of the VPC where the RDS instance will be created"
   type        = string
