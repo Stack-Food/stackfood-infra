@@ -49,27 +49,6 @@ output "eks_oidc_issuer_url" {
   value       = module.eks.cluster_oidc_issuer_url
 }
 
-# RDS Outputs
-output "db_instance_endpoint" {
-  description = "The connection endpoint of the RDS instance"
-  value       = module.rds.db_instance_endpoint
-}
-
-output "db_instance_name" {
-  description = "The database name"
-  value       = module.rds.db_instance_name
-}
-
-output "db_instance_port" {
-  description = "The database port"
-  value       = module.rds.db_instance_port
-}
-
-output "db_security_group_id" {
-  description = "The security group ID of the RDS instance"
-  value       = module.rds.db_security_group_id
-}
-
 # Lambda Outputs
 output "lambda_function_names" {
   description = "The names of the Lambda functions"

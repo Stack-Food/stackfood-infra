@@ -10,6 +10,9 @@
   - Aplicações
   - Banco de Dados
 - Metodologia GitOps
+- Terraform AWS
+  - Configuração e Implantação
+  - IAM Roles
 - Guia de Uso
   - Pré-requisitos
   - Configuração do Ambiente de Desenvolvimento
@@ -64,10 +67,21 @@ stackfood-infra/
 │       ├── base/
 │       ├── dev/
 │       └── prod/
-└── scripts/                    # Scripts de automação e utilitários
-    ├── port-forward.sh         # Script para configurar port-forward
-    ├── test-local.sh           # Script para testar ambiente local
-    └── test-local-new.sh       # Versão otimizada do script de teste
+├── scripts/                    # Scripts de automação e utilitários
+│   ├── port-forward.sh         # Script para configurar port-forward
+│   ├── test-local.sh           # Script para testar ambiente local
+│   └── test-local-new.sh       # Versão otimizada do script de teste
+└── terraform/                  # Infraestrutura como código (IaC) para AWS
+    └── aws/                    # Recursos AWS usando Terraform
+        ├── env/                # Configurações específicas de ambiente
+        │   ├── dev.tfvars      # Variáveis para ambiente de desenvolvimento
+        │   └── prod.tfvars     # Variáveis para ambiente de produção
+        ├── main/               # Configuração principal do Terraform
+        └── modules/            # Módulos Terraform reutilizáveis
+            ├── eks/            # Módulo para Amazon EKS
+            ├── lambda/         # Módulo para AWS Lambda
+            ├── rds/            # Módulo para Amazon RDS
+            └── vpc/            # Módulo para Amazon VPC
 ```
 
 ## 📝 Manifestos Kubernetes
@@ -186,6 +200,39 @@ Este projeto segue a metodologia GitOps para gerenciamento de infraestrutura, co
 
 4. **Kustomize para Camadas de Configuração**: Usamos Kustomize para gerenciar as diferenças entre ambientes.
 
+## ☁️ Terraform AWS
+
+A infraestrutura na AWS é provisionada usando Terraform, que permite definir e gerenciar recursos como código.
+
+### Configuração e Implantação
+
+Para implantar a infraestrutura na AWS:
+
+1. Configure as credenciais AWS (utilizando o AWS CLI ou variáveis de ambiente)
+2. Navegue até o diretório `terraform/aws`
+3. Inicialize o Terraform:
+   ```bash
+   terraform init
+   ```
+4. Aplique a configuração para o ambiente desejado:
+   ```bash
+   # Para ambiente de desenvolvimento
+   terraform apply -var-file=env/dev.tfvars
+   
+   # Para ambiente de produção
+   terraform apply -var-file=env/prod.tfvars
+   ```
+
+### IAM Roles
+
+Este projeto utiliza IAM roles existentes na AWS em vez de criar novos roles, seguindo as práticas recomendadas de segurança e permissões mínimas necessárias:
+
+1. **Lambda Functions**: Utilizam o role existente `LabRole` para permissões de execução
+2. **EKS Cluster**: Utiliza o role existente `LabEksClusterRole` para o plano de controle
+3. **EKS Nodes**: Utilizam o role existente `LabEksNodeRole` para os nós workers
+
+Essa abordagem simplifica a gestão de permissões e garante conformidade com políticas de segurança organizacionais.
+
 ## 💻 Guia de Uso
 
 ### Pré-requisitos
@@ -197,6 +244,8 @@ Para utilizar esta infraestrutura, você precisa ter instalado:
 - **Docker**: Para utlizar o container runtime no cluster K8S
 - **git**: Para clonar o repositório
 - **bash**: Para executar os scripts de automação
+- **Terraform**: Para provisionar recursos na AWS (versão 1.0+)
+- **AWS CLI**: Para autenticação e interação com a AWS
 
 ### Configuração do Ambiente de Desenvolvimento
 

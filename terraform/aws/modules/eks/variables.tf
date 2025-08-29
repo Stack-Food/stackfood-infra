@@ -97,3 +97,34 @@ variable "node_groups" {
     }
   }
 }
+
+variable "vpc_id" {
+  description = "ID of the VPC where the EKS cluster will be created"
+  type        = string
+}
+
+# Variables for IAM roles
+variable "cluster_role_name" {
+  description = "Name of the IAM role to use for the EKS cluster (e.g., 'LabEksClusterRole')"
+  type        = string
+  default     = "LabEksClusterRole"
+}
+
+variable "node_role_name" {
+  description = "Name of the IAM role to use for the EKS node groups (e.g., 'LabEksNodeRole')"
+  type        = string
+  default     = "LabEksNodeRole"
+}
+
+# Variables for CloudWatch Logs
+variable "log_retention_in_days" {
+  description = "Number of days to retain log events in CloudWatch Log Group"
+  type        = number
+  default     = 30
+}
+
+variable "log_kms_key_id" {
+  description = "The ARN of the KMS Key to use when encrypting log data"
+  type        = string
+  default     = null
+}

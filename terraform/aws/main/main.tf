@@ -15,8 +15,8 @@ module "vpc" {
   tags             = var.tags
 
   # VPC Settings
-  vpc_cidr_blocks        = var.vpc_cidr_blocks
-  vpc_enable_dns_support = true
+  vpc_cidr_blocks          = var.vpc_cidr_blocks
+  vpc_enable_dns_support   = true
   vpc_enable_dns_hostnames = true
 
   # Subnet Settings
@@ -36,48 +36,53 @@ module "eks" {
   # Network Settings
   subnet_ids      = module.vpc.private_subnet_ids
   node_subnet_ids = module.vpc.private_subnet_ids
+  vpc_id          = module.vpc.vpc_id
 
   # Cluster Settings
-  kubernetes_version = var.kubernetes_version
+  kubernetes_version      = var.kubernetes_version
   endpoint_private_access = true
   endpoint_public_access  = var.eks_endpoint_public_access
 
   # Node Group Settings
   node_groups = var.eks_node_groups
+  
+  # IAM Role Settings
+  cluster_role_name = var.eks_cluster_role_name
+  node_role_name    = var.eks_node_role_name
 }
 
 # RDS Module
 module "rds" {
-  source = "../modules/rds/"
+  source   = "../modules/rds/"
   for_each = var.rds_instances
 
   # General Settings
-  identifier   = each.key
-  engine       = "postgres"
+  identifier     = each.key
+  engine         = "postgres"
   engine_version = each.value.engine_version
-  environment  = var.environment
-  tags         = var.tags
+  environment    = var.environment
+  tags           = var.tags
 
   # Network Settings
-  vpc_id        = module.vpc.vpc_id
-  subnet_ids    = module.vpc.private_subnet_ids
+  vpc_id                  = module.vpc.vpc_id
+  subnet_ids              = module.vpc.private_subnet_ids
   allowed_security_groups = [module.eks.node_security_group_id]
 
   # Database Settings
-  instance_class       = each.value.instance_class
-  allocated_storage    = each.value.allocated_storage
-  max_allocated_storage = each.value.max_allocated_storage
-  storage_encrypted    = true
+  instance_class        = each.value.db_instance_class
+  allocated_storage     = each.value.allocated_storage
+  max_allocated_storage = each.value.allocated_storage
+  storage_encrypted     = true
 
   # Backup and Maintenance
-  backup_retention_period = var.db_backup_retention_period
-  maintenance_window      = var.db_maintenance_window
-  backup_window           = var.db_backup_window
+  backup_retention_period = each.value.backup_retention_period
+  maintenance_window      = each.value.maintenance_window
+  backup_window           = each.value.backup_window
 
   # Performance and Availability
-  multi_az                  = var.db_multi_az
+  multi_az                     = each.value.multi_az
   performance_insights_enabled = true
-  deletion_protection       = var.db_deletion_protection
+  deletion_protection          = each.value.deletion_protection
 }
 
 # Lambda Functions
@@ -102,7 +107,10 @@ module "api_lambda" {
   subnet_ids = var.lambda_functions[count.index].vpc_access ? module.vpc.private_subnet_ids : []
 
   # Function Configuration
-  memory_size = var.lambda_functions[count.index].memory_size
-  timeout     = var.lambda_functions[count.index].timeout
+  memory_size           = var.lambda_functions[count.index].memory_size
+  timeout               = var.lambda_functions[count.index].timeout
   environment_variables = var.lambda_functions[count.index].environment_variables
+  
+  # IAM Role Settings
+  lambda_role_name = var.lambda_role_name
 }

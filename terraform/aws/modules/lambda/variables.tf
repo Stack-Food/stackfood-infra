@@ -121,6 +121,12 @@ variable "environment_variables" {
 }
 
 # Permissions and policies
+variable "lambda_role_name" {
+  description = "Name of the IAM role to use for the Lambda function (e.g., 'LabRole')"
+  type        = string
+  default     = "LabRole"
+}
+
 variable "additional_policy_arns" {
   description = "List of IAM policy ARNs to attach to the Lambda function role"
   type        = list(string)

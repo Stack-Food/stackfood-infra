@@ -5,42 +5,20 @@
 # Data Sources
 data "aws_caller_identity" "current" {}
 
-# IAM Role for EKS Cluster
-resource "aws_iam_role" "eks_cluster" {
-  name = var.cluster_name
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "eks.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = merge(
-    {
-      Name        = "${var.cluster_name}-cluster-role"
-      Environment = var.environment
-    },
-    var.tags
-  )
+# Data source para obter a IAM role existente para o cluster EKS
+data "aws_iam_role" "eks_cluster_role" {
+  name = var.cluster_role_name
 }
 
-# Attach AWS managed policy for EKS cluster
-resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.eks_cluster.name
+# Data source para obter a IAM role existente para os nodes do EKS
+data "aws_iam_role" "eks_node_role" {
+  name = var.node_role_name
 }
 
 # EKS Cluster
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
-  role_arn = aws_iam_role.eks_cluster.arn
+  role_arn = data.aws_iam_role.eks_cluster_role.arn
   version  = var.kubernetes_version
 
   vpc_config {
@@ -73,10 +51,6 @@ resource "aws_eks_cluster" "main" {
     },
     var.tags
   )
-
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_policy
-  ]
 }
 
 # KMS Key for EKS Secret Encryption
@@ -95,60 +69,13 @@ resource "aws_kms_key" "eks" {
   )
 }
 
-# IAM Role for EKS Node Group
-resource "aws_iam_role" "node_group" {
-  name = "${var.cluster_name}-node-group"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = merge(
-    {
-      Name        = "${var.cluster_name}-node-group-role"
-      Environment = var.environment
-    },
-    var.tags
-  )
-}
-
-# Attach policies to Node Group Role
-resource "aws_iam_role_policy_attachment" "node_group_AmazonEKSWorkerNodePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.node_group.name
-}
-
-resource "aws_iam_role_policy_attachment" "node_group_AmazonEKS_CNI_Policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.node_group.name
-}
-
-resource "aws_iam_role_policy_attachment" "node_group_AmazonEC2ContainerRegistryReadOnly" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.node_group.name
-}
-
-resource "aws_iam_role_policy_attachment" "node_group_AmazonSSMManagedInstanceCore" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  role       = aws_iam_role.node_group.name
-}
-
 # EKS Node Group
 resource "aws_eks_node_group" "main" {
   for_each = var.node_groups
 
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = each.key
-  node_role_arn   = aws_iam_role.node_group.arn
+  node_role_arn   = data.aws_iam_role.eks_node_role.arn
   subnet_ids      = var.node_subnet_ids
 
   scaling_config {
@@ -164,7 +91,7 @@ resource "aws_eks_node_group" "main" {
 
   # Use launch template for more customization if needed
   dynamic "launch_template" {
-    for_each = each.value.launch_template != null ? [each.value.launch_template] : []
+    for_each = lookup(each.value, "launch_template", null) != null ? [each.value.launch_template] : []
     
     content {
       id      = launch_template.value.id
@@ -174,17 +101,17 @@ resource "aws_eks_node_group" "main" {
 
   # Enable remote access if specified
   dynamic "remote_access" {
-    for_each = each.value.ssh_key != null ? [1] : []
+    for_each = lookup(each.value, "ssh_key", null) != null ? [1] : []
     
     content {
       ec2_ssh_key               = each.value.ssh_key
-      source_security_group_ids = each.value.source_security_group_ids
+      source_security_group_ids = lookup(each.value, "source_security_group_ids", null)
     }
   }
 
   # Apply labels and taints if provided
   dynamic "taint" {
-    for_each = each.value.taints != null ? each.value.taints : []
+    for_each = lookup(each.value, "taints", [])
     
     content {
       key    = taint.value.key
@@ -193,7 +120,7 @@ resource "aws_eks_node_group" "main" {
     }
   }
 
-  labels = each.value.labels
+  labels = lookup(each.value, "labels", {})
 
   tags = merge(
     {
@@ -203,12 +130,6 @@ resource "aws_eks_node_group" "main" {
     var.tags
   )
 
-  depends_on = [
-    aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly,
-  ]
-
   # Ensure proper node rotation during updates
   update_config {
     max_unavailable_percentage = 33
@@ -217,4 +138,19 @@ resource "aws_eks_node_group" "main" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# CloudWatch Log Group for EKS Cluster Logs
+resource "aws_cloudwatch_log_group" "eks_cluster" {
+  name              = "/aws/eks/${var.cluster_name}/cluster"
+  retention_in_days = var.log_retention_in_days
+  kms_key_id        = var.log_kms_key_id
+
+  tags = merge(
+    {
+      Name        = "/aws/eks/${var.cluster_name}/cluster"
+      Environment = var.environment
+    },
+    var.tags
+  )
 }

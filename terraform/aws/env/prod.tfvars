@@ -99,8 +99,16 @@ rds_instances = {
     backup_window                = "03:00-06:00"
     maintenance_window           = "Mon:00:00-Mon:03:00"
     deletion_protection          = false
+    backup_retention_period      = 7
   }
 }
+
+######################
+# IAM Configuration #
+######################
+lambda_role_name      = "LabRole"
+eks_cluster_role_name = "c173096a4485959l11267681t1w623941-LabEksClusterRole-PYvjzWerQxXl"
+eks_node_role_name    = "c173096a4485959l11267681t1w623941-LabEksClusterRole-PYvjzWerQxXl"
 
 ######################
 # Lambda Configuration #

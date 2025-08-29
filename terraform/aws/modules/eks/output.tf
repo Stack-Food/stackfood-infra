@@ -49,13 +49,3 @@ output "cluster_primary_security_group_id" {
   description = "The cluster primary security group ID created by the EKS cluster on cluster creation"
   value       = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
 }
-
-output "node_group_role_arn" {
-  description = "IAM role ARN for EKS Node Group"
-  value       = aws_iam_role.node_group.arn
-}
-
-output "node_group_role_name" {
-  description = "IAM role name for EKS Node Group"
-  value       = aws_iam_role.node_group.name
-}

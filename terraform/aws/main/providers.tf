@@ -16,8 +16,8 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "stackfood-s3-tfstate-fiap"
-    key    = "terraform.tfstate"
+    bucket  = "stackfood-s3-tfstate-fiap"
+    key     = "terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
   }
@@ -25,7 +25,7 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-  
+
   default_tags {
     tags = {
       Project     = "StackFood"
