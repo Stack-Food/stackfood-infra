@@ -62,3 +62,4 @@ output "route_table_public_id" {
   description = "ID of public route table"
   value       = aws_route_table.route-table-public.id
 }
+

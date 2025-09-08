@@ -2,19 +2,6 @@
 # EKS Cluster Module #
 ######################
 
-# Data Sources
-data "aws_caller_identity" "current" {}
-
-# Data source para obter a IAM role existente para o cluster EKS
-data "aws_iam_role" "eks_cluster_role" {
-  name = var.cluster_role_name
-}
-
-# Data source para obter a IAM role existente para os nodes do EKS
-data "aws_iam_role" "eks_node_role" {
-  name = var.node_role_name
-}
-
 # EKS Cluster
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
@@ -92,7 +79,7 @@ resource "aws_eks_node_group" "main" {
   # Use launch template for more customization if needed
   dynamic "launch_template" {
     for_each = lookup(each.value, "launch_template", null) != null ? [each.value.launch_template] : []
-    
+
     content {
       id      = launch_template.value.id
       version = launch_template.value.version
@@ -102,17 +89,16 @@ resource "aws_eks_node_group" "main" {
   # Enable remote access if specified
   dynamic "remote_access" {
     for_each = lookup(each.value, "ssh_key", null) != null ? [1] : []
-    
+
     content {
       ec2_ssh_key               = each.value.ssh_key
       source_security_group_ids = lookup(each.value, "source_security_group_ids", null)
     }
   }
 
-  # Apply labels and taints if provided
   dynamic "taint" {
     for_each = lookup(each.value, "taints", [])
-    
+
     content {
       key    = taint.value.key
       value  = taint.value.value
@@ -130,7 +116,6 @@ resource "aws_eks_node_group" "main" {
     var.tags
   )
 
-  # Ensure proper node rotation during updates
   update_config {
     max_unavailable_percentage = 33
   }
@@ -140,8 +125,14 @@ resource "aws_eks_node_group" "main" {
   }
 }
 
-# CloudWatch Log Group for EKS Cluster Logs
+data "aws_cloudwatch_log_group" "existing_eks_cluster" {
+  count = 1
+  name  = "/aws/eks/${var.cluster_name}/cluster"
+}
+
 resource "aws_cloudwatch_log_group" "eks_cluster" {
+  count = try(data.aws_cloudwatch_log_group.existing_eks_cluster[0].arn, null) == null ? 1 : 0
+
   name              = "/aws/eks/${var.cluster_name}/cluster"
   retention_in_days = var.log_retention_in_days
   kms_key_id        = var.log_kms_key_id

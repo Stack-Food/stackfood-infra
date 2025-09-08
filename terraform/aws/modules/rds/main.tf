@@ -2,9 +2,6 @@
 # RDS Module - Main #
 #####################
 
-# Get available AZs
-data "aws_availability_zones" "available" {}
-
 # Create DB subnet group
 resource "aws_db_subnet_group" "this" {
   name        = var.db_subnet_group_name != null ? var.db_subnet_group_name : "${var.identifier}-subnet-group"
@@ -106,20 +103,21 @@ resource "aws_kms_key" "rds" {
 # Create security group for RDS
 resource "aws_security_group" "this" {
   name        = "${var.identifier}-sg"
-  description = "Security group for RDS instance ${var.identifier}"
+  description = "Security group for RDS instance ${var.identifier} - allows access from EKS"
   vpc_id      = var.vpc_id
 
   tags = merge(
     {
       Name        = "${var.identifier}-sg"
       Environment = var.environment
+      Purpose     = "RDS-Database-Access"
     },
     var.tags
   )
 }
 
-# Allow inbound traffic to the database port
-resource "aws_security_group_rule" "ingress" {
+# Allow inbound traffic to the database port from EKS nodes
+resource "aws_security_group_rule" "ingress_from_eks" {
   count = length(var.allowed_security_groups) > 0 ? length(var.allowed_security_groups) : 0
 
   type                     = "ingress"
@@ -128,6 +126,7 @@ resource "aws_security_group_rule" "ingress" {
   protocol                 = "tcp"
   security_group_id        = aws_security_group.this.id
   source_security_group_id = element(var.allowed_security_groups, count.index)
+  description              = "Allow database access from EKS nodes"
 }
 
 # Allow inbound traffic from CIDR blocks if specified
@@ -146,38 +145,44 @@ resource "aws_security_group_rule" "cidr_ingress" {
 resource "aws_db_instance" "this" {
   identifier = var.identifier
 
-  engine               = var.engine
-  engine_version       = var.engine_version
-  instance_class       = var.instance_class
-  allocated_storage    = var.allocated_storage
-  max_allocated_storage = var.max_allocated_storage
-  storage_type         = var.storage_type
-  storage_encrypted    = var.storage_encrypted
-  kms_key_id           = var.storage_encrypted ? (var.kms_key_id != null ? var.kms_key_id : aws_kms_key.rds[0].arn) : null
-
-  port                 = var.port
+  engine                      = var.engine
+  engine_version              = var.engine_version
+  instance_class              = var.instance_class
+  allocated_storage           = var.allocated_storage
+  max_allocated_storage       = var.max_allocated_storage
+  storage_type                = var.storage_type
+  storage_encrypted           = var.storage_encrypted
+  kms_key_id                  = var.storage_encrypted ? (var.kms_key_id != null ? var.kms_key_id : aws_kms_key.rds[0].arn) : null
+  username                    = var.db_username
+  password                    = var.manage_master_user_password ? null : var.db_password
+  manage_master_user_password = var.manage_master_user_password
+  port                        = var.port
 
   vpc_security_group_ids = [aws_security_group.this.id]
   db_subnet_group_name   = aws_db_subnet_group.this.name
   parameter_group_name   = var.create_db_parameter_group ? aws_db_parameter_group.this[0].name : var.parameter_group_name
   option_group_name      = var.create_db_option_group ? aws_db_option_group.this[0].name : var.option_group_name
 
-  multi_az               = var.multi_az
-  availability_zone      = var.multi_az ? null : var.availability_zone
+  multi_az          = var.multi_az
+  availability_zone = var.multi_az ? null : var.availability_zone
 
   backup_retention_period = var.backup_retention_period
   backup_window           = var.backup_window
   maintenance_window      = var.maintenance_window
-  
-  skip_final_snapshot     = var.skip_final_snapshot
+
+  skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.identifier}-final-snapshot-${formatdate("YYYYMMDDhhmmss", timestamp())}"
-  deletion_protection     = var.deletion_protection
-  
-  apply_immediately       = var.apply_immediately
+  deletion_protection       = var.deletion_protection
+
+  apply_immediately            = var.apply_immediately
   performance_insights_enabled = var.performance_insights_enabled
-  
-  copy_tags_to_snapshot   = true
-  
+
+  # Enhanced monitoring is NOT supported in AWS Academy
+  monitoring_interval = 0
+  # monitoring_role_arn = data.aws_iam_role.rds_role.arn  # Commented out for AWS Academy
+
+  copy_tags_to_snapshot = true
+
   tags = merge(
     {
       Name        = var.identifier

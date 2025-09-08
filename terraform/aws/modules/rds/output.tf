@@ -24,9 +24,20 @@ output "db_instance_username" {
   sensitive   = true
 }
 
-output "db_instance_port" {
-  description = "The database port"
-  value       = aws_db_instance.this.port
+# Note: We don't output the password for security reasons
+output "db_username" {
+  description = "The database username"
+  value       = aws_db_instance.this.username
+}
+
+output "master_user_secret_arn" {
+  description = "The ARN of the master user secret (when manage_master_user_password is true)"
+  value       = aws_db_instance.this.master_user_secret
+}
+
+output "master_user_secret_kms_key_id" {
+  description = "The KMS key ID used to encrypt the master user secret"
+  value       = aws_db_instance.this.master_user_secret != null ? aws_db_instance.this.master_user_secret[0].kms_key_id : null
 }
 
 output "db_subnet_group_id" {
@@ -47,14 +58,4 @@ output "db_instance_resource_id" {
 output "db_security_group_id" {
   description = "The security group ID of the RDS instance"
   value       = aws_security_group.this.id
-}
-
-output "db_parameter_group_id" {
-  description = "The db parameter group id"
-  value       = try(aws_db_parameter_group.this[0].id, "")
-}
-
-output "db_option_group_id" {
-  description = "The db option group id"
-  value       = try(aws_db_option_group.this[0].id, "")
 }

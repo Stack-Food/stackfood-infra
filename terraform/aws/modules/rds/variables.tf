@@ -19,12 +19,12 @@ variable "engine_version" {
 }
 
 variable "instance_class" {
-  description = "The instance type of the RDS instance"
+  description = "The instance type of the RDS instance (AWS Academy supports: nano, micro, small, medium)"
   type        = string
 }
 
 variable "allocated_storage" {
-  description = "The amount of allocated storage in gibibytes"
+  description = "The amount of allocated storage in gibibytes (max 100GB for AWS Academy)"
   type        = number
 }
 
@@ -40,6 +40,11 @@ variable "subnet_ids" {
 
 variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
+  type        = string
+}
+
+variable "rds_role_name" {
+  description = "Name of the IAM role to use for enhanced monitoring (e.g., 'LabRole')"
   type        = string
 }
 
@@ -60,13 +65,13 @@ variable "port" {
 }
 
 variable "max_allocated_storage" {
-  description = "The upper limit to which Amazon RDS can automatically scale the storage of the DB instance"
+  description = "The upper limit to which Amazon RDS can automatically scale the storage of the DB instance (max 100GB for AWS Academy)"
   type        = number
-  default     = 0 # Disabled by default
+  default     = 100
 }
 
 variable "storage_type" {
-  description = "One of 'standard' (magnetic), 'gp2' (general purpose SSD), or 'io1' (provisioned IOPS SSD)"
+  description = "Storage type - AWS Academy only supports gp2 (general purpose SSD)"
   type        = string
   default     = "gp2"
 }
@@ -198,7 +203,6 @@ variable "create_db_option_group" {
 variable "major_engine_version" {
   description = "The major version of the engine to use for the option group"
   type        = string
-  default     = "14"
 }
 
 variable "options" {
@@ -211,4 +215,23 @@ variable "options" {
     })), [])
   }))
   default = []
+}
+
+variable "db_username" {
+  description = "The database username"
+  type        = string
+  default     = "stackfood"
+}
+
+variable "db_password" {
+  description = "The database password (must be at least 8 characters). Only used if manage_master_user_password is false."
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "manage_master_user_password" {
+  description = "Set to true to allow RDS to manage the master user password in Secrets Manager (RECOMMENDED for production)"
+  type        = bool
+  default     = true
 }

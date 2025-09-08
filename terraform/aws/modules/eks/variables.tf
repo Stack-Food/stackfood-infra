@@ -65,16 +65,16 @@ variable "kms_key_arn" {
 variable "node_groups" {
   description = "Map of EKS Node Group configurations"
   type = map(object({
-    desired_size  = number
-    max_size      = number
-    min_size      = number
-    ami_type      = string
-    capacity_type = string
-    instance_types = list(string)
-    disk_size     = number
-    ssh_key       = optional(string, null)
+    desired_size              = number
+    max_size                  = number
+    min_size                  = number
+    ami_type                  = string
+    capacity_type             = string
+    instance_types            = list(string)
+    disk_size                 = number
+    ssh_key                   = optional(string, null)
     source_security_group_ids = optional(list(string), [])
-    labels        = optional(map(string), {})
+    labels                    = optional(map(string), {})
     taints = optional(list(object({
       key    = string
       value  = string
@@ -87,13 +87,13 @@ variable "node_groups" {
   }))
   default = {
     "default" = {
-      desired_size  = 2
-      max_size      = 4
-      min_size      = 1
-      ami_type      = "AL2_x86_64"
-      capacity_type = "ON_DEMAND"
+      desired_size   = 2
+      max_size       = 4
+      min_size       = 1
+      ami_type       = "AL2_x86_64"
+      capacity_type  = "ON_DEMAND"
       instance_types = ["t3.medium"]
-      disk_size     = 20
+      disk_size      = 20
     }
   }
 }
@@ -107,13 +107,11 @@ variable "vpc_id" {
 variable "cluster_role_name" {
   description = "Name of the IAM role to use for the EKS cluster (e.g., 'LabEksClusterRole')"
   type        = string
-  default     = "LabEksClusterRole"
 }
 
 variable "node_role_name" {
   description = "Name of the IAM role to use for the EKS node groups (e.g., 'LabEksNodeRole')"
   type        = string
-  default     = "LabEksNodeRole"
 }
 
 # Variables for CloudWatch Logs
