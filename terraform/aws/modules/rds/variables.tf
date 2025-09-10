@@ -175,7 +175,7 @@ variable "create_db_parameter_group" {
 variable "family" {
   description = "The family of the DB parameter group"
   type        = string
-  default     = "postgres14"
+  default     = "postgres16"
 }
 
 variable "parameters" {

@@ -173,10 +173,12 @@ variable "lambda_functions" {
   type = list(object({
     name                  = string
     description           = string
-    runtime               = string
-    handler               = string
-    filename              = string
-    source_code_hash      = string
+    package_type          = optional(string, "Zip")
+    runtime               = optional(string)
+    handler               = optional(string)
+    filename              = optional(string)
+    source_code_hash      = optional(string)
+    image_uri             = optional(string)
     memory_size           = number
     timeout               = number
     vpc_access            = bool
@@ -353,6 +355,7 @@ variable "cognito_user_pools" {
     alias_attributes         = optional(list(string), ["email"])
     auto_verified_attributes = optional(list(string), ["email"])
     username_attributes      = optional(list(string), ["email"])
+    attributes_require_verification_before_update = optional(list(string), null)
 
     # Password Policy
     password_minimum_length          = optional(number, 8)

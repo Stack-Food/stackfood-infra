@@ -105,10 +105,12 @@ module "api_lambda" {
   tags          = var.tags
 
   # Code and Runtime
+  package_type     = local.lambda_functions_with_cognito_refs[count.index].package_type
   runtime          = local.lambda_functions_with_cognito_refs[count.index].runtime
   handler          = local.lambda_functions_with_cognito_refs[count.index].handler
   filename         = local.lambda_functions_with_cognito_refs[count.index].filename
   source_code_hash = local.lambda_functions_with_cognito_refs[count.index].source_code_hash
+  image_uri        = local.lambda_functions_with_cognito_refs[count.index].image_uri
 
   # Network Settings (VPC)
   vpc_id     = local.lambda_functions_with_cognito_refs[count.index].vpc_access ? module.vpc.vpc_id : null
@@ -138,10 +140,8 @@ module "api_gateway" {
   tags        = var.tags
 
   # Stage Configuration
-  stage_name        = each.value.stage_name
-  endpoint_type     = each.value.endpoint_type
-  create_stage      = true
-  stage_description = "API Gateway stage for ${each.value.name}"
+  stage_name   = each.value.stage_name
+  endpoint_type = each.value.endpoint_type
 
   # CORS Configuration
   enable_cors            = each.value.enable_cors
@@ -174,6 +174,9 @@ module "api_gateway" {
 
   # Lambda Permissions
   lambda_permissions = each.value.lambda_permissions
+
+  # Dependencies - Garantir que Lambda functions sejam criadas primeiro
+  depends_on = [module.api_lambda]
 }
 
 # Cognito Module
@@ -190,6 +193,7 @@ module "cognito" {
   alias_attributes         = each.value.alias_attributes
   auto_verified_attributes = each.value.auto_verified_attributes
   username_attributes      = each.value.username_attributes
+  attributes_require_verification_before_update = each.value.attributes_require_verification_before_update
 
   # Password Policy
   password_minimum_length          = each.value.password_minimum_length

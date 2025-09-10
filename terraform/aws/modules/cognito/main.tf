@@ -177,6 +177,12 @@ resource "aws_cognito_user_pool" "this" {
     },
     var.tags
   )
+
+  lifecycle {
+    create_before_destroy = true
+    # Note: Cognito User Pool schema cannot be modified once created
+    # If schema changes are needed, the User Pool will need to be recreated
+  }
 }
 
 # Cognito User Pool Domain

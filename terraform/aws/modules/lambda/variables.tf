@@ -7,16 +7,6 @@ variable "function_name" {
   type        = string
 }
 
-variable "handler" {
-  description = "Handler function entrypoint"
-  type        = string
-}
-
-variable "runtime" {
-  description = "Runtime environment for the Lambda function"
-  type        = string
-}
-
 variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
   type        = string
@@ -38,7 +28,32 @@ variable "description" {
   default     = ""
 }
 
-# Source code options - either use filename OR s3_* variables
+# Package Type
+variable "package_type" {
+  description = "Lambda deployment package type (Zip or Image)"
+  type        = string
+  default     = "Zip"
+
+  validation {
+    condition     = contains(["Zip", "Image"], var.package_type)
+    error_message = "Package type must be either 'Zip' or 'Image'."
+  }
+}
+
+# For ZIP packages
+variable "handler" {
+  description = "Handler function entrypoint (required for Zip packages)"
+  type        = string
+  default     = null
+}
+
+variable "runtime" {
+  description = "Runtime environment for the Lambda function (required for Zip packages)"
+  type        = string
+  default     = null
+}
+
+# Source code options - either use filename OR s3_* variables OR image_uri
 variable "filename" {
   description = "Path to the function's deployment package within the local filesystem"
   type        = string
@@ -47,6 +62,13 @@ variable "filename" {
 
 variable "source_code_hash" {
   description = "Used to trigger updates when file contents change"
+  type        = string
+  default     = null
+}
+
+# For Container images
+variable "image_uri" {
+  description = "URI of the container image in Amazon ECR"
   type        = string
   default     = null
 }

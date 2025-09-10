@@ -47,20 +47,27 @@ resource "aws_security_group" "lambda" {
 
 # Lambda Function
 resource "aws_lambda_function" "this" {
-  function_name     = var.function_name
-  description       = var.description
-  role              = data.aws_iam_role.lambda_role.arn
-  handler           = var.handler
-  runtime           = var.runtime
-  filename          = var.filename
-  source_code_hash  = var.source_code_hash
-  s3_bucket         = var.s3_bucket
-  s3_key            = var.s3_key
-  s3_object_version = var.s3_object_version
-  memory_size       = var.memory_size
-  timeout           = var.timeout
-  publish           = var.publish
-  kms_key_arn       = var.kms_key_arn
+  function_name = var.function_name
+  description   = var.description
+  role          = data.aws_iam_role.lambda_role.arn
+  package_type  = var.package_type
+
+  # For ZIP packages
+  handler           = var.package_type == "Zip" ? var.handler : null
+  runtime           = var.package_type == "Zip" ? var.runtime : null
+  filename          = var.package_type == "Zip" ? var.filename : null
+  source_code_hash  = var.package_type == "Zip" ? var.source_code_hash : null
+  s3_bucket         = var.package_type == "Zip" ? var.s3_bucket : null
+  s3_key            = var.package_type == "Zip" ? var.s3_key : null
+  s3_object_version = var.package_type == "Zip" ? var.s3_object_version : null
+
+  # For Container images
+  image_uri = var.package_type == "Image" ? var.image_uri : null
+
+  memory_size = var.memory_size
+  timeout     = var.timeout
+  publish     = var.publish
+  kms_key_arn = var.kms_key_arn
 
   # Environment variables
   dynamic "environment" {

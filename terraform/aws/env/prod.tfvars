@@ -116,15 +116,13 @@ rds_role_name         = "LabRole"
 ######################
 lambda_functions = [
   {
-    name             = "stackfood-auth-validator"
-    description      = "Lambda for CPF authentication and JWT validation"
-    runtime          = "nodejs18.x"
-    handler          = "index.handler"
-    filename         = "../lambda-mocks/auth-validator.zip"
-    source_code_hash = ""
-    memory_size      = 256
-    timeout          = 30
-    vpc_access       = false # Auth não precisa de VPC
+    name         = "stackfood-auth-validator"
+    description  = "Lambda for CPF authentication and JWT validation"
+    package_type = "Image"
+    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
+    memory_size  = 256
+    timeout      = 30
+    vpc_access   = false # Auth não precisa de VPC
     environment_variables = {
       USER_POOL_ID = "" # Será populado via reference no Terraform
       CLIENT_ID    = "" # Será populado via reference no Terraform
@@ -134,15 +132,13 @@ lambda_functions = [
     }
   },
   {
-    name             = "stackfood-user-creator"
-    description      = "Lambda for creating users in Cognito and application database"
-    runtime          = "nodejs18.x"
-    handler          = "index.handler"
-    filename         = "../lambda-mocks/user-creator.zip"
-    source_code_hash = ""
-    memory_size      = 256
-    timeout          = 30
-    vpc_access       = false # User creation não precisa de VPC inicialmente
+    name         = "stackfood-user-creator"
+    description  = "Lambda for creating users in Cognito and application database"
+    package_type = "Image"
+    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
+    memory_size  = 256
+    timeout      = 30
+    vpc_access   = false # User creation não precisa de VPC inicialmente
     environment_variables = {
       USER_POOL_ID = "" # Será populado via reference no Terraform
       CLIENT_ID    = "" # Será populado via reference no Terraform
@@ -152,15 +148,13 @@ lambda_functions = [
     }
   },
   {
-    name             = "stackfood-prod-api"
-    description      = "API for StackFood production application"
-    runtime          = "nodejs18.x"
-    handler          = "index.handler"
-    filename         = "../lambdas/api.zip" # This should point to your lambda code
-    source_code_hash = ""                   # Will be computed from the file
-    memory_size      = 512
-    timeout          = 30
-    vpc_access       = true
+    name         = "stackfood-prod-api"
+    description  = "API for StackFood production application"
+    package_type = "Image"
+    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
+    memory_size  = 512
+    timeout      = 30
+    vpc_access   = true
     environment_variables = {
       DB_HOST   = "stackfood-prod-postgres.internal"
       DB_PORT   = "5432"
@@ -170,15 +164,13 @@ lambda_functions = [
     }
   },
   {
-    name             = "stackfood-prod-worker"
-    description      = "Worker for StackFood production application"
-    runtime          = "nodejs18.x"
-    handler          = "worker.handler"
-    filename         = "../lambdas/worker.zip" # This should point to your lambda code
-    source_code_hash = ""                      # Will be computed from the file
-    memory_size      = 1024
-    timeout          = 60
-    vpc_access       = true
+    name         = "stackfood-prod-worker"
+    description  = "Worker for StackFood production application"
+    package_type = "Image"
+    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
+    memory_size  = 1024
+    timeout      = 60
+    vpc_access   = true
     environment_variables = {
       DB_HOST            = "stackfood-prod-postgres.internal"
       DB_PORT            = "5432"
@@ -212,7 +204,7 @@ api_gateways = {
     # Sem throttling para POC
     cache_cluster_enabled = false
 
-    # API Resources Structure - Incluindo rotas de auth
+    # API Resources Structure - Reorganizada para evitar conflitos
     resources = {
       # Auth resources (para lambdas de autenticação)
       "auth" = {
@@ -227,45 +219,51 @@ api_gateways = {
         parent_id = null # Will be set to auth resource ID
       }
 
-      # API resources (para aplicação no EKS e lambda de criação de usuário)
+      # API resources - estrutura reorganizada
       "api" = {
         path_part = "api"
       }
-      "customers" = {
+
+      # Customers - com estrutura própria
+      "api-customers" = {
         path_part = "customers"
         parent_id = null # Will be set to api resource ID
       }
-      "customers-cpf" = {
+      "api-customers-cpf" = {
         path_part = "{cpf}"
-        parent_id = null # Will be set to customers resource ID
+        parent_id = null # Will be set to api-customers resource ID
       }
-      "order" = {
-        path_part = "order"
+
+      # Orders - com estrutura própria
+      "api-orders" = {
+        path_part = "orders"
         parent_id = null # Will be set to api resource ID
       }
-      "order-id" = {
-        path_part = "{id}"
-        parent_id = null # Will be set to order resource ID
+      "api-orders-id" = {
+        path_part = "{orderId}"
+        parent_id = null # Will be set to api-orders resource ID
       }
-      "order-payment" = {
+      "api-orders-id-payment" = {
         path_part = "payment"
-        parent_id = null # Will be set to order-id resource ID
+        parent_id = null # Will be set to api-orders-id resource ID
       }
-      "order-change-status" = {
+      "api-orders-id-status" = {
         path_part = "change-status"
-        parent_id = null # Will be set to order-id resource ID
+        parent_id = null # Will be set to api-orders-id resource ID
       }
-      "product" = {
-        path_part = "product"
+
+      # Products - com estrutura própria
+      "api-products" = {
+        path_part = "products"
         parent_id = null # Will be set to api resource ID
       }
-      "product-all" = {
+      "api-products-all" = {
         path_part = "all"
-        parent_id = null # Will be set to product resource ID
+        parent_id = null # Will be set to api-products resource ID
       }
-      "product-id" = {
-        path_part = "{id}"
-        parent_id = null # Will be set to product resource ID
+      "api-products-id" = {
+        path_part = "{productId}"
+        parent_id = null # Will be set to api-products resource ID
       }
     }
 
@@ -285,12 +283,12 @@ api_gateways = {
 
       # Customers endpoints
       "customers-post" = {
-        resource_key  = "customers"
+        resource_key  = "api-customers"
         http_method   = "POST"
         authorization = "NONE" # Lambda de criação de usuário
       }
       "customers-get-cpf" = {
-        resource_key  = "customers-cpf"
+        resource_key  = "api-customers-cpf"
         http_method   = "GET"
         authorization = "NONE" # EKS backend (protegido via JWT na aplicação)
         request_parameters = {
@@ -299,70 +297,70 @@ api_gateways = {
       }
 
       # Order endpoints
-      "order-get" = {
-        resource_key  = "order"
+      "orders-get" = {
+        resource_key  = "api-orders"
         http_method   = "GET"
         authorization = "NONE"
       }
-      "order-post" = {
-        resource_key  = "order"
+      "orders-post" = {
+        resource_key  = "api-orders"
         http_method   = "POST"
         authorization = "NONE"
       }
-      "order-get-id" = {
-        resource_key  = "order-id"
+      "orders-get-id" = {
+        resource_key  = "api-orders-id"
         http_method   = "GET"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.id" = true
+          "method.request.path.orderId" = true
         }
       }
-      "order-payment-put" = {
-        resource_key  = "order-payment"
+      "orders-payment-put" = {
+        resource_key  = "api-orders-id-payment"
         http_method   = "PUT"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.id" = true
+          "method.request.path.orderId" = true
         }
       }
-      "order-change-status-put" = {
-        resource_key  = "order-change-status"
+      "orders-status-put" = {
+        resource_key  = "api-orders-id-status"
         http_method   = "PUT"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.id" = true
+          "method.request.path.orderId" = true
         }
       }
 
       # Product endpoints
-      "product-all-get" = {
-        resource_key  = "product-all"
+      "products-all-get" = {
+        resource_key  = "api-products-all"
         http_method   = "GET"
         authorization = "NONE"
       }
-      "product-get-id" = {
-        resource_key  = "product-id"
+      "products-get-id" = {
+        resource_key  = "api-products-id"
         http_method   = "GET"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.id" = true
+          "method.request.path.productId" = true
         }
       }
-      "product-delete-id" = {
-        resource_key  = "product-id"
+      "products-delete-id" = {
+        resource_key  = "api-products-id"
         http_method   = "DELETE"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.id" = true
+          "method.request.path.productId" = true
         }
       }
-      "product-post" = {
-        resource_key  = "product"
+      "products-post" = {
+        resource_key  = "api-products"
         http_method   = "POST"
         authorization = "NONE"
       }
-      "product-put" = {
-        resource_key  = "product"
+      "products-put" = {
+        resource_key  = "api-products"
         http_method   = "PUT"
         authorization = "NONE"
       }
@@ -391,7 +389,7 @@ api_gateways = {
       # Customer creation integration (Lambda para criação de usuário)
       "customers-post-integration" = {
         method_key              = "customers-post"
-        resource_key            = "customers"
+        resource_key            = "api-customers"
         integration_http_method = "POST"
         type                    = "AWS_PROXY"
         uri                     = "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:ACCOUNT_ID:function:stackfood-user-creator/invocations"
@@ -401,7 +399,7 @@ api_gateways = {
       # API integrations (EKS via HTTP proxy - será configurado após deploy do EKS)
       "customers-get-cpf-integration" = {
         method_key              = "customers-get-cpf"
-        resource_key            = "customers-cpf"
+        resource_key            = "api-customers-cpf"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
         uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/customers/{cpf}"
@@ -412,101 +410,101 @@ api_gateways = {
       }
 
       # Order integrations (EKS backend)
-      "order-get-integration" = {
-        method_key              = "order-get"
-        resource_key            = "order"
+      "orders-get-integration" = {
+        method_key              = "orders-get"
+        resource_key            = "api-orders"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/order"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
-      "order-post-integration" = {
-        method_key              = "order-post"
-        resource_key            = "order"
+      "orders-post-integration" = {
+        method_key              = "orders-post"
+        resource_key            = "api-orders"
         integration_http_method = "POST"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/order"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
-      "order-get-id-integration" = {
-        method_key              = "order-get-id"
-        resource_key            = "order-id"
+      "orders-get-id-integration" = {
+        method_key              = "orders-get-id"
+        resource_key            = "api-orders-id"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/order/{id}"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders/{orderId}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.id" = "method.request.path.id"
+          "integration.request.path.orderId" = "method.request.path.orderId"
         }
       }
-      "order-payment-put-integration" = {
-        method_key              = "order-payment-put"
-        resource_key            = "order-payment"
+      "orders-payment-put-integration" = {
+        method_key              = "orders-payment-put"
+        resource_key            = "api-orders-id-payment"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/order/{id}/payment"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders/{orderId}/payment"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.id" = "method.request.path.id"
+          "integration.request.path.orderId" = "method.request.path.orderId"
         }
       }
-      "order-change-status-put-integration" = {
-        method_key              = "order-change-status-put"
-        resource_key            = "order-change-status"
+      "orders-status-put-integration" = {
+        method_key              = "orders-status-put"
+        resource_key            = "api-orders-id-status"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/order/{id}/change-status"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders/{orderId}/change-status"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.id" = "method.request.path.id"
+          "integration.request.path.orderId" = "method.request.path.orderId"
         }
       }
 
       # Product integrations (EKS backend)
-      "product-all-get-integration" = {
-        method_key              = "product-all-get"
-        resource_key            = "product-all"
+      "products-all-get-integration" = {
+        method_key              = "products-all-get"
+        resource_key            = "api-products-all"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/product/all"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products/all"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
-      "product-get-id-integration" = {
-        method_key              = "product-get-id"
-        resource_key            = "product-id"
+      "products-get-id-integration" = {
+        method_key              = "products-get-id"
+        resource_key            = "api-products-id"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/product/{id}"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products/{productId}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.id" = "method.request.path.id"
+          "integration.request.path.productId" = "method.request.path.productId"
         }
       }
-      "product-delete-id-integration" = {
-        method_key              = "product-delete-id"
-        resource_key            = "product-id"
+      "products-delete-id-integration" = {
+        method_key              = "products-delete-id"
+        resource_key            = "api-products-id"
         integration_http_method = "DELETE"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/product/{id}"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products/{productId}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.id" = "method.request.path.id"
+          "integration.request.path.productId" = "method.request.path.productId"
         }
       }
-      "product-post-integration" = {
-        method_key              = "product-post"
-        resource_key            = "product"
+      "products-post-integration" = {
+        method_key              = "products-post"
+        resource_key            = "api-products"
         integration_http_method = "POST"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/product"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
-      "product-put-integration" = {
-        method_key              = "product-put"
-        resource_key            = "product"
+      "products-put-integration" = {
+        method_key              = "products-put"
+        resource_key            = "api-products"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/product"
+        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
     }
@@ -534,23 +532,55 @@ api_gateways = {
       # API responses
       "customers-post-200" = {
         method_key   = "customers-post"
-        resource_key = "customers"
+        resource_key = "api-customers"
         status_code  = "200"
         response_parameters = {
           "method.response.header.Access-Control-Allow-Origin" = true
         }
       }
-      "order-get-200" = {
-        method_key   = "order-get"
-        resource_key = "order"
+      "customers-get-cpf-200" = {
+        method_key   = "customers-get-cpf"
+        resource_key = "api-customers-cpf"
         status_code  = "200"
         response_parameters = {
           "method.response.header.Access-Control-Allow-Origin" = true
         }
       }
-      "product-all-get-200" = {
-        method_key   = "product-all-get"
-        resource_key = "product-all"
+      "orders-get-200" = {
+        method_key   = "orders-get"
+        resource_key = "api-orders"
+        status_code  = "200"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = true
+        }
+      }
+      "orders-post-200" = {
+        method_key   = "orders-post"
+        resource_key = "api-orders"
+        status_code  = "200"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = true
+        }
+      }
+      "orders-get-id-200" = {
+        method_key   = "orders-get-id"
+        resource_key = "api-orders-id"
+        status_code  = "200"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = true
+        }
+      }
+      "products-all-get-200" = {
+        method_key   = "products-all-get"
+        resource_key = "api-products-all"
+        status_code  = "200"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = true
+        }
+      }
+      "products-get-id-200" = {
+        method_key   = "products-get-id"
+        resource_key = "api-products-id"
         status_code  = "200"
         response_parameters = {
           "method.response.header.Access-Control-Allow-Origin" = true
@@ -582,23 +612,55 @@ api_gateways = {
       "customers-post-200-response" = {
         method_key          = "customers-post"
         method_response_key = "customers-post-200"
-        resource_key        = "customers"
+        resource_key        = "api-customers"
         response_parameters = {
           "method.response.header.Access-Control-Allow-Origin" = "'*'"
         }
       }
-      "order-get-200-response" = {
-        method_key          = "order-get"
-        method_response_key = "order-get-200"
-        resource_key        = "order"
+      "customers-get-cpf-200-response" = {
+        method_key          = "customers-get-cpf"
+        method_response_key = "customers-get-cpf-200"
+        resource_key        = "api-customers-cpf"
         response_parameters = {
           "method.response.header.Access-Control-Allow-Origin" = "'*'"
         }
       }
-      "product-all-get-200-response" = {
-        method_key          = "product-all-get"
-        method_response_key = "product-all-get-200"
-        resource_key        = "product-all"
+      "orders-get-200-response" = {
+        method_key          = "orders-get"
+        method_response_key = "orders-get-200"
+        resource_key        = "api-orders"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = "'*'"
+        }
+      }
+      "orders-post-200-response" = {
+        method_key          = "orders-post"
+        method_response_key = "orders-post-200"
+        resource_key        = "api-orders"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = "'*'"
+        }
+      }
+      "orders-get-id-200-response" = {
+        method_key          = "orders-get-id"
+        method_response_key = "orders-get-id-200"
+        resource_key        = "api-orders-id"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = "'*'"
+        }
+      }
+      "products-all-get-200-response" = {
+        method_key          = "products-all-get"
+        method_response_key = "products-all-get-200"
+        resource_key        = "api-products-all"
+        response_parameters = {
+          "method.response.header.Access-Control-Allow-Origin" = "'*'"
+        }
+      }
+      "products-get-id-200-response" = {
+        method_key          = "products-get-id"
+        method_response_key = "products-get-id-200"
+        resource_key        = "api-products-id"
         response_parameters = {
           "method.response.header.Access-Control-Allow-Origin" = "'*'"
         }
@@ -615,16 +677,9 @@ api_gateways = {
     usage_plan_keys = {}
 
     # Lambda Permissions para as funções de auth e user creation
-    lambda_permissions = {
-      "stackfood-auth-validator-permission" = {
-        statement_id  = "AllowExecutionFromAPIGateway"
-        function_name = "stackfood-auth-validator"
-      }
-      "stackfood-user-creator-permission" = {
-        statement_id  = "AllowExecutionFromAPIGateway"
-        function_name = "stackfood-user-creator"
-      }
-    }
+    # Removidas temporariamente para evitar dependência circular
+    # As permissões serão adicionadas manualmente após deploy das Lambda functions
+    lambda_permissions = {}
   }
 }
 
@@ -633,9 +688,10 @@ api_gateways = {
 ##########################
 cognito_user_pools = {
   "stackfood-users" = {
-    name                     = "stackfood-prod-users"
-    alias_attributes         = ["preferred_username"] # CPF será usado via preferred_username
-    auto_verified_attributes = []                     # Sem verificação automática (apenas CPF)
+    name                                          = "stackfood-prod-users"
+    alias_attributes                              = ["preferred_username"] # CPF será usado via preferred_username
+    auto_verified_attributes                      = []                     # Sem verificação automática (apenas CPF)
+    attributes_require_verification_before_update = []                     # Nenhum atributo requer verificação antes de atualizar
     # Para autenticação por CPF customizada, usar alias_attributes em vez de username_attributes
 
     # Password Policy - Desabilitada para autenticação sem senha
@@ -693,8 +749,8 @@ cognito_user_pools = {
         prevent_user_existence_errors = "ENABLED"
         enable_token_revocation       = true
 
-        read_attributes  = ["preferred_username", "name", "family_name", "custom:cpf"]
-        write_attributes = ["name", "family_name", "custom:cpf"]
+        read_attributes  = []
+        write_attributes = []
       }
 
       "api-backend" = {
@@ -718,8 +774,8 @@ cognito_user_pools = {
         prevent_user_existence_errors = "ENABLED"
         enable_token_revocation       = true
 
-        read_attributes  = ["preferred_username", "name", "family_name", "custom:cpf", "custom:customer_type"]
-        write_attributes = ["name", "family_name", "custom:cpf", "custom:customer_type"]
+        read_attributes  = []
+        write_attributes = []
       }
     }
 
@@ -731,77 +787,14 @@ cognito_user_pools = {
     # Custom Attributes para StackFood - Foco em CPF
     schemas = [
       {
-        attribute_data_type = "String"
-        name                = "preferred_username" # CPF será armazenado aqui
-        required            = true
-        mutable             = false # CPF não pode ser alterado
-        string_attribute_constraints = {
-          min_length = "11"
-          max_length = "14" # Para CPF com formatação
-        }
-      },
-      {
-        attribute_data_type = "String"
-        name                = "name"
-        required            = true
-        mutable             = true
-        string_attribute_constraints = {
-          min_length = "1"
-          max_length = "256"
-        }
-      },
-      {
-        attribute_data_type = "String"
-        name                = "family_name"
-        required            = false
-        mutable             = true
-        string_attribute_constraints = {
-          min_length = "1"
-          max_length = "256"
-        }
-      },
-      {
         attribute_data_type      = "String"
         name                     = "custom:cpf"
-        required                 = true
+        required                 = false # Custom attributes não podem ser required
         mutable                  = false # CPF não pode ser alterado
         developer_only_attribute = false
         string_attribute_constraints = {
           min_length = "11"
           max_length = "14"
-        }
-      },
-      {
-        attribute_data_type      = "String"
-        name                     = "custom:customer_type"
-        required                 = false
-        mutable                  = true
-        developer_only_attribute = false
-        string_attribute_constraints = {
-          min_length = "1"
-          max_length = "50"
-        }
-      },
-      {
-        attribute_data_type      = "String"
-        name                     = "custom:customer_id"
-        required                 = false
-        mutable                  = false # ID único não pode ser alterado
-        developer_only_attribute = false
-        string_attribute_constraints = {
-          min_length = "1"
-          max_length = "100"
-        }
-      },
-      {
-        attribute_data_type      = "String"
-        name                     = "custom:preferences"
-        required                 = false
-        mutable                  = true
-        developer_only_attribute = false
-        string_attribute_constraints = {
-          min_length = "1"
-          max_length = "2048"
         }
       }
     ]
