@@ -34,14 +34,24 @@ module "eks" {
   tags         = var.tags
 
   # Network Settings
-  subnet_ids      = module.vpc.private_subnet_ids
-  node_subnet_ids = module.vpc.private_subnet_ids
-  vpc_id          = module.vpc.vpc_id
+  subnet_ids        = module.vpc.private_subnet_ids
+  node_subnet_ids   = module.vpc.private_subnet_ids
+  public_subnet_ids = module.vpc.public_subnet_ids
+  vpc_id            = module.vpc.vpc_id
+  vpc_cidr          = module.vpc.vpc_cidr_block
 
   # Cluster Settings
   kubernetes_version      = var.kubernetes_version
   endpoint_private_access = true
   endpoint_public_access  = var.eks_endpoint_public_access
+
+  # Load Balancer Settings
+  create_internal_alb = var.eks_create_internal_alb
+  create_public_nlb   = var.eks_create_public_nlb
+
+  # Remote Management Settings
+  enable_remote_management = var.eks_enable_remote_management
+  management_cidr_blocks   = var.eks_management_cidr_blocks
 
   # Node Group Settings
   node_groups = var.eks_node_groups
@@ -94,53 +104,59 @@ module "rds" {
 }
 
 # Lambda Functions
-module "api_lambda" {
-  count  = length(local.lambda_functions_with_cognito_refs)
-  source = "../modules/lambda/"
+module "lambda" {
+  for_each = var.lambda_functions
+  source   = "../modules/lambda/"
+  #depends_on = [module.cognito]
 
   # General Settings
-  function_name = local.lambda_functions_with_cognito_refs[count.index].name
-  description   = local.lambda_functions_with_cognito_refs[count.index].description
+  function_name = each.key
+  description   = each.value.description
   environment   = var.environment
   tags          = var.tags
 
-  # Code and Runtime
-  package_type     = local.lambda_functions_with_cognito_refs[count.index].package_type
-  runtime          = local.lambda_functions_with_cognito_refs[count.index].runtime
-  handler          = local.lambda_functions_with_cognito_refs[count.index].handler
-  filename         = local.lambda_functions_with_cognito_refs[count.index].filename
-  source_code_hash = local.lambda_functions_with_cognito_refs[count.index].source_code_hash
-  image_uri        = local.lambda_functions_with_cognito_refs[count.index].image_uri
+  # Code and Runtime - condicionalmente baseado no package_type
+  package_type     = each.value.package_type
+  runtime          = try(each.value.runtime, ".NET 8")
+  handler          = try(each.value.handler, null)
+  filename         = try(each.value.filename, null)
+  source_code_hash = try(each.value.source_code_hash, null)
+  image_uri        = each.value.image_uri
 
   # Network Settings (VPC)
-  vpc_id     = local.lambda_functions_with_cognito_refs[count.index].vpc_access ? module.vpc.vpc_id : null
-  subnet_ids = local.lambda_functions_with_cognito_refs[count.index].vpc_access ? module.vpc.private_subnet_ids : []
+  vpc_id     = each.value.vpc_access ? module.vpc.vpc_id : null
+  subnet_ids = each.value.vpc_access ? module.vpc.private_subnet_ids : []
 
   # Function Configuration
-  memory_size           = local.lambda_functions_with_cognito_refs[count.index].memory_size
-  timeout               = local.lambda_functions_with_cognito_refs[count.index].timeout
-  environment_variables = local.lambda_functions_with_cognito_refs[count.index].environment_variables
+  memory_size           = each.value.memory_size
+  timeout               = each.value.timeout
+  environment_variables = each.value.environment_variables
 
   # IAM Role Settings
   lambda_role_name = var.lambda_role_name
-
-  # Dependencies para garantir que Cognito seja criado primeiro
-  depends_on = [module.cognito]
 }
 
 # API Gateway
 module "api_gateway" {
   for_each = var.api_gateways
   source   = "../modules/api-gateway/"
+  # Dependencies - Garantir que Lambda functions sejam criadas primeiro
+  depends_on = [module.lambda, module.eks]
 
   # General Settings
-  api_name    = each.value.name
+  api_name    = each.key
   description = each.value.description
   environment = var.environment
   tags        = var.tags
 
+  # Simplified variables for single Lambda and EKS cluster
+  aws_region           = var.aws_region
+  lambda_function_name = "stackfood-auth" # Single Lambda function name
+  eks_cluster_name     = var.eks_cluster_name
+  vpc_id               = module.vpc.vpc_id
+
   # Stage Configuration
-  stage_name   = each.value.stage_name
+  stage_name    = each.value.stage_name
   endpoint_type = each.value.endpoint_type
 
   # CORS Configuration
@@ -174,62 +190,59 @@ module "api_gateway" {
 
   # Lambda Permissions
   lambda_permissions = each.value.lambda_permissions
-
-  # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  depends_on = [module.api_lambda]
 }
 
 # Cognito Module
-module "cognito" {
-  for_each = var.cognito_user_pools
-  source   = "../modules/cognito/"
+# module "cognito" {
+#   for_each = var.cognito_user_pools
+#   source   = "../modules/cognito/"
 
-  # General Settings
-  user_pool_name = each.value.name
-  environment    = var.environment
-  tags           = var.tags
+#   # General Settings
+#   user_pool_name = each.value.name
+#   environment    = var.environment
+#   tags           = var.tags
 
-  # User Pool Configuration
-  alias_attributes         = each.value.alias_attributes
-  auto_verified_attributes = each.value.auto_verified_attributes
-  username_attributes      = each.value.username_attributes
-  attributes_require_verification_before_update = each.value.attributes_require_verification_before_update
+#   # User Pool Configuration
+#   alias_attributes                              = each.value.alias_attributes
+#   auto_verified_attributes                      = each.value.auto_verified_attributes
+#   username_attributes                           = each.value.username_attributes
+#   attributes_require_verification_before_update = each.value.attributes_require_verification_before_update
 
-  # Password Policy
-  password_minimum_length          = each.value.password_minimum_length
-  password_require_lowercase       = each.value.password_require_lowercase
-  password_require_numbers         = each.value.password_require_numbers
-  password_require_symbols         = each.value.password_require_symbols
-  password_require_uppercase       = each.value.password_require_uppercase
-  temporary_password_validity_days = each.value.temporary_password_validity_days
+#   # Password Policy
+#   password_minimum_length          = each.value.password_minimum_length
+#   password_require_lowercase       = each.value.password_require_lowercase
+#   password_require_numbers         = each.value.password_require_numbers
+#   password_require_symbols         = each.value.password_require_symbols
+#   password_require_uppercase       = each.value.password_require_uppercase
+#   temporary_password_validity_days = each.value.temporary_password_validity_days
 
-  # Security Settings
-  advanced_security_mode       = each.value.advanced_security_mode
-  allow_admin_create_user_only = each.value.allow_admin_create_user_only
+#   # Security Settings
+#   advanced_security_mode       = each.value.advanced_security_mode
+#   allow_admin_create_user_only = each.value.allow_admin_create_user_only
 
-  # Communication Settings
-  email_configuration = each.value.email_configuration
-  sms_configuration   = each.value.sms_configuration
+#   # Communication Settings
+#   email_configuration = each.value.email_configuration
+#   sms_configuration   = each.value.sms_configuration
 
-  # Lambda Triggers
-  lambda_config = each.value.lambda_config
+#   # Lambda Triggers
+#   lambda_config = each.value.lambda_config
 
-  # Domain Configuration
-  domain          = each.value.domain
-  certificate_arn = each.value.certificate_arn
+#   # Domain Configuration
+#   domain          = each.value.domain
+#   certificate_arn = each.value.certificate_arn
 
-  # Client Applications
-  clients = each.value.clients
+#   # Client Applications
+#   clients = each.value.clients
 
-  # Identity Pool Configuration
-  create_identity_pool             = each.value.create_identity_pool
-  allow_unauthenticated_identities = each.value.allow_unauthenticated_identities
-  default_client_key               = each.value.default_client_key
-  supported_login_providers        = each.value.supported_login_providers
+#   # Identity Pool Configuration
+#   create_identity_pool             = each.value.create_identity_pool
+#   allow_unauthenticated_identities = each.value.allow_unauthenticated_identities
+#   default_client_key               = each.value.default_client_key
+#   supported_login_providers        = each.value.supported_login_providers
 
-  # Custom Attributes Schema
-  schemas = each.value.schemas
+#   # Custom Attributes Schema
+#   schemas = each.value.schemas
 
-  # Logging
-  log_retention_in_days = 7
-}
+#   # Logging
+#   log_retention_in_days = 7
+# }

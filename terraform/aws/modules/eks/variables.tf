@@ -126,3 +126,39 @@ variable "log_kms_key_id" {
   type        = string
   default     = null
 }
+
+# Load Balancer Configuration
+variable "vpc_cidr" {
+  description = "CIDR block of the VPC"
+  type        = string
+}
+
+variable "create_public_nlb" {
+  description = "Whether to create a public NLB for external access"
+  type        = bool
+  default     = false
+}
+
+variable "enable_remote_management" {
+  description = "Whether to enable remote management access to the cluster"
+  type        = bool
+  default     = false
+}
+
+variable "management_cidr_blocks" {
+  description = "List of CIDR blocks allowed for remote management access"
+  type        = list(string)
+  default     = []
+}
+
+variable "public_subnet_ids" {
+  description = "List of public subnet IDs for external load balancer"
+  type        = list(string)
+  default     = []
+}
+
+variable "create_internal_alb" {
+  description = "Whether to create an internal ALB"
+  type        = bool
+  default     = true
+}

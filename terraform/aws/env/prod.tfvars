@@ -50,6 +50,14 @@ eks_cluster_name           = "stackfood-prod-eks"
 kubernetes_version         = "1.32"
 eks_endpoint_public_access = false
 
+# Load Balancer Configuration
+eks_create_internal_alb = true # ALB interno para API Gateway e serviços internos
+eks_create_public_nlb   = true # NLB público para acesso externo (opcional)
+
+# Remote Management Configuration
+eks_enable_remote_management = true
+eks_management_cidr_blocks   = ["0.0.0.0/0"] # Ajuste para seu IP específico em produção
+
 eks_node_groups = {
   "api" = {
     desired_size   = 3
@@ -60,7 +68,10 @@ eks_node_groups = {
     instance_types = ["t3.large"]
     disk_size      = 50
     labels = {
-      "role" = "api"
+      "role"                        = "api"
+      "node-role.kubernetes.io/api" = "true"
+      "app.kubernetes.io/component" = "backend"
+      "app.kubernetes.io/part-of"   = "stackfood"
     }
   },
   "worker" = {
@@ -72,7 +83,10 @@ eks_node_groups = {
     instance_types = ["t3.large"]
     disk_size      = 100
     labels = {
-      "role" = "worker"
+      "role"                           = "worker"
+      "node-role.kubernetes.io/worker" = "true"
+      "app.kubernetes.io/component"    = "worker"
+      "app.kubernetes.io/part-of"      = "stackfood"
     }
   }
 }
@@ -114,80 +128,32 @@ rds_role_name         = "LabRole"
 ######################
 # Lambda Configuration #
 ######################
-lambda_functions = [
-  {
-    name         = "stackfood-auth-validator"
+lambda_functions = {
+  "stackfood-auth" = {
     description  = "Lambda for CPF authentication and JWT validation"
     package_type = "Image"
-    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
-    memory_size  = 256
-    timeout      = 30
-    vpc_access   = false # Auth não precisa de VPC
+    # Imagem base oficial AWS Lambda para .NET 8 - RUNTIME
+    image_uri   = "public.ecr.aws/lambda/dotnet:8.2025.09.11.17"
+    memory_size = 256
+    runtime     = null # Não usado para package_type = "Image"
+    timeout     = 30
+    vpc_access  = false
+    handler     = null # Não usado para package_type = "Image"
+    filename    = null
     environment_variables = {
-      USER_POOL_ID = "" # Será populado via reference no Terraform
-      CLIENT_ID    = "" # Será populado via reference no Terraform
-      AWS_REGION   = "us-west-2"
-      LOG_LEVEL    = "info"
-      NODE_ENV     = "production"
-    }
-  },
-  {
-    name         = "stackfood-user-creator"
-    description  = "Lambda for creating users in Cognito and application database"
-    package_type = "Image"
-    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
-    memory_size  = 256
-    timeout      = 30
-    vpc_access   = false # User creation não precisa de VPC inicialmente
-    environment_variables = {
-      USER_POOL_ID = "" # Será populado via reference no Terraform
-      CLIENT_ID    = "" # Será populado via reference no Terraform
-      AWS_REGION   = "us-west-2"
-      LOG_LEVEL    = "info"
-      NODE_ENV     = "production"
-    }
-  },
-  {
-    name         = "stackfood-prod-api"
-    description  = "API for StackFood production application"
-    package_type = "Image"
-    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
-    memory_size  = 512
-    timeout      = 30
-    vpc_access   = true
-    environment_variables = {
-      DB_HOST   = "stackfood-prod-postgres.internal"
-      DB_PORT   = "5432"
-      DB_NAME   = "stackfooddb"
-      LOG_LEVEL = "info"
-      NODE_ENV  = "production"
-    }
-  },
-  {
-    name         = "stackfood-prod-worker"
-    description  = "Worker for StackFood production application"
-    package_type = "Image"
-    image_uri    = "public.ecr.aws/lambda/nodejs:18-latest"
-    memory_size  = 1024
-    timeout      = 60
-    vpc_access   = true
-    environment_variables = {
-      DB_HOST            = "stackfood-prod-postgres.internal"
-      DB_PORT            = "5432"
-      DB_NAME            = "stackfooddb"
-      LOG_LEVEL          = "info"
-      NODE_ENV           = "production"
-      WORKER_CONCURRENCY = "10"
+      USER_POOL_ID           = ""
+      CLIENT_ID              = ""
+      LOG_LEVEL              = "info"
+      ASPNETCORE_ENVIRONMENT = "Production"
     }
   }
-]
+}
 
 ##########################
 # API Gateway Configuration #
 ##########################
 api_gateways = {
   "stackfood-api" = {
-    name                 = "stackfood-prod-api"
     description          = "StackFood Production API Gateway"
     stage_name           = "prod"
     endpoint_type        = "REGIONAL"
@@ -368,13 +334,13 @@ api_gateways = {
 
     # Integrações com roteamento inteligente: Auth → Lambda, API → EKS/Lambda
     integrations = {
-      # Auth integrations (para lambdas de autenticação)
+      # Auth integrations (Lambda)
       "auth-cpf-post-integration" = {
         method_key              = "auth-cpf-post"
         resource_key            = "auth-cpf"
         integration_http_method = "POST"
         type                    = "AWS_PROXY"
-        uri                     = "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:ACCOUNT_ID:function:stackfood-auth-validator/invocations"
+        integration_type        = "lambda"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
       "auth-validate-post-integration" = {
@@ -382,40 +348,42 @@ api_gateways = {
         resource_key            = "auth-validate"
         integration_http_method = "POST"
         type                    = "AWS_PROXY"
-        uri                     = "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:ACCOUNT_ID:function:stackfood-auth-validator/invocations"
+        integration_type        = "lambda"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
 
-      # Customer creation integration (Lambda para criação de usuário)
+      # Customer creation integration (Lambda)
       "customers-post-integration" = {
         method_key              = "customers-post"
         resource_key            = "api-customers"
         integration_http_method = "POST"
         type                    = "AWS_PROXY"
-        uri                     = "arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:ACCOUNT_ID:function:stackfood-user-creator/invocations"
+        integration_type        = "lambda"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
 
-      # API integrations (EKS via HTTP proxy - será configurado após deploy do EKS)
+      # API integrations (EKS)
       "customers-get-cpf-integration" = {
         method_key              = "customers-get-cpf"
         resource_key            = "api-customers-cpf"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/customers/{cpf}"
+        integration_type        = "eks"
+        eks_path                = "/api/customers/{cpf}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
           "integration.request.path.cpf" = "method.request.path.cpf"
         }
       }
 
-      # Order integrations (EKS backend)
+      # Order integrations (EKS)
       "orders-get-integration" = {
         method_key              = "orders-get"
         resource_key            = "api-orders"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders"
+        integration_type        = "eks"
+        eks_path                = "/api/orders"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
       "orders-post-integration" = {
@@ -423,7 +391,8 @@ api_gateways = {
         resource_key            = "api-orders"
         integration_http_method = "POST"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders"
+        integration_type        = "eks"
+        eks_path                = "/api/orders"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
       "orders-get-id-integration" = {
@@ -431,7 +400,8 @@ api_gateways = {
         resource_key            = "api-orders-id"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders/{orderId}"
+        integration_type        = "eks"
+        eks_path                = "/api/orders/{orderId}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
           "integration.request.path.orderId" = "method.request.path.orderId"
@@ -442,7 +412,8 @@ api_gateways = {
         resource_key            = "api-orders-id-payment"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders/{orderId}/payment"
+        integration_type        = "eks"
+        eks_path                = "/api/orders/{orderId}/payment"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
           "integration.request.path.orderId" = "method.request.path.orderId"
@@ -453,20 +424,22 @@ api_gateways = {
         resource_key            = "api-orders-id-status"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/orders/{orderId}/change-status"
+        integration_type        = "eks"
+        eks_path                = "/api/orders/{orderId}/change-status"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
           "integration.request.path.orderId" = "method.request.path.orderId"
         }
       }
 
-      # Product integrations (EKS backend)
+      # Product integrations (EKS)
       "products-all-get-integration" = {
         method_key              = "products-all-get"
         resource_key            = "api-products-all"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products/all"
+        integration_type        = "eks"
+        eks_path                = "/api/products/all"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
       "products-get-id-integration" = {
@@ -474,7 +447,8 @@ api_gateways = {
         resource_key            = "api-products-id"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products/{productId}"
+        integration_type        = "eks"
+        eks_path                = "/api/products/{productId}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
           "integration.request.path.productId" = "method.request.path.productId"
@@ -485,7 +459,8 @@ api_gateways = {
         resource_key            = "api-products-id"
         integration_http_method = "DELETE"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products/{productId}"
+        integration_type        = "eks"
+        eks_path                = "/api/products/{productId}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
           "integration.request.path.productId" = "method.request.path.productId"
@@ -496,7 +471,8 @@ api_gateways = {
         resource_key            = "api-products"
         integration_http_method = "POST"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products"
+        integration_type        = "eks"
+        eks_path                = "/api/products"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
       "products-put-integration" = {
@@ -504,7 +480,8 @@ api_gateways = {
         resource_key            = "api-products"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
-        uri                     = "http://stackfood-api-service.default.svc.cluster.local/api/products"
+        integration_type        = "eks"
+        eks_path                = "/api/products"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
     }

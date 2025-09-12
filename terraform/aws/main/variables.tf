@@ -99,6 +99,32 @@ variable "eks_endpoint_public_access" {
   default     = true
 }
 
+# EKS Load Balancer Configuration
+variable "eks_create_internal_alb" {
+  description = "Whether to create an internal ALB for EKS"
+  type        = bool
+  default     = true
+}
+
+variable "eks_create_public_nlb" {
+  description = "Whether to create a public NLB for EKS"
+  type        = bool
+  default     = false
+}
+
+# EKS Remote Management Configuration
+variable "eks_enable_remote_management" {
+  description = "Whether to enable remote management access to the EKS cluster"
+  type        = bool
+  default     = false
+}
+
+variable "eks_management_cidr_blocks" {
+  description = "List of CIDR blocks allowed for remote management access to EKS"
+  type        = list(string)
+  default     = []
+}
+
 variable "eks_node_groups" {
   description = "Map of EKS Node Group configurations"
   type = map(object({
@@ -169,9 +195,8 @@ variable "db_password" {
 ######################
 
 variable "lambda_functions" {
-  description = "List of Lambda functions to create"
-  type = list(object({
-    name                  = string
+  description = "Map of Lambda functions to create"
+  type = map(object({
     description           = string
     package_type          = optional(string, "Zip")
     runtime               = optional(string)
@@ -184,7 +209,7 @@ variable "lambda_functions" {
     vpc_access            = bool
     environment_variables = map(string)
   }))
-  default = []
+  default = {}
 }
 
 ######################
@@ -221,7 +246,6 @@ variable "eks_node_role_name" {
 variable "api_gateways" {
   description = "Map of API Gateways to create"
   type = map(object({
-    name                 = string
     description          = optional(string, "")
     stage_name           = string
     endpoint_type        = optional(string, "REGIONAL")
@@ -271,7 +295,6 @@ variable "api_gateways" {
       resource_id             = optional(string)
       integration_http_method = string
       type                    = string
-      uri                     = string
       connection_type         = optional(string)
       connection_id           = optional(string)
       credentials             = optional(string)
@@ -351,10 +374,10 @@ variable "api_gateways" {
 variable "cognito_user_pools" {
   description = "Map of Cognito User Pools to create"
   type = map(object({
-    name                     = string
-    alias_attributes         = optional(list(string), ["email"])
-    auto_verified_attributes = optional(list(string), ["email"])
-    username_attributes      = optional(list(string), ["email"])
+    name                                          = string
+    alias_attributes                              = optional(list(string), ["email"])
+    auto_verified_attributes                      = optional(list(string), ["email"])
+    username_attributes                           = optional(list(string), ["email"])
     attributes_require_verification_before_update = optional(list(string), null)
 
     # Password Policy

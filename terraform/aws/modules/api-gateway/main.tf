@@ -1,6 +1,24 @@
 ############################
 # API Gateway REST Module #
 ############################
+# VPC Link para conectar API Gateway com EKS (se especificado)
+resource "aws_api_gateway_vpc_link" "eks" {
+
+  name        = "${var.api_name}-eks-vpc-link"
+  description = "VPC Link for ${var.api_name} to connect to EKS cluster ${var.eks_cluster_name}"
+  target_arns = length(data.aws_lb.eks_nlb) > 0 ? [data.aws_lb.eks_nlb[0].arn] : []
+
+  tags = merge(
+    {
+      Name        = "${var.api_name}-eks-vpc-link"
+      Environment = var.environment
+      Cluster     = var.eks_cluster_name
+    },
+    var.tags
+  )
+}
+
+
 
 # CloudWatch Log Group for API Gateway
 resource "aws_cloudwatch_log_group" "api_gateway" {
@@ -79,9 +97,13 @@ resource "aws_api_gateway_method" "this" {
   request_parameters = each.value.request_parameters
 }
 
-# API Gateway Integrations (principalmente para Lambda)
-resource "aws_api_gateway_integration" "this" {
-  for_each = var.integrations
+# API Gateway Integrations (simplificadas para Lambda e EKS únicos)
+# API Gateway Integrations para EKS
+resource "aws_api_gateway_integration" "eks" {
+  for_each = {
+    for k, v in var.integrations : k => v
+    if v.integration_type == "eks"
+  }
 
   rest_api_id = aws_api_gateway_rest_api.this.id
   resource_id = each.value.resource_id != null ? each.value.resource_id : aws_api_gateway_resource.this[each.value.resource_key].id
@@ -89,11 +111,13 @@ resource "aws_api_gateway_integration" "this" {
 
   integration_http_method = each.value.integration_http_method
   type                    = each.value.type
-  uri                     = each.value.uri
+  uri                     = local.integration_uris[each.key]
+
+  # VPC Link configuration para integrações EKS
+  connection_type = "VPC_LINK"
+  connection_id   = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks.id : null
 
   # Configurações opcionais
-  connection_type      = each.value.connection_type
-  connection_id        = each.value.connection_id
   credentials          = each.value.credentials
   request_templates    = each.value.request_templates
   request_parameters   = each.value.request_parameters
@@ -110,6 +134,40 @@ resource "aws_api_gateway_integration" "this" {
       insecure_skip_verification = tls_config.value.insecure_skip_verification
     }
   }
+}
+
+# API Gateway Integrations para Lambda
+resource "aws_api_gateway_integration" "lambda" {
+  for_each = {
+    for k, v in var.integrations : k => v
+    if v.integration_type == "lambda"
+  }
+
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = each.value.resource_id != null ? each.value.resource_id : aws_api_gateway_resource.this[each.value.resource_key].id
+  http_method = aws_api_gateway_method.this[each.value.method_key].http_method
+
+  integration_http_method = each.value.integration_http_method
+  type                    = each.value.type
+  uri                     = local.integration_uris[each.key]
+
+  # Configurações opcionais
+  credentials          = each.value.credentials
+  request_templates    = each.value.request_templates
+  request_parameters   = each.value.request_parameters
+  passthrough_behavior = each.value.passthrough_behavior
+  cache_key_parameters = each.value.cache_key_parameters
+  cache_namespace      = each.value.cache_namespace
+  content_handling     = each.value.content_handling
+  timeout_milliseconds = each.value.timeout_milliseconds
+}
+
+# Resource consolidado para referências
+locals {
+  all_integrations = merge(
+    aws_api_gateway_integration.eks,
+    aws_api_gateway_integration.lambda
+  )
 }
 
 # Method Responses
@@ -139,7 +197,7 @@ resource "aws_api_gateway_integration_response" "this" {
   selection_pattern   = each.value.selection_pattern
   content_handling    = each.value.content_handling
 
-  depends_on = [aws_api_gateway_integration.this]
+  depends_on = [aws_api_gateway_integration.eks, aws_api_gateway_integration.lambda]
 }
 
 # API Gateway Deployment
@@ -153,7 +211,8 @@ resource "aws_api_gateway_deployment" "this" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_rest_api.this.body,
       aws_api_gateway_method.this,
-      aws_api_gateway_integration.this,
+      aws_api_gateway_integration.eks,
+      aws_api_gateway_integration.lambda,
       aws_api_gateway_method_response.this,
       aws_api_gateway_integration_response.this,
     ]))
@@ -165,7 +224,8 @@ resource "aws_api_gateway_deployment" "this" {
 
   depends_on = [
     aws_api_gateway_method.this,
-    aws_api_gateway_integration.this,
+    aws_api_gateway_integration.eks,
+    aws_api_gateway_integration.lambda,
     aws_api_gateway_method_response.this,
     aws_api_gateway_integration_response.this,
   ]
@@ -301,13 +361,29 @@ resource "aws_api_gateway_usage_plan_key" "this" {
 }
 
 # Lambda permissions para API Gateway (quando necessário)
-resource "aws_lambda_permission" "this" {
+# Lambda Permissions configuradas manualmente
+resource "aws_lambda_permission" "api_gateway" {
   for_each = var.lambda_permissions
 
   statement_id  = each.value.statement_id
   action        = "lambda:InvokeFunction"
   function_name = each.value.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/*/*"
   qualifier     = each.value.qualifier
+
+  # The /*/*/* parte permite qualquer path de API Gateway
+  source_arn = "${aws_api_gateway_rest_api.this.execution_arn}/*/*/*"
+}
+
+# Lambda Permission automática para a função Lambda especificada
+resource "aws_lambda_permission" "api_gateway_auto" {
+  count = var.lambda_function_name != null ? 1 : 0
+
+  statement_id  = "AllowExecutionFromAPIGateway-${var.api_name}"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # Permitir invocação desta API Gateway específica
+  source_arn = "${aws_api_gateway_rest_api.this.execution_arn}/*/*/*"
 }

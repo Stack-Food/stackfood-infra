@@ -18,14 +18,9 @@ output "cluster_certificate_authority_data" {
   value       = aws_eks_cluster.main.certificate_authority[0].data
 }
 
-output "cluster_security_group_id" {
-  description = "The cluster security group that was created by Amazon EKS for the cluster"
-  value       = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
-}
-
 output "node_security_group_id" {
   description = "Security group ID attached to the EKS workers"
-  value       = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+  value       = aws_security_group.node.id
 }
 
 output "cluster_oidc_issuer_url" {
@@ -45,7 +40,49 @@ output "node_groups" {
   }
 }
 
-output "cluster_primary_security_group_id" {
-  description = "The cluster primary security group ID created by the EKS cluster on cluster creation"
-  value       = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+# Load Balancer Outputs
+output "internal_alb_arn" {
+  description = "ARN of the internal ALB"
+  value       = var.create_internal_alb ? aws_lb.internal[0].arn : null
+}
+
+output "internal_alb_dns_name" {
+  description = "DNS name of the internal ALB"
+  value       = var.create_internal_alb ? aws_lb.internal[0].dns_name : null
+}
+
+output "internal_alb_zone_id" {
+  description = "Zone ID of the internal ALB"
+  value       = var.create_internal_alb ? aws_lb.internal[0].zone_id : null
+}
+
+output "public_nlb_arn" {
+  description = "ARN of the public NLB"
+  value       = var.create_public_nlb ? aws_lb.public[0].arn : null
+}
+
+output "public_nlb_dns_name" {
+  description = "DNS name of the public NLB"
+  value       = var.create_public_nlb ? aws_lb.public[0].dns_name : null
+}
+
+# Security Group Outputs
+output "cluster_security_group_id" {
+  description = "Security group ID for the EKS cluster"
+  value       = aws_security_group.cluster.id
+}
+
+output "alb_internal_security_group_id" {
+  description = "Security group ID for the internal ALB"
+  value       = aws_security_group.alb_internal.id
+}
+
+output "nlb_public_security_group_id" {
+  description = "Security group ID for the public NLB"
+  value       = var.create_public_nlb ? aws_security_group.nlb_public[0].id : null
+}
+
+output "management_security_group_id" {
+  description = "Security group ID for remote management"
+  value       = var.enable_remote_management ? aws_security_group.management[0].id : null
 }

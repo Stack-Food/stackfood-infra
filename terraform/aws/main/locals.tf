@@ -35,20 +35,4 @@ locals {
   # Naming convention
   name_prefix = "${var.environment}-stackfood"
 }
-locals {
-  # Lambda environment variables com referências do Cognito
-  lambda_functions_with_cognito_refs = [
-    for lambda_func in var.lambda_functions : merge(
-      lambda_func,
-      {
-        environment_variables = merge(
-          lambda_func.environment_variables,
-          contains(["stackfood-auth-validator", "stackfood-user-creator"], lambda_func.name) ? {
-            USER_POOL_ID = length(module.cognito) > 0 ? module.cognito["stackfood-users"].user_pool_id : ""
-            CLIENT_ID    = length(module.cognito) > 0 ? module.cognito["stackfood-users"].user_pool_client_ids["cpf-auth-app"] : ""
-          } : {}
-        )
-      }
-    )
-  ]
-}
+

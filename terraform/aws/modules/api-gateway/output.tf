@@ -48,55 +48,55 @@
 #   value       = var.create_stage ? aws_api_gateway_stage.this[0].arn : null
 # }
 
-# output "stage_invoke_url" {
-#   description = "URL to invoke the API pointing to the stage"
-#   value       = var.create_stage ? aws_api_gateway_stage.this[0].invoke_url : null
-# }
+# # output "stage_invoke_url" {
+# #   description = "URL to invoke the API pointing to the stage"
+# #   value       = var.create_stage ? aws_api_gateway_stage.this[0].invoke_url : null
+# # }
 
-# output "stage_execution_arn" {
-#   description = "Execution ARN of the stage"
-#   value       = var.create_stage ? aws_api_gateway_stage.this[0].execution_arn : null
-# }
+# # output "stage_execution_arn" {
+# #   description = "Execution ARN of the stage"
+# #   value       = var.create_stage ? aws_api_gateway_stage.this[0].execution_arn : null
+# # }
 
-# # Resources Outputs
-# output "resource_ids" {
-#   description = "Map of resource names to their IDs"
-#   value       = { for k, v in aws_api_gateway_resource.this : k => v.id }
-# }
+# # # Resources Outputs
+# # output "resource_ids" {
+# #   description = "Map of resource names to their IDs"
+# #   value       = { for k, v in aws_api_gateway_resource.this : k => v.id }
+# # }
 
-# output "resource_paths" {
-#   description = "Map of resource names to their paths"
-#   value       = { for k, v in aws_api_gateway_resource.this : k => v.path }
-# }
+# # output "resource_paths" {
+# #   description = "Map of resource names to their paths"
+# #   value       = { for k, v in aws_api_gateway_resource.this : k => v.path }
+# # }
 
-# # Methods Outputs
-# output "method_ids" {
-#   description = "Map of method keys to their HTTP methods"
-#   value       = { for k, v in aws_api_gateway_method.this : k => v.http_method }
-# }
+# # # Methods Outputs
+# # output "method_ids" {
+# #   description = "Map of method keys to their HTTP methods"
+# #   value       = { for k, v in aws_api_gateway_method.this : k => v.http_method }
+# # }
 
-# # CloudWatch Log Group Outputs
-# output "log_group_name" {
-#   description = "Name of the CloudWatch Log Group"
-#   value       = aws_cloudwatch_log_group.api_gateway.name
-# }
+# # # CloudWatch Log Group Outputs
+# # output "log_group_name" {
+# #   description = "Name of the CloudWatch Log Group"
+# #   value       = aws_cloudwatch_log_group.api_gateway.name
+# # }
 
-# output "log_group_arn" {
-#   description = "ARN of the CloudWatch Log Group"
-#   value       = aws_cloudwatch_log_group.api_gateway.arn
-# }
+# # output "log_group_arn" {
+# #   description = "ARN of the CloudWatch Log Group"
+# #   value       = aws_cloudwatch_log_group.api_gateway.arn
+# # }
 
-# # API Keys Outputs
-# output "api_key_ids" {
-#   description = "Map of API key names to their IDs"
-#   value       = { for k, v in aws_api_gateway_api_key.this : k => v.id }
-# }
+# # # API Keys Outputs
+# # output "api_key_ids" {
+# #   description = "Map of API key names to their IDs"
+# #   value       = { for k, v in aws_api_gateway_api_key.this : k => v.id }
+# # }
 
-# output "api_key_values" {
-#   description = "Map of API key names to their values"
-#   value       = { for k, v in aws_api_gateway_api_key.this : k => v.value }
-#   sensitive   = true
-# }
+# # output "api_key_values" {
+# #   description = "Map of API key names to their values"
+# #   value       = { for k, v in aws_api_gateway_api_key.this : k => v.value }
+# #   sensitive   = true
+# # }
 
 # # Usage Plans Outputs
 # output "usage_plan_ids" {
@@ -109,10 +109,30 @@
 #   value       = { for k, v in aws_api_gateway_usage_plan.this : k => v.arn }
 # }
 
-# # Integration Information
+# # Integration Information with Simplified Dynamic URIs
 # output "integration_uris" {
-#   description = "Map of integration keys to their URIs"
-#   value       = { for k, v in var.integrations : k => v.uri }
+#   description = "Map of integration keys to their final URIs (including dynamically resolved)"
+#   value       = local.integration_uris
+# }
+
+# output "lambda_arn_resolved" {
+#   description = "ARN of the Lambda function if configured"
+#   value       = local.lambda_arn
+# }
+
+# output "eks_load_balancer_dns" {
+#   description = "DNS name of the EKS load balancer if found"
+#   value       = local.eks_dns
+# }
+
+# output "vpc_link_id" {
+#   description = "ID of the VPC Link for EKS integration"
+#   value       = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks[0].id : null
+# }
+
+# output "vpc_link_status" {
+#   description = "Status of the VPC Link for EKS integration"
+#   value       = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks[0].status : null
 # }
 
 # # Complete API Information
@@ -127,20 +147,23 @@
 # }
 
 # # Regional Information (needed for API base URL)
-# data "aws_region" "current" {}
 
 # # Summary Output for Documentation
 # output "api_summary" {
 #   description = "Summary of the created API Gateway"
 #   value = {
-#     api_name     = aws_api_gateway_rest_api.this.name
-#     api_id       = aws_api_gateway_rest_api.this.id
-#     stage_name   = var.stage_name
-#     endpoint_url = var.create_stage ? aws_api_gateway_stage.this[0].invoke_url : aws_api_gateway_deployment.this.invoke_url
-#     resources    = length(var.resources)
-#     methods      = length(var.methods)
-#     integrations = length(var.integrations)
-#     api_keys     = length(var.api_keys)
-#     usage_plans  = length(var.usage_plans)
+#     api_name          = aws_api_gateway_rest_api.this.name
+#     api_id            = aws_api_gateway_rest_api.this.id
+#     stage_name        = var.stage_name
+#     endpoint_url      = var.create_stage ? aws_api_gateway_stage.this[0].invoke_url : aws_api_gateway_deployment.this.invoke_url
+#     resources         = length(var.resources)
+#     methods           = length(var.methods)
+#     integrations      = length(var.integrations)
+#     lambda_configured = var.lambda_function_name != null
+#     eks_configured    = var.eks_cluster_name != null
+#     vpc_link_enabled  = length(aws_api_gateway_vpc_link.eks) > 0
+#     vpc_link_status   = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks[0].status : null
+#     api_keys          = length(var.api_keys)
+#     usage_plans       = length(var.usage_plans)
 #   }
 # }

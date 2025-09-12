@@ -17,6 +17,29 @@ variable "stage_name" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region for Lambda integrations"
+  type        = string
+}
+
+variable "eks_cluster_name" {
+  description = "Name of the EKS cluster for HTTP integrations"
+  type        = string
+  default     = null
+}
+
+variable "lambda_function_name" {
+  description = "Name of the Lambda function for AWS_PROXY integrations"
+  type        = string
+  default     = null
+}
+
+variable "vpc_id" {
+  description = "VPC ID where the EKS cluster is located"
+  type        = string
+  default     = null
+}
+
 ######################
 # Optional Variables #
 ######################
@@ -164,17 +187,21 @@ variable "integrations" {
     resource_id             = optional(string)
     integration_http_method = string
     type                    = string
-    uri                     = string
-    connection_type         = optional(string)
-    connection_id           = optional(string)
-    credentials             = optional(string)
-    request_templates       = optional(map(string))
-    request_parameters      = optional(map(string))
-    passthrough_behavior    = optional(string)
-    cache_key_parameters    = optional(list(string))
-    cache_namespace         = optional(string)
-    content_handling        = optional(string)
-    timeout_milliseconds    = optional(number)
+    uri                     = optional(string)
+    # Simplified integration types
+    integration_type = optional(string, "custom") # "lambda", "eks", or "custom"
+    eks_path         = optional(string, "")       # Path for EKS integrations
+    # Original fields
+    connection_type      = optional(string)
+    connection_id        = optional(string)
+    credentials          = optional(string)
+    request_templates    = optional(map(string))
+    request_parameters   = optional(map(string))
+    passthrough_behavior = optional(string)
+    cache_key_parameters = optional(list(string))
+    cache_namespace      = optional(string)
+    content_handling     = optional(string)
+    timeout_milliseconds = optional(number)
     tls_config = optional(object({
       insecure_skip_verification = bool
     }))
