@@ -1,4 +1,4 @@
-aws_region  = "us-west-2"
+aws_region  = "us-east-1"
 environment = "prod"
 
 tags = {
@@ -8,6 +8,15 @@ tags = {
 }
 
 ######################
+# Domain Configuration #
+######################
+domain_name               = "stackfood.com.br"
+subject_alternative_names = ["*.stackfood.com.br"]
+
+# DNS Provider Configuration (Cloudflare)
+cloudflare_zone_id = "09f31a057e454d7d71ab44b6b5960723" # Substitua pelo seu Zone ID real
+
+######################
 # VPC Configuration #
 ######################
 vpc_name        = "stackfood-prod-vpc"
@@ -15,44 +24,47 @@ vpc_cidr_blocks = ["10.0.0.0/16"]
 
 private_subnets = {
   "private1" = {
-    availability_zone = "us-west-2a"
+    availability_zone = "us-east-1a"
     cidr_block        = "10.0.1.0/24"
   },
   "private2" = {
-    availability_zone = "us-west-2b"
+    availability_zone = "us-east-1b"
     cidr_block        = "10.0.2.0/24"
   },
   "private3" = {
-    availability_zone = "us-west-2c"
+    availability_zone = "us-east-1c"
     cidr_block        = "10.0.3.0/24"
   }
 }
 
 public_subnets = {
   "public1" = {
-    availability_zone = "us-west-2a"
+    availability_zone = "us-east-1a"
     cidr_block        = "10.0.101.0/24"
   },
   "public2" = {
-    availability_zone = "us-west-2b"
+    availability_zone = "us-east-1b"
     cidr_block        = "10.0.102.0/24"
   },
   "public3" = {
-    availability_zone = "us-west-2c"
+    availability_zone = "us-east-1c"
     cidr_block        = "10.0.103.0/24"
   }
 }
 
 ######################
+# Load Balancer Configuration #
+######################
+
+
+
+######################
 # EKS Configuration #
 ######################
 eks_cluster_name           = "stackfood-prod-eks"
-kubernetes_version         = "1.32"
-eks_endpoint_public_access = false
-
-# Load Balancer Configuration
-eks_create_internal_alb = true # ALB interno para API Gateway e serviços internos
-eks_create_public_nlb   = true # NLB público para acesso externo (opcional)
+kubernetes_version         = "1.33"
+eks_endpoint_public_access = true
+eks_authentication_mode    = "API_AND_CONFIG_MAP"
 
 # Remote Management Configuration
 eks_enable_remote_management = true
@@ -60,38 +72,45 @@ eks_management_cidr_blocks   = ["0.0.0.0/0"] # Ajuste para seu IP específico em
 
 eks_node_groups = {
   "api" = {
-    desired_size   = 3
-    max_size       = 6
+    desired_size   = 2
+    max_size       = 3
     min_size       = 2
-    ami_type       = "AL2_x86_64"
     capacity_type  = "ON_DEMAND"
-    instance_types = ["t3.large"]
-    disk_size      = 50
-    labels = {
-      "role"                        = "api"
-      "node-role.kubernetes.io/api" = "true"
-      "app.kubernetes.io/component" = "backend"
-      "app.kubernetes.io/part-of"   = "stackfood"
-    }
+    instance_types = ["c1.xlarge"]
+    disk_size      = 100
+    # labels = {
+    #   "role"                        = "api"
+    #   "node-role.kubernetes.io/api" = "true"
+    #   "app.kubernetes.io/component" = "backend"
+    #   "app.kubernetes.io/part-of"   = "stackfood"
+    # }
   },
   "worker" = {
     desired_size   = 2
-    max_size       = 4
+    max_size       = 3
     min_size       = 2
-    ami_type       = "AL2_x86_64"
     capacity_type  = "ON_DEMAND"
-    instance_types = ["t3.large"]
+    instance_types = ["c1.xlarge"]
     disk_size      = 100
-    labels = {
-      "role"                           = "worker"
-      "node-role.kubernetes.io/worker" = "true"
-      "app.kubernetes.io/component"    = "worker"
-      "app.kubernetes.io/part-of"      = "stackfood"
-    }
+    # labels = {
+    #   "role"                           = "worker"
+    #   "node-role.kubernetes.io/worker" = "true"
+    #   "app.kubernetes.io/component"    = "worker"
+    #   "app.kubernetes.io/part-of"      = "stackfood"
+    # }
   }
 }
 
-######################major_engine_version
+########################
+# NGINX Ingress Configuration # 
+########################
+nginx_ingress_name       = "nginx-ingress"
+nginx_ingress_repository = "https://kubernetes.github.io/ingress-nginx"
+nginx_ingress_chart      = "ingress-nginx"
+nginx_ingress_namespace  = "ingress-nginx"
+nginx_ingress_version    = "4.10.0"
+
+######################
 # RDS Configuration #
 ######################
 rds_instances = {
@@ -101,6 +120,7 @@ rds_instances = {
     storage_encrypted            = false         # Simplified for AWS Academy
     db_instance_class            = "db.t3.micro" # Changed to supported instance type
     db_username                  = "stackfood"
+    db_password                  = "postgre" # Ensure this meets complexity requirements
     manage_master_user_password  = true
     engine                       = "postgres" # Lowercase as required
     engine_version               = "16.3"     # Updated version
@@ -121,9 +141,14 @@ rds_instances = {
 # IAM Configuration #
 ######################
 lambda_role_name      = "LabRole"
-eks_cluster_role_name = "c173096a4485959l11267681t1w623941-LabEksClusterRole-PYvjzWerQxXl"
-eks_node_role_name    = "c173096a4485959l11267681t1w623941524-LabEksNodeRole-u7CI3SEcaNrk"
+eks_cluster_role_name = "LabRole"
+eks_node_role_name    = "LabRole"
 rds_role_name         = "LabRole"
+
+# lambda_role_name      = "LabRole"
+# eks_cluster_role_name = "c173096a4485959l11267681t1w623941-LabEksClusterRole-PYvjzWerQxXl"
+# eks_node_role_name    = "c173096a4485959l11267681t1w623941524-LabEksNodeRole-u7CI3SEcaNrk"
+# rds_role_name         = "LabRole"
 
 ######################
 # Lambda Configuration #
@@ -133,7 +158,7 @@ lambda_functions = {
     description  = "Lambda for CPF authentication and JWT validation"
     package_type = "Image"
     # Imagem base oficial AWS Lambda para .NET 8 - RUNTIME
-    image_uri   = "public.ecr.aws/lambda/dotnet:8.2025.09.11.17"
+    image_uri   = "public.ecr.aws/lambda/dotnet:9.2025.09.15.12"
     memory_size = 256
     runtime     = null # Não usado para package_type = "Image"
     timeout     = 30

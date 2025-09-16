@@ -19,15 +19,6 @@ locals {
   tags = merge(local.common_tags, var.tags)
 }
 locals {
-  # EKS related
-  eks_managed_node_groups_defaults = {
-    ami_type       = "AL2_x86_64"
-    instance_types = ["t3.medium"]
-    capacity_type  = "ON_DEMAND"
-    disk_size      = 20
-  }
-}
-locals {
   # Security related
   vpc_cidr = var.vpc_cidr_blocks[0]
 }

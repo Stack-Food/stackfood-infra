@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 3.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.10"
+    }
   }
 
   backend "s3" {
@@ -33,6 +37,11 @@ provider "aws" {
       Terraform   = "true"
     }
   }
+}
+
+# Configure Cloudflare provider
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
 # Configure Kubernetes provider with EKS cluster config

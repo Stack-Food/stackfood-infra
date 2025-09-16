@@ -24,30 +24,49 @@ module "vpc" {
   subnets_public  = var.public_subnets
 }
 
+# ACM Certificate Module
+module "acm" {
+  source = "../modules/acm/"
+
+  # Domain Configuration
+  domain_name               = var.domain_name
+  subject_alternative_names = var.subject_alternative_names
+
+  # General Settings
+  environment = var.environment
+  tags        = var.tags
+
+  # Cloudflare Settings
+  cloudflare_zone_id = var.cloudflare_zone_id
+
+  # Validation Settings
+  validation_method = "DNS"
+
+  # Certificate Settings
+  key_algorithm                   = "RSA_2048"
+  transparency_logging_preference = "ENABLED"
+}
+
 # EKS Module
 module "eks" {
   source = "../modules/eks/"
 
   # General Settings
-  cluster_name = var.eks_cluster_name
-  environment  = var.environment
-  tags         = var.tags
+  cluster_name        = var.eks_cluster_name
+  environment         = var.environment
+  tags                = var.tags
+  authentication_mode = var.eks_authentication_mode
 
   # Network Settings
-  subnet_ids        = module.vpc.private_subnet_ids
-  node_subnet_ids   = module.vpc.private_subnet_ids
-  public_subnet_ids = module.vpc.public_subnet_ids
-  vpc_id            = module.vpc.vpc_id
-  vpc_cidr          = module.vpc.vpc_cidr_block
+  private_subnet_ids = module.vpc.private_subnet_ids
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  vpc_id             = module.vpc.vpc_id
+  vpc_cidr           = module.vpc.vpc_cidr_block
 
   # Cluster Settings
   kubernetes_version      = var.kubernetes_version
   endpoint_private_access = true
   endpoint_public_access  = var.eks_endpoint_public_access
-
-  # Load Balancer Settings
-  create_internal_alb = var.eks_create_internal_alb
-  create_public_nlb   = var.eks_create_public_nlb
 
   # Remote Management Settings
   enable_remote_management = var.eks_enable_remote_management
@@ -59,6 +78,10 @@ module "eks" {
   # IAM Role Settings
   cluster_role_name = var.eks_cluster_role_name
   node_role_name    = var.eks_node_role_name
+
+  log_kms_key_id        = var.eks_log_kms_key_id
+  kms_key_arn           = var.eks_kms_key_arn
+  log_retention_in_days = var.eks_log_retention_in_days
 }
 
 # RDS Module
@@ -77,7 +100,7 @@ module "rds" {
   # Network Settings
   vpc_id                  = module.vpc.vpc_id
   subnet_ids              = module.vpc.private_subnet_ids
-  allowed_security_groups = [module.eks.node_security_group_id]
+  allowed_security_groups = [module.eks.cluster_security_group_id]
 
   # Database Settings
   instance_class              = each.value.db_instance_class
@@ -190,6 +213,20 @@ module "api_gateway" {
 
   # Lambda Permissions
   lambda_permissions = each.value.lambda_permissions
+}
+
+
+# NGINX Ingres
+module "nginx-ingress" {
+  source     = "../modules/kubernetes/nginx-ingress"
+  depends_on = [module.eks, module.acm]
+
+  ingress_name        = var.nginx_ingress_name
+  ingress_repository  = var.nginx_ingress_repository
+  ingress_chart       = var.nginx_ingress_chart
+  ingress_namespace   = var.nginx_ingress_namespace
+  ingress_version     = var.nginx_ingress_version
+  ssl_certificate_arn = module.acm.certificate_arn
 }
 
 # Cognito Module
