@@ -227,7 +227,6 @@ variable "db_password" {
   description = "The database password (must be at least 8 characters). Only used if manage_master_user_password is false."
   type        = string
   sensitive   = true
-  default     = null
 }
 
 variable "manage_master_user_password" {
