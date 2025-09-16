@@ -2,7 +2,24 @@
 # API Gateway REST Module #
 ############################
 # VPC Link para conectar API Gateway com EKS (se especificado)
+# resource "aws_api_gateway_vpc_link" "eks" {
+
+#   name        = "${var.api_name}-eks-vpc-link"
+#   description = "VPC Link for ${var.api_name} to connect to EKS cluster ${var.eks_cluster_name}"
+#   target_arns = length(data.aws_lb.eks_nlb) > 0 ? [data.aws_lb.eks_nlb[0].arn] : []
+
+#   tags = merge(
+#     {
+#       Name        = "${var.api_name}-eks-vpc-link"
+#       Environment = var.environment
+#       Cluster     = var.eks_cluster_name
+#     },
+#     var.tags
+#   )
+# }
+
 resource "aws_api_gateway_vpc_link" "eks" {
+  count = var.eks_cluster_name != null ? 1 : 0
 
   name        = "${var.api_name}-eks-vpc-link"
   description = "VPC Link for ${var.api_name} to connect to EKS cluster ${var.eks_cluster_name}"
@@ -17,7 +34,6 @@ resource "aws_api_gateway_vpc_link" "eks" {
     var.tags
   )
 }
-
 
 
 # CloudWatch Log Group for API Gateway
@@ -115,7 +131,7 @@ resource "aws_api_gateway_integration" "eks" {
 
   # VPC Link configuration para integrações EKS
   connection_type = "VPC_LINK"
-  connection_id   = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks.id : null
+  connection_id   = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks[0].id : null
 
   # Configurações opcionais
   credentials          = each.value.credentials
