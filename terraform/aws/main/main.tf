@@ -193,56 +193,9 @@ module "api_gateway" {
 }
 
 # Cognito Module
-# module "cognito" {
-#   for_each = var.cognito_user_pools
-#   source   = "../modules/cognito/"
+module "cognito" {
+  source = "../modules/cognito"
 
-#   # General Settings
-#   user_pool_name = each.value.name
-#   environment    = var.environment
-#   tags           = var.tags
-
-#   # User Pool Configuration
-#   alias_attributes                              = each.value.alias_attributes
-#   auto_verified_attributes                      = each.value.auto_verified_attributes
-#   username_attributes                           = each.value.username_attributes
-#   attributes_require_verification_before_update = each.value.attributes_require_verification_before_update
-
-#   # Password Policy
-#   password_minimum_length          = each.value.password_minimum_length
-#   password_require_lowercase       = each.value.password_require_lowercase
-#   password_require_numbers         = each.value.password_require_numbers
-#   password_require_symbols         = each.value.password_require_symbols
-#   password_require_uppercase       = each.value.password_require_uppercase
-#   temporary_password_validity_days = each.value.temporary_password_validity_days
-
-#   # Security Settings
-#   advanced_security_mode       = each.value.advanced_security_mode
-#   allow_admin_create_user_only = each.value.allow_admin_create_user_only
-
-#   # Communication Settings
-#   email_configuration = each.value.email_configuration
-#   sms_configuration   = each.value.sms_configuration
-
-#   # Lambda Triggers
-#   lambda_config = each.value.lambda_config
-
-#   # Domain Configuration
-#   domain          = each.value.domain
-#   certificate_arn = each.value.certificate_arn
-
-#   # Client Applications
-#   clients = each.value.clients
-
-#   # Identity Pool Configuration
-#   create_identity_pool             = each.value.create_identity_pool
-#   allow_unauthenticated_identities = each.value.allow_unauthenticated_identities
-#   default_client_key               = each.value.default_client_key
-#   supported_login_providers        = each.value.supported_login_providers
-
-#   # Custom Attributes Schema
-#   schemas = each.value.schemas
-
-#   # Logging
-#   log_retention_in_days = 7
-# }
+  user_pool_name = "stackfood"
+  environment    = var.environment
+}
