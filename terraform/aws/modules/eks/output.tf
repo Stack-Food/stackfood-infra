@@ -72,5 +72,5 @@ output "cloudwatch_log_group_name" {
 
 output "cloudwatch_log_group_arn" {
   description = "ARN of the CloudWatch log group (auto-created by EKS)"
-  value       = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${aws_eks_cluster.main.name}/cluster"
+  value       = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${aws_eks_cluster.main.name}/cluster"
 }
