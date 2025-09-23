@@ -1,7 +1,3 @@
-#######################
-# Modules & Resources #
-#######################
-
 # VPC Module
 module "vpc" {
   source = "../modules/vpc/"
@@ -47,41 +43,68 @@ module "acm" {
   transparency_logging_preference = "ENABLED"
 }
 
-# EKS Module
+# EKS Module - Usando módulo personalizado compatível com AWS Academy
 module "eks" {
   source = "../modules/eks/"
 
-  # General Settings
-  cluster_name        = var.eks_cluster_name
-  environment         = var.environment
-  tags                = var.tags
-  authentication_mode = var.eks_authentication_mode
+  # Configurações básicas do cluster
+  cluster_name       = var.eks_cluster_name
+  kubernetes_version = var.kubernetes_version
 
-  # Network Settings
-  private_subnet_ids = module.vpc.private_subnet_ids
-  public_subnet_ids  = module.vpc.public_subnet_ids
+  # Configurações de VPC
   vpc_id             = module.vpc.vpc_id
-  vpc_cidr           = module.vpc.vpc_cidr_block
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
 
-  # Cluster Settings
-  kubernetes_version      = var.kubernetes_version
-  endpoint_private_access = true
-  endpoint_public_access  = var.eks_endpoint_public_access
+  # Configuração de IAM (usando a LabRole)
+  cluster_role_name = "LabRole"
+  node_role_name    = "LabRole"
 
-  # Remote Management Settings
+  # Configurações de endpoint
+  endpoint_private_access = false
+  endpoint_public_access  = true
+
+  # Configuração de logs
+  log_retention_in_days = 30
+  log_kms_key_id        = var.eks_kms_key_arn
+
+  # Configuração de criptografia
+  kms_key_arn = var.eks_kms_key_arn
+
+  # Configuração dos grupos de nós
+  node_groups = {
+    api = {
+      desired_size   = 2
+      max_size       = 3
+      min_size       = 2
+      instance_types = ["c5.xlarge"]
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 100
+    }
+    worker = {
+      desired_size   = 2
+      max_size       = 3
+      min_size       = 2
+      instance_types = ["c5.xlarge"]
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 100
+    }
+  }
+
+  # Configurações de acesso remoto
   enable_remote_management = var.eks_enable_remote_management
   management_cidr_blocks   = var.eks_management_cidr_blocks
+  vpc_cidr                 = var.vpc_cidr_blocks[0]
 
-  # Node Group Settings
-  node_groups = var.eks_node_groups
+  # Modo de autenticação
+  authentication_mode = var.eks_authentication_mode
 
-  # IAM Role Settings
-  cluster_role_name = var.eks_cluster_role_name
-  node_role_name    = var.eks_node_role_name
+  # Tags
+  environment = var.environment
+  tags        = var.tags
 
-  log_kms_key_id        = var.eks_log_kms_key_id
-  kms_key_arn           = var.eks_kms_key_arn
-  log_retention_in_days = var.eks_log_retention_in_days
+  # Dependências
+  depends_on = [module.vpc]
 }
 
 # RDS Module
@@ -126,97 +149,7 @@ module "rds" {
   deletion_protection          = lookup(each.value, "deletion_protection", false)
 }
 
-# Lambda Functions
-module "lambda" {
-  for_each = var.lambda_functions
-  source   = "../modules/lambda/"
-  #depends_on = [module.cognito]
-
-  # General Settings
-  function_name = each.key
-  description   = each.value.description
-  environment   = var.environment
-  tags          = var.tags
-
-  # Code and Runtime - condicionalmente baseado no package_type
-  package_type     = each.value.package_type
-  runtime          = try(each.value.runtime, ".NET 8")
-  handler          = try(each.value.handler, null)
-  filename         = try(each.value.filename, null)
-  source_code_hash = try(each.value.source_code_hash, null)
-  image_uri        = each.value.image_uri
-
-  # Network Settings (VPC)
-  vpc_id     = each.value.vpc_access ? module.vpc.vpc_id : null
-  subnet_ids = each.value.vpc_access ? module.vpc.private_subnet_ids : []
-
-  # Function Configuration
-  memory_size           = each.value.memory_size
-  timeout               = each.value.timeout
-  environment_variables = each.value.environment_variables
-
-  # IAM Role Settings
-  lambda_role_name = var.lambda_role_name
-}
-
-# API Gateway
-module "api_gateway" {
-  for_each = var.api_gateways
-  source   = "../modules/api-gateway/"
-  # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  depends_on = [module.lambda, module.eks]
-
-  # General Settings
-  api_name    = each.key
-  description = each.value.description
-  environment = var.environment
-  tags        = var.tags
-
-  # Simplified variables for single Lambda and EKS cluster
-  aws_region           = var.aws_region
-  lambda_function_name = "stackfood-auth" # Single Lambda function name
-  eks_cluster_name     = var.eks_cluster_name
-  vpc_id               = module.vpc.vpc_id
-
-  # Stage Configuration
-  stage_name    = each.value.stage_name
-  endpoint_type = each.value.endpoint_type
-
-  # CORS Configuration
-  enable_cors            = each.value.enable_cors
-  cors_allow_origins     = each.value.cors_allow_origins
-  cors_allow_methods     = each.value.cors_allow_methods
-  cors_allow_headers     = each.value.cors_allow_headers
-  cors_allow_credentials = each.value.cors_allow_credentials
-
-  # Monitoring and Logging
-  enable_access_logs    = each.value.enable_access_logs
-  xray_tracing_enabled  = each.value.xray_tracing_enabled
-  log_retention_in_days = 7
-
-  # Performance
-  throttle_settings     = each.value.throttle_settings
-  cache_cluster_enabled = each.value.cache_cluster_enabled
-  cache_cluster_size    = each.value.cache_cluster_size
-
-  # API Configuration
-  resources             = each.value.resources
-  methods               = each.value.methods
-  integrations          = each.value.integrations
-  method_responses      = each.value.method_responses
-  integration_responses = each.value.integration_responses
-
-  # API Keys and Usage Plans
-  api_keys        = each.value.api_keys
-  usage_plans     = each.value.usage_plans
-  usage_plan_keys = each.value.usage_plan_keys
-
-  # Lambda Permissions
-  lambda_permissions = each.value.lambda_permissions
-}
-
-
-# NGINX Ingres
+# NGINX Ingress
 module "nginx-ingress" {
   source     = "../modules/kubernetes/nginx-ingress"
   depends_on = [module.eks, module.acm]
@@ -228,58 +161,3 @@ module "nginx-ingress" {
   ingress_version     = var.nginx_ingress_version
   ssl_certificate_arn = module.acm.certificate_arn
 }
-
-# Cognito Module
-# module "cognito" {
-#   for_each = var.cognito_user_pools
-#   source   = "../modules/cognito/"
-
-#   # General Settings
-#   user_pool_name = each.value.name
-#   environment    = var.environment
-#   tags           = var.tags
-
-#   # User Pool Configuration
-#   alias_attributes                              = each.value.alias_attributes
-#   auto_verified_attributes                      = each.value.auto_verified_attributes
-#   username_attributes                           = each.value.username_attributes
-#   attributes_require_verification_before_update = each.value.attributes_require_verification_before_update
-
-#   # Password Policy
-#   password_minimum_length          = each.value.password_minimum_length
-#   password_require_lowercase       = each.value.password_require_lowercase
-#   password_require_numbers         = each.value.password_require_numbers
-#   password_require_symbols         = each.value.password_require_symbols
-#   password_require_uppercase       = each.value.password_require_uppercase
-#   temporary_password_validity_days = each.value.temporary_password_validity_days
-
-#   # Security Settings
-#   advanced_security_mode       = each.value.advanced_security_mode
-#   allow_admin_create_user_only = each.value.allow_admin_create_user_only
-
-#   # Communication Settings
-#   email_configuration = each.value.email_configuration
-#   sms_configuration   = each.value.sms_configuration
-
-#   # Lambda Triggers
-#   lambda_config = each.value.lambda_config
-
-#   # Domain Configuration
-#   domain          = each.value.domain
-#   certificate_arn = each.value.certificate_arn
-
-#   # Client Applications
-#   clients = each.value.clients
-
-#   # Identity Pool Configuration
-#   create_identity_pool             = each.value.create_identity_pool
-#   allow_unauthenticated_identities = each.value.allow_unauthenticated_identities
-#   default_client_key               = each.value.default_client_key
-#   supported_login_providers        = each.value.supported_login_providers
-
-#   # Custom Attributes Schema
-#   schemas = each.value.schemas
-
-#   # Logging
-#   log_retention_in_days = 7
-# }

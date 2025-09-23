@@ -104,7 +104,7 @@ eks_node_groups = {
 ########################
 # NGINX Ingress Configuration # 
 ########################
-nginx_ingress_name       = "nginx-ingress"
+nginx_ingress_name       = "ingress-nginx"
 nginx_ingress_repository = "https://kubernetes.github.io/ingress-nginx"
 nginx_ingress_chart      = "ingress-nginx"
 nginx_ingress_namespace  = "ingress-nginx"

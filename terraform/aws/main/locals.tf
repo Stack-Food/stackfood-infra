@@ -18,10 +18,12 @@ locals {
   # Merge common tags with user provided tags
   tags = merge(local.common_tags, var.tags)
 }
+
 locals {
   # Security related
   vpc_cidr = var.vpc_cidr_blocks[0]
 }
+
 locals {
   # Naming convention
   name_prefix = "${var.environment}-stackfood"
