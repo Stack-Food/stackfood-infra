@@ -40,3 +40,37 @@ output "cluster_security_group_id" {
   description = "Security group ID for the EKS cluster"
   value       = aws_security_group.cluster.id
 }
+
+# EKS Add-ons Outputs
+output "addons" {
+  description = "Map of EKS add-ons"
+  value = {
+    coredns = {
+      arn     = aws_eks_addon.coredns.arn
+      version = aws_eks_addon.coredns.addon_version
+    }
+    kube_proxy = {
+      arn     = aws_eks_addon.kube_proxy.arn
+      version = aws_eks_addon.kube_proxy.addon_version
+    }
+    vpc_cni = {
+      arn     = aws_eks_addon.vpc_cni.arn
+      version = aws_eks_addon.vpc_cni.addon_version
+    }
+    ebs_csi_driver = {
+      arn     = aws_eks_addon.ebs_csi_driver.arn
+      version = aws_eks_addon.ebs_csi_driver.addon_version
+    }
+  }
+}
+
+# CloudWatch Log Group Output (using EKS auto-created log group)
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group (auto-created by EKS)"
+  value       = "/aws/eks/${aws_eks_cluster.main.name}/cluster"
+}
+
+output "cloudwatch_log_group_arn" {
+  description = "ARN of the CloudWatch log group (auto-created by EKS)"
+  value       = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${aws_eks_cluster.main.name}/cluster"
+}
