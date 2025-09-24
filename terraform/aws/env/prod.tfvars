@@ -158,7 +158,7 @@ lambda_functions = {
     description  = "Lambda for CPF authentication and JWT validation"
     package_type = "Image"
     # Imagem base oficial AWS Lambda para .NET 8 - RUNTIME
-    image_uri   = "public.ecr.aws/lambda/dotnet:9.2025.09.15.12"
+    image_uri   = "public.ecr.aws/lambda/dotnet:8"
     memory_size = 256
     runtime     = null # Não usado para package_type = "Image"
     timeout     = 30
