@@ -57,7 +57,7 @@ resource "aws_cognito_user_pool" "this" {
 resource "aws_cognito_user_pool_client" "this" {
   name         = "${var.user_pool_name}-client"
   user_pool_id = aws_cognito_user_pool.this.id
-  
+
   # Não gerar secret para simplificar a integração
   generate_secret = false
 
@@ -74,8 +74,8 @@ resource "aws_cognito_user_pool_client" "this" {
 
   # Fluxos de autenticação permitidos
   explicit_auth_flows = [
-    "ALLOW_CUSTOM_AUTH",        # Para autenticação customizada com CPF
-    "ALLOW_REFRESH_TOKEN_AUTH"  # Para renovar tokens
+    "ALLOW_CUSTOM_AUTH",       # Para autenticação customizada com CPF
+    "ALLOW_REFRESH_TOKEN_AUTH" # Para renovar tokens
   ]
 
   # Prevenir vazamento de informações sobre existência de usuários
