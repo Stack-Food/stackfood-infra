@@ -7,7 +7,7 @@ resource "aws_vpc" "vpc" {
   cidr_block           = var.vpc_cidr_blocks[0]
   enable_dns_support   = var.vpc_enable_dns_support
   enable_dns_hostnames = var.vpc_enable_dns_hostnames
-  
+
   # Flow logs for security and troubleshooting
   enable_network_address_usage_metrics = true
 
@@ -38,14 +38,14 @@ resource "aws_subnet" "subnet-private" {
 
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = each.value.cidr_block
-  availability_zone       = try (each.value.availability_zone, data.aws_availability_zones.availability_zones.names[0])
+  availability_zone       = try(each.value.availability_zone, data.aws_availability_zones.availability_zones.names[0])
   map_public_ip_on_launch = false
 
   tags = merge(
     {
-      Name                          = join("-", [var.vpc_name, "private", each.key])
-      Terraform_Managed            = "true"
-      Environment                  = var.environment
+      Name                              = join("-", [var.vpc_name, "private", each.key])
+      Terraform_Managed                 = "true"
+      Environment                       = var.environment
       "kubernetes.io/role/internal-elb" = "1"
     },
     var.tags
@@ -62,14 +62,14 @@ resource "aws_subnet" "subnet-public" {
 
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = each.value.cidr_block
-  availability_zone       = try (each.value.availability_zone, data.aws_availability_zones.availability_zones.names[0])
+  availability_zone       = try(each.value.availability_zone, data.aws_availability_zones.availability_zones.names[0])
   map_public_ip_on_launch = true
 
   tags = merge(
     {
-      Name                   = join("-", [var.vpc_name, "public", each.key])
-      Terraform_Managed     = "true"
-      Environment           = var.environment
+      Name                     = join("-", [var.vpc_name, "public", each.key])
+      Terraform_Managed        = "true"
+      Environment              = var.environment
       "kubernetes.io/role/elb" = "1"
     },
     var.tags
@@ -89,6 +89,17 @@ resource "aws_internet_gateway" "igw" {
 # NAT Gateway
 resource "aws_eip" "ngw-ip" {
   for_each = var.subnets_public
+  domain   = "vpc"
+
+  tags = {
+    Name              = join("-", [var.vpc_name, "eip", each.key])
+    Terraform_Managed = "true"
+    Environment       = var.environment
+  }
+
+  lifecycle {
+    prevent_destroy = false
+  }
 }
 
 resource "aws_nat_gateway" "ngw" {
@@ -102,6 +113,7 @@ resource "aws_nat_gateway" "ngw" {
     Name              = var.ngw_name
     Terraform_Managed = "true"
   }
+
 }
 
 

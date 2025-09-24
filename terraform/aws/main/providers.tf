@@ -11,7 +11,11 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0"
+      version = "~> 3.0.2"
+    }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.52.5"
     }
   }
 
@@ -35,16 +39,25 @@ provider "aws" {
   }
 }
 
+# Configure Cloudflare provider
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
+data "aws_eks_cluster_auth" "eks" {
+  name = var.eks_cluster_name
+}
+
 # Configure Kubernetes provider with EKS cluster config
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_id, "--region", var.aws_region]
-  }
+  token                  = data.aws_eks_cluster_auth.eks.token
+  # exec {
+  #   api_version = "client.authentication.k8s.io/v1beta1"
+  #   command     = "aws"
+  #   args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_id, "--region", var.aws_region]
+  # }
 }
 
 # Configure Helm provider with EKS cluster config
@@ -52,11 +65,11 @@ provider "helm" {
   kubernetes = {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-
+    #token                  = data.aws_eks_cluster_auth.eks.token
     exec = {
       api_version = "client.authentication.k8s.io/v1beta1"
+      args        = ["eks", "get-token", "--cluster-name", var.eks_cluster_name]
       command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_id, "--region", var.aws_region]
     }
   }
 }

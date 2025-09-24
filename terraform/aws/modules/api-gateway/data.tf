@@ -4,13 +4,12 @@ data "aws_lambda_function" "this" {
   function_name = var.lambda_function_name
 }
 
-# Data source para buscar o Network Load Balancer do EKS (se especificado)
+# Data source para buscar o Network Load Balancer do EKS NGINX Ingress
 data "aws_lb" "eks_nlb" {
   count = var.eks_cluster_name != null ? 1 : 0
 
   tags = {
     "kubernetes.io/cluster/${var.eks_cluster_name}" = "owned"
-    "kubernetes.io/service-name"                    = "default/api-gateway-nlb"
   }
 }
 

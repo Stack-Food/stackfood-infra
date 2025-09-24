@@ -20,6 +20,32 @@ variable "tags" {
 }
 
 ######################
+# Domain Configuration #
+######################
+
+variable "domain_name" {
+  description = "The primary domain name for SSL certificate"
+  type        = string
+}
+
+variable "subject_alternative_names" {
+  description = "Set of domains that should be SANs in the issued certificate"
+  type        = list(string)
+  default     = []
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID for DNS validation"
+  type        = string
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token for DNS management"
+  type        = string
+  sensitive   = true
+}
+
+######################
 # VPC Configuration #
 ######################
 
@@ -42,15 +68,15 @@ variable "private_subnets" {
   }))
   default = {
     "private1" = {
-      availability_zone = "us-west-2a"
+      availability_zone = "us-east-1a"
       cidr_block        = "10.0.1.0/24"
     },
     "private2" = {
-      availability_zone = "us-west-2b"
+      availability_zone = "us-east-1b"
       cidr_block        = "10.0.2.0/24"
     },
     "private3" = {
-      availability_zone = "us-west-2c"
+      availability_zone = "us-east-1c"
       cidr_block        = "10.0.3.0/24"
     }
   }
@@ -64,15 +90,15 @@ variable "public_subnets" {
   }))
   default = {
     "public1" = {
-      availability_zone = "us-west-2a"
+      availability_zone = "us-east-1a"
       cidr_block        = "10.0.101.0/24"
     },
     "public2" = {
-      availability_zone = "us-west-2b"
+      availability_zone = "us-east-1b"
       cidr_block        = "10.0.102.0/24"
     },
     "public3" = {
-      availability_zone = "us-west-2c"
+      availability_zone = "us-east-1c"
       cidr_block        = "10.0.103.0/24"
     }
   }
@@ -90,90 +116,49 @@ variable "eks_cluster_name" {
 variable "kubernetes_version" {
   description = "Kubernetes version to use for the EKS cluster"
   type        = string
-  default     = "1.28"
 }
 
 variable "eks_endpoint_public_access" {
   description = "Whether the EKS public API server endpoint is enabled"
   type        = bool
-  default     = true
-}
-
-# EKS Load Balancer Configuration
-variable "eks_create_internal_alb" {
-  description = "Whether to create an internal ALB for EKS"
-  type        = bool
-  default     = true
-}
-
-variable "eks_create_public_nlb" {
-  description = "Whether to create a public NLB for EKS"
-  type        = bool
-  default     = false
 }
 
 # EKS Remote Management Configuration
 variable "eks_enable_remote_management" {
   description = "Whether to enable remote management access to the EKS cluster"
   type        = bool
-  default     = false
 }
 
 variable "eks_management_cidr_blocks" {
   description = "List of CIDR blocks allowed for remote management access to EKS"
   type        = list(string)
-  default     = []
+}
+
+variable "eks_authentication_mode" {
+  description = "Authentication mode for EKS cluster (e.g., 'aws', 'oidc')"
+  type        = string
 }
 
 variable "eks_node_groups" {
   description = "Map of EKS Node Group configurations"
-  type = map(object({
-    desired_size              = number
-    max_size                  = number
-    min_size                  = number
-    ami_type                  = string
-    capacity_type             = string
-    instance_types            = list(string)
-    disk_size                 = number
-    ssh_key                   = optional(string, null)
-    source_security_group_ids = optional(list(string), [])
-    labels                    = optional(map(string), {})
-    taints = optional(list(object({
-      key    = string
-      value  = string
-      effect = string
-    })), [])
-    launch_template = optional(object({
-      id      = string
-      version = string
-    }), null)
-  }))
-  default = {
-    "app" = {
-      desired_size   = 2
-      max_size       = 4
-      min_size       = 1
-      ami_type       = "AL2_x86_64"
-      capacity_type  = "ON_DEMAND"
-      instance_types = ["t3.medium"]
-      disk_size      = 20
-      labels = {
-        "role" = "app"
-      }
-    },
-    "db" = {
-      desired_size   = 1
-      max_size       = 2
-      min_size       = 1
-      ami_type       = "AL2_x86_64"
-      capacity_type  = "ON_DEMAND"
-      instance_types = ["t3.medium"]
-      disk_size      = 20
-      labels = {
-        "role" = "db"
-      }
-    }
-  }
+}
+
+variable "eks_log_retention_in_days" {
+  description = "Number of days to retain CloudWatch logs"
+  type        = number
+  default     = 7
+}
+
+variable "eks_log_kms_key_id" {
+  description = "KMS key ID for encrypting EKS logs"
+  type        = string
+  default     = null
+}
+
+variable "eks_kms_key_arn" {
+  description = "KMS key ARN for encrypting EKS resources"
+  type        = string
+  default     = null
 }
 
 ######################
@@ -182,12 +167,6 @@ variable "eks_node_groups" {
 
 variable "rds_instances" {
   description = "Identifier for the RDS instance"
-}
-
-variable "db_password" {
-  description = "The password for the RDS database user"
-  type        = string
-  default     = "postgres"
 }
 
 ######################
@@ -501,3 +480,34 @@ variable "cognito_user_pools" {
   }))
   default = {}
 }
+
+
+######################
+# NGINX Ingress Configuration #
+######################
+
+variable "nginx_ingress_name" {
+  description = "Name of the NGINX Ingress Helm release"
+  type        = string
+}
+
+variable "nginx_ingress_repository" {
+  description = "Helm repository for the NGINX Ingress controller"
+  type        = string
+}
+
+variable "nginx_ingress_chart" {
+  description = "Helm chart name for the NGINX Ingress controller"
+  type        = string
+}
+
+variable "nginx_ingress_namespace" {
+  description = "Kubernetes namespace to deploy the NGINX Ingress controller"
+  type        = string
+}
+
+variable "nginx_ingress_version" {
+  description = "Version of the NGINX Ingress Helm chart"
+  type        = string
+}
+

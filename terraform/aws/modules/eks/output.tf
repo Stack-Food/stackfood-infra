@@ -18,11 +18,6 @@ output "cluster_certificate_authority_data" {
   value       = aws_eks_cluster.main.certificate_authority[0].data
 }
 
-output "node_security_group_id" {
-  description = "Security group ID attached to the EKS workers"
-  value       = aws_security_group.node.id
-}
-
 output "cluster_oidc_issuer_url" {
   description = "The URL on the EKS cluster for the OpenID Connect identity provider"
   value       = aws_eks_cluster.main.identity[0].oidc[0].issuer
@@ -40,49 +35,42 @@ output "node_groups" {
   }
 }
 
-# Load Balancer Outputs
-output "internal_alb_arn" {
-  description = "ARN of the internal ALB"
-  value       = var.create_internal_alb ? aws_lb.internal[0].arn : null
-}
-
-output "internal_alb_dns_name" {
-  description = "DNS name of the internal ALB"
-  value       = var.create_internal_alb ? aws_lb.internal[0].dns_name : null
-}
-
-output "internal_alb_zone_id" {
-  description = "Zone ID of the internal ALB"
-  value       = var.create_internal_alb ? aws_lb.internal[0].zone_id : null
-}
-
-output "public_nlb_arn" {
-  description = "ARN of the public NLB"
-  value       = var.create_public_nlb ? aws_lb.public[0].arn : null
-}
-
-output "public_nlb_dns_name" {
-  description = "DNS name of the public NLB"
-  value       = var.create_public_nlb ? aws_lb.public[0].dns_name : null
-}
-
 # Security Group Outputs
 output "cluster_security_group_id" {
   description = "Security group ID for the EKS cluster"
   value       = aws_security_group.cluster.id
 }
 
-output "alb_internal_security_group_id" {
-  description = "Security group ID for the internal ALB"
-  value       = aws_security_group.alb_internal.id
+# EKS Add-ons Outputs
+output "addons" {
+  description = "Map of EKS add-ons"
+  value = {
+    coredns = {
+      arn     = aws_eks_addon.coredns.arn
+      version = aws_eks_addon.coredns.addon_version
+    }
+    kube_proxy = {
+      arn     = aws_eks_addon.kube_proxy.arn
+      version = aws_eks_addon.kube_proxy.addon_version
+    }
+    vpc_cni = {
+      arn     = aws_eks_addon.vpc_cni.arn
+      version = aws_eks_addon.vpc_cni.addon_version
+    }
+    ebs_csi_driver = {
+      arn     = aws_eks_addon.ebs_csi_driver.arn
+      version = aws_eks_addon.ebs_csi_driver.addon_version
+    }
+  }
 }
 
-output "nlb_public_security_group_id" {
-  description = "Security group ID for the public NLB"
-  value       = var.create_public_nlb ? aws_security_group.nlb_public[0].id : null
+# CloudWatch Log Group Output (using EKS auto-created log group)
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group (auto-created by EKS)"
+  value       = "/aws/eks/${aws_eks_cluster.main.name}/cluster"
 }
 
-output "management_security_group_id" {
-  description = "Security group ID for remote management"
-  value       = var.enable_remote_management ? aws_security_group.management[0].id : null
+output "cloudwatch_log_group_arn" {
+  description = "ARN of the CloudWatch log group (auto-created by EKS)"
+  value       = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${aws_eks_cluster.main.name}/cluster"
 }

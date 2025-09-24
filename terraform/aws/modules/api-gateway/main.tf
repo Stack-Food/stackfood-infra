@@ -3,6 +3,7 @@
 ############################
 # VPC Link para conectar API Gateway com EKS (se especificado)
 resource "aws_api_gateway_vpc_link" "eks" {
+  count = var.eks_cluster_name != null ? 1 : 0
 
   name        = "${var.api_name}-eks-vpc-link"
   description = "VPC Link for ${var.api_name} to connect to EKS cluster ${var.eks_cluster_name}"
@@ -17,7 +18,6 @@ resource "aws_api_gateway_vpc_link" "eks" {
     var.tags
   )
 }
-
 
 
 # CloudWatch Log Group for API Gateway
@@ -111,11 +111,11 @@ resource "aws_api_gateway_integration" "eks" {
 
   integration_http_method = each.value.integration_http_method
   type                    = each.value.type
-  uri                     = local.integration_uris[each.key]
+  uri                     = local.eks_integration_uris[each.key]
 
   # VPC Link configuration para integrações EKS
   connection_type = "VPC_LINK"
-  connection_id   = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks.id : null
+  connection_id   = length(aws_api_gateway_vpc_link.eks) > 0 ? aws_api_gateway_vpc_link.eks[0].id : null
 
   # Configurações opcionais
   credentials          = each.value.credentials
@@ -149,7 +149,7 @@ resource "aws_api_gateway_integration" "lambda" {
 
   integration_http_method = each.value.integration_http_method
   type                    = each.value.type
-  uri                     = local.integration_uris[each.key]
+  uri                     = local.lambda_integration_uris[each.key]
 
   # Configurações opcionais
   credentials          = each.value.credentials
@@ -160,14 +160,6 @@ resource "aws_api_gateway_integration" "lambda" {
   cache_namespace      = each.value.cache_namespace
   content_handling     = each.value.content_handling
   timeout_milliseconds = each.value.timeout_milliseconds
-}
-
-# Resource consolidado para referências
-locals {
-  all_integrations = merge(
-    aws_api_gateway_integration.eks,
-    aws_api_gateway_integration.lambda
-  )
 }
 
 # Method Responses

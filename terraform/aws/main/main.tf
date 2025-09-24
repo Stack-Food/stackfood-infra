@@ -1,7 +1,3 @@
-#######################
-# Modules & Resources #
-#######################
-
 # VPC Module
 module "vpc" {
   source = "../modules/vpc/"
@@ -24,41 +20,91 @@ module "vpc" {
   subnets_public  = var.public_subnets
 }
 
-# EKS Module
+# ACM Certificate Module
+module "acm" {
+  source = "../modules/acm/"
+
+  # Domain Configuration
+  domain_name               = var.domain_name
+  subject_alternative_names = var.subject_alternative_names
+
+  # General Settings
+  environment = var.environment
+  tags        = var.tags
+
+  # Cloudflare Settings
+  cloudflare_zone_id = var.cloudflare_zone_id
+
+  # Validation Settings
+  validation_method = "DNS"
+
+  # Certificate Settings
+  key_algorithm                   = "RSA_2048"
+  transparency_logging_preference = "ENABLED"
+}
+
+# EKS Module - Usando módulo personalizado compatível com AWS Academy
 module "eks" {
   source = "../modules/eks/"
 
-  # General Settings
-  cluster_name = var.eks_cluster_name
-  environment  = var.environment
-  tags         = var.tags
+  # Configurações básicas do cluster
+  cluster_name       = var.eks_cluster_name
+  kubernetes_version = var.kubernetes_version
 
-  # Network Settings
-  subnet_ids        = module.vpc.private_subnet_ids
-  node_subnet_ids   = module.vpc.private_subnet_ids
-  public_subnet_ids = module.vpc.public_subnet_ids
-  vpc_id            = module.vpc.vpc_id
-  vpc_cidr          = module.vpc.vpc_cidr_block
+  # Configurações de VPC
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
 
-  # Cluster Settings
-  kubernetes_version      = var.kubernetes_version
-  endpoint_private_access = true
-  endpoint_public_access  = var.eks_endpoint_public_access
+  # Configuração de IAM (usando a LabRole)
+  cluster_role_name = "LabRole"
+  node_role_name    = "LabRole"
 
-  # Load Balancer Settings
-  create_internal_alb = var.eks_create_internal_alb
-  create_public_nlb   = var.eks_create_public_nlb
+  # Configurações de endpoint
+  endpoint_private_access = false
+  endpoint_public_access  = true
 
-  # Remote Management Settings
+  # Configuração de logs
+  log_retention_in_days = 30
+  log_kms_key_id        = var.eks_kms_key_arn
+
+  # Configuração de criptografia
+  kms_key_arn = var.eks_kms_key_arn
+
+  # Configuração dos grupos de nós
+  node_groups = {
+    api = {
+      desired_size   = 2
+      max_size       = 3
+      min_size       = 2
+      instance_types = ["c5.xlarge"]
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 100
+    }
+    worker = {
+      desired_size   = 2
+      max_size       = 3
+      min_size       = 2
+      instance_types = ["c5.xlarge"]
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 100
+    }
+  }
+
+  # Configurações de acesso remoto
   enable_remote_management = var.eks_enable_remote_management
   management_cidr_blocks   = var.eks_management_cidr_blocks
+  vpc_cidr                 = var.vpc_cidr_blocks[0]
 
-  # Node Group Settings
-  node_groups = var.eks_node_groups
+  # Modo de autenticação
+  authentication_mode = var.eks_authentication_mode
 
-  # IAM Role Settings
-  cluster_role_name = var.eks_cluster_role_name
-  node_role_name    = var.eks_node_role_name
+  # Tags
+  environment = var.environment
+  tags        = var.tags
+
+  # Dependências
+  depends_on = [module.vpc]
 }
 
 # RDS Module
@@ -77,7 +123,7 @@ module "rds" {
   # Network Settings
   vpc_id                  = module.vpc.vpc_id
   subnet_ids              = module.vpc.private_subnet_ids
-  allowed_security_groups = [module.eks.node_security_group_id]
+  allowed_security_groups = [module.eks.cluster_security_group_id]
 
   # Database Settings
   instance_class              = each.value.db_instance_class
@@ -103,11 +149,24 @@ module "rds" {
   deletion_protection          = lookup(each.value, "deletion_protection", false)
 }
 
+# NGINX Ingress
+module "nginx-ingress" {
+  source     = "../modules/kubernetes/nginx-ingress"
+  depends_on = [module.eks, module.acm]
+
+  ingress_name        = var.nginx_ingress_name
+  ingress_repository  = var.nginx_ingress_repository
+  ingress_chart       = var.nginx_ingress_chart
+  ingress_namespace   = var.nginx_ingress_namespace
+  ingress_version     = var.nginx_ingress_version
+  ssl_certificate_arn = module.acm.certificate_arn
+}
+
 # Lambda Functions
 module "lambda" {
-  for_each = var.lambda_functions
-  source   = "../modules/lambda/"
-  #depends_on = [module.cognito]
+  for_each   = var.lambda_functions
+  source     = "../modules/lambda/"
+  depends_on = [module.vpc]
 
   # General Settings
   function_name = each.key
@@ -117,7 +176,7 @@ module "lambda" {
 
   # Code and Runtime - condicionalmente baseado no package_type
   package_type     = each.value.package_type
-  runtime          = try(each.value.runtime, ".NET 8")
+  runtime          = try(each.value.runtime, "dotnet8")
   handler          = try(each.value.handler, null)
   filename         = try(each.value.filename, null)
   source_code_hash = try(each.value.source_code_hash, null)
