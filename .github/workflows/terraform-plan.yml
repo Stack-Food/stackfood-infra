@@ -101,14 +101,3 @@ jobs:
           echo "PLAN<<EOF" >> $GITHUB_ENV
           echo "$PLAN" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-
-      # - name: Post Plan to GitHub PR
-      #   uses: mshick/add-pr-comment@v2
-      #   with:
-      #     allow-repeats: true
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-      #     message: |
-      #       ## Terraform Plan Output (Production)
-      #       ```diff
-      #       ${{ env.PLAN }}
-      #       ```

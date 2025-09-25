@@ -79,7 +79,7 @@ jobs:
         if: steps.plan.outcome == 'success'
         id: apply
         continue-on-error: true
-        run: terraform apply -input=false -no-color tfplan
+        run: terraform apply -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -auto-approve -input=false -no-color tfplan
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

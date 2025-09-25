@@ -53,21 +53,9 @@ resource "aws_lambda_function" "this" {
   package_type  = var.package_type
 
   # For ZIP packages
-  handler           = var.package_type == "Zip" ? var.handler : null
-  runtime           = var.package_type == "Zip" ? var.runtime : null
-  filename          = var.package_type == "Zip" ? var.filename : null
-  source_code_hash  = var.package_type == "Zip" ? var.source_code_hash : null
-  s3_bucket         = var.package_type == "Zip" ? var.s3_bucket : null
-  s3_key            = var.package_type == "Zip" ? var.s3_key : null
-  s3_object_version = var.package_type == "Zip" ? var.s3_object_version : null
-
-  # For Container images
-  image_uri = var.package_type == "Image" ? var.image_uri : null
-
-  memory_size = var.memory_size
-  timeout     = var.timeout
-  publish     = var.publish
-  kms_key_arn = var.kms_key_arn
+  runtime  = var.package_type == "Zip" ? var.runtime : null
+  handler  = var.package_type == "Zip" ? var.handler : null
+  filename = data.archive_file.lambda_placeholder.output_path
 
   # Environment variables
   dynamic "environment" {
@@ -86,22 +74,6 @@ resource "aws_lambda_function" "this" {
     }
   }
 
-  # Dead letter configuration
-  dynamic "dead_letter_config" {
-    for_each = var.dead_letter_target_arn != null ? [1] : []
-    content {
-      target_arn = var.dead_letter_target_arn
-    }
-  }
-
-  # Tracing configuration
-  dynamic "tracing_config" {
-    for_each = var.tracing_mode != null ? [1] : []
-    content {
-      mode = var.tracing_mode
-    }
-  }
-
   tags = merge(
     {
       Name        = var.function_name
@@ -109,7 +81,13 @@ resource "aws_lambda_function" "this" {
     },
     var.tags
   )
-
+  lifecycle {
+    ignore_changes = [
+      filename,
+      source_code_hash,
+      last_modified,
+    ]
+  }
   depends_on = [aws_cloudwatch_log_group.lambda]
 }
 

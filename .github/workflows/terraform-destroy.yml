@@ -1,0 +1,127 @@
+name: "4. AWS / PROD / Terraform Destroy"
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'terraform/aws/main/**'
+  #     - 'terraform/aws/env/prod.tfvars'
+  workflow_dispatch:
+
+jobs:
+  inform_about_destroy:
+    name: Inform About Destroy
+    runs-on: ubuntu-22.04
+    environment:
+      name: Production
+
+    steps:
+      - name: Inform on PR that destroy is Running
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            ***Running terraform destroy***
+            Results will display here momentarily...
+
+  plan_and_destroy:
+    name: Plan and Destroy
+    runs-on: ubuntu-22.04
+    environment:
+      name: Production
+    defaults:
+      run:
+        working-directory: ./terraform/aws/main
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialise Terraform
+        run: terraform init -input=false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: "Production"
+
+      - name: Terraform Plan
+        id: plan
+        continue-on-error: true
+        run: |
+          terraform plan -var-file="../env/prod.tfvars" -input=false -no-color -out=tfplan \
+          && terraform show -no-color tfplan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: "Production"
+
+      - name: Reformat Plan
+        if: steps.plan.outcome == 'success'
+        run: |
+          echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
+          | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
+
+      - name: Put Plan in Env Var
+        if: steps.plan.outcome == 'success'
+        run: |
+          PLAN=$(cat plan.txt)
+          echo "PLAN<<EOF" >> $GITHUB_ENV
+          echo "$PLAN" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Terraform Destroy
+        if: steps.plan.outcome == 'success'
+        id: destroy
+        continue-on-error: true
+        run: terraform destroy -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -auto-approve -input=false -no-color tfplan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: "Production"
+
+      - name: Post Plan and Destroy to GitHub PR
+        if: steps.plan.outcome == 'success' && steps.destroy.outcome == 'success'
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            Terraform destroy Output (Production):
+
+            ```diff
+            ${{ env.PLAN }}
+            ```
+
+            ```
+            ${{ steps.destroy.outputs.stdout }}
+            ```
+
+      - name: Post Plan Failure
+        if: steps.plan.outcome == 'failure'
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            Terraform Plan **FAILED** (Production):
+
+            ```
+            ${{ steps.plan.outputs.stderr }}
+            ```
+
+      - name: Post destroy Failure
+        if: steps.destroy.outcome == 'failure'
+        uses: mshick/add-pr-comment@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: |
+            Terraform destroy **Failed** (Production):
+
+            ```
+            ${{ steps.destroy.outputs.stderr }}
+            ```

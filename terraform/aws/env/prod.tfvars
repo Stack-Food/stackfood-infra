@@ -156,15 +156,14 @@ rds_role_name         = "LabRole"
 lambda_functions = {
   "stackfood-auth" = {
     description  = "Lambda for CPF authentication and JWT validation"
-    package_type = "Image"
+    package_type = "Zip"
     # Imagem base oficial AWS Lambda para .NET 8 - RUNTIME
-    image_uri   = "public.ecr.aws/lambda/dotnet:8"
     memory_size = 256
-    runtime     = null # Não usado para package_type = "Image"
+    runtime     = "dotnet8"
     timeout     = 30
     vpc_access  = false
-    handler     = null # Não usado para package_type = "Image"
-    filename    = null
+    handler     = "index.handler"
+    filename    = "function.zip"
     environment_variables = {
       USER_POOL_ID           = ""
       CLIENT_ID              = ""
