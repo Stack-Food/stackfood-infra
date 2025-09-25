@@ -98,7 +98,7 @@ jobs:
         id: plan
         continue-on-error: true
         run: |
-          terraform plan -var-file="../env/prod.tfvars" -input=false -no-color -out=tfplan
+          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -input=false -no-color -out=tfplan
           terraform show -no-color tfplan
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
