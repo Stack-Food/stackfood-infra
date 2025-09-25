@@ -57,7 +57,7 @@ resource "aws_cognito_user_pool" "this" {
 resource "aws_cognito_user_pool_client" "this" {
   name         = "${var.user_pool_name}-client"
   user_pool_id = aws_cognito_user_pool.this.id
-  
+
   # Não gerar secret para simplificar a integração
   generate_secret = false
 
@@ -87,6 +87,7 @@ resource "aws_cognito_user_pool_client" "this" {
   read_attributes = ["custom:cpf", "preferred_username", "email"]
 }
 
+
 ###########################
 # Cognito Guest User      #
 ###########################
@@ -109,3 +110,4 @@ resource "aws_cognito_user" "guest" {
     email_verified = true
   }
 }
+
