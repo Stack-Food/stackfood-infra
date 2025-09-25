@@ -4,21 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  inform_about_destroy:
-    name: Inform About Destroy
-    runs-on: ubuntu-22.04
-    environment:
-      name: Production
-
-    steps:
-      - name: Inform on PR that destroy is Running
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            ***Running terraform destroy***
-            Results will display here momentarily...
-
   plan_and_destroy:
     name: Plan and Destroy
     runs-on: ubuntu-22.04
@@ -86,43 +71,3 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
-
-      - name: Post Plan and Destroy to GitHub PR
-        if: steps.plan.outcome == 'success' && steps.destroy.outcome == 'success'
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            Terraform destroy Output (Production):
-
-            ```diff
-            ${{ env.PLAN }}
-            ```
-
-            ```
-            ${{ steps.destroy.outputs.stdout }}
-            ```
-
-      - name: Post Plan Failure
-        if: steps.plan.outcome == 'failure'
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            Terraform Plan **FAILED** (Production):
-
-            ```
-            ${{ steps.plan.outputs.stderr }}
-            ```
-
-      - name: Post destroy Failure
-        if: steps.destroy.outcome == 'failure'
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            Terraform destroy **Failed** (Production):
-
-            ```
-            ${{ steps.destroy.outputs.stderr }}
-            ```

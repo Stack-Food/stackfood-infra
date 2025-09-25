@@ -4,21 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  inform_about_apply:
-    name: Inform About Apply
-    runs-on: ubuntu-22.04
-    environment:
-      name: Production
-
-    steps:
-      - name: Inform on PR that Apply is Running
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            ***Running terraform apply***
-            Results will display here momentarily...
-
   plan_and_apply:
     name: Plan and Apply
     runs-on: ubuntu-22.04
@@ -87,43 +72,3 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
-
-      - name: Post Plan and Apply to GitHub PR
-        if: steps.plan.outcome == 'success' && steps.apply.outcome == 'success'
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            Terraform Apply Output (Production):
-
-            ```diff
-            ${{ env.PLAN }}
-            ```
-
-            ```
-            ${{ steps.apply.outputs.stdout }}
-            ```
-
-      - name: Post Plan Failure
-        if: steps.plan.outcome == 'failure'
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            Terraform Plan **FAILED** (Production):
-
-            ```
-            ${{ steps.plan.outputs.stderr }}
-            ```
-
-      - name: Post Apply Failure
-        if: steps.apply.outcome == 'failure'
-        uses: mshick/add-pr-comment@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            Terraform Apply **Failed** (Production):
-
-            ```
-            ${{ steps.apply.outputs.stderr }}
-            ```
