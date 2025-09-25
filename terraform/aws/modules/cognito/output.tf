@@ -18,12 +18,7 @@ output "user_pool_endpoint" {
   value       = aws_cognito_user_pool.this.endpoint
 }
 
-output "api_gateway_authorizer_config" {
+output "user_pool_id" {
   description = "Configuração para authorizer do API Gateway"
-  value = {
-    type          = "COGNITO_USER_POOLS"
-    user_pool_arn = aws_cognito_user_pool.this.arn
-    user_pool_id  = aws_cognito_user_pool.this.id
-    client_id     = aws_cognito_user_pool_client.this.id
-  }
+  value       = aws_cognito_user_pool.this.id
 }
