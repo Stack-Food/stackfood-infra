@@ -7,3 +7,9 @@ variable "environment" {
   description = "dev"
   type        = string
 }
+
+variable "guest_user_password" {
+  description = "Senha para o usuário convidado. Deve ser forte."
+  type        = string
+  sensitive   = true
+}

@@ -74,8 +74,9 @@ resource "aws_cognito_user_pool_client" "this" {
 
   # Fluxos de autenticação permitidos
   explicit_auth_flows = [
-    "ALLOW_CUSTOM_AUTH",       # Para autenticação customizada com CPF
-    "ALLOW_REFRESH_TOKEN_AUTH" # Para renovar tokens
+    "ALLOW_USER_PASSWORD_AUTH",     # Para autenticação padrão
+    "ALLOW_CUSTOM_AUTH",        # Para autenticação customizada com CPF
+    "ALLOW_REFRESH_TOKEN_AUTH"  # Para renovar tokens
   ]
 
   # Prevenir vazamento de informações sobre existência de usuários
@@ -85,3 +86,28 @@ resource "aws_cognito_user_pool_client" "this" {
   # Atributos que podem ser lidos
   read_attributes = ["custom:cpf", "preferred_username", "email"]
 }
+
+
+###########################
+# Cognito Guest User      #
+###########################
+
+resource "aws_cognito_user" "guest" {
+  user_pool_id = aws_cognito_user_pool.this.id
+  username     = "convidado"
+  password     = var.guest_user_password
+
+  # Suprime o e-mail de boas-vindas, o que, em conjunto com a definição da senha,
+  # cria o usuário com o status CONFIRMED, tornando a senha "permanente"
+  # e não exigindo alteração no primeiro login.
+  message_action = "SUPPRESS"
+
+  attributes = {
+    name  = "Usuário Convidado"
+    email = "convidado@example.com"
+    # O Cognito requer que o e-mail seja verificado para algumas operações,
+    # mas para um usuário interno/convidado, podemos marcá-lo como verificado.
+    email_verified = true
+  }
+}
+

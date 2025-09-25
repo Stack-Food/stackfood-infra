@@ -257,4 +257,6 @@ module "cognito" {
 
   user_pool_name = "stackfood"
   environment    = var.environment
+  
+  guest_user_password = "Convidado123!"
 }
