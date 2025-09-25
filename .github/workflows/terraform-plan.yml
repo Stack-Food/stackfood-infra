@@ -1,0 +1,122 @@
+name: "AWS / PROD / Terraform Plan"
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  tflint:
+    name: Lint
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+    defaults:
+      run:
+        working-directory: ./terraform/aws/
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout source code
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Substitua pela sua região
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Só se usar temporary credentials
+
+      - uses: actions/cache@v4
+        name: Cache plugin dir
+        with:
+          path: ~/.tflint.d/plugins
+          key: aws-tflint-${{ hashFiles('.tflint.hcl') }}
+
+      - uses: terraform-linters/setup-tflint@v4
+        name: Setup TFLint
+        with:
+          tflint_version: latest
+
+      - name: Show version
+        run: tflint --version
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN ao invés de TOKEN
+
+      - name: Run TFLint
+        id: tflint
+        run: tflint -f compact
+
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+    defaults:
+      run:
+        working-directory: ./terraform/aws/main
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Substitua pela sua região
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Só se usar temporary credentials
+
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Initialise Terraform
+        run: terraform init -input=false
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: "Production"
+
+      - name: Terraform FMT
+        run: terraform fmt -check -diff -recursive
+
+      - name: Terraform Plan
+        id: plan
+        continue-on-error: true
+        run: |
+          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -input=false -no-color -out=tfplan
+          terraform show -no-color tfplan
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_WORKSPACE: "Production"
+
+      - name: Create artifacts directory
+        if: always()
+        run: mkdir -p ../../../artifacts
+
+      - name: Save Plan Output
+        if: always()
+        run: |
+          if [ -f tfplan ]; then
+            terraform show -no-color tfplan > ../../../artifacts/terraform-plan.txt
+          fi
+          echo "Plan status: ${{ steps.plan.outcome }}" > ../../../artifacts/plan-summary.txt
+
+      - name: Upload Plan Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 15
