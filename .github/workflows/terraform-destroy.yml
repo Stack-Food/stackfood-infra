@@ -1,12 +1,6 @@
 name: "AWS / PROD / Terraform Destroy"
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - 'terraform/aws/main/**'
-  #     - 'terraform/aws/env/prod.tfvars'
   workflow_dispatch:
 
 jobs:

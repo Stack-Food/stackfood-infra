@@ -1,13 +1,10 @@
 name: "AWS / PROD / Terraform Plan"
 
 on:
-  push:
-    paths:
-      - "terraform/aws/**"
-      - ".github/workflows/**"
   pull_request:
-    paths:
-      - "terraform/aws/**"
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 jobs:
