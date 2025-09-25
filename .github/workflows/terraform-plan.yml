@@ -30,7 +30,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1 # Substitua pela sua região
-          # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  # Só se usar temporary credentials
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Só se usar temporary credentials
 
       - uses: actions/cache@v4
         name: Cache plugin dir
@@ -91,7 +91,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
 
-      - name: Terraform Lint
+      - name: Terraform FMT
         run: terraform fmt -check -diff -recursive
 
       - name: Terraform Plan
