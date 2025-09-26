@@ -200,7 +200,7 @@ module "api_gateway" {
   for_each = var.api_gateways
   source   = "../modules/api-gateway/"
   # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  depends_on = [module.lambda, module.eks]
+  depends_on = [module.lambda, module.eks, module.nginx-ingress]
 
   # General Settings
   api_name    = each.key

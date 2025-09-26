@@ -1,23 +1,7 @@
 ############################
 # API Gateway REST Module #
 ############################
-# VPC Link para conectar API Gateway com EKS (se especificado)
-resource "aws_api_gateway_vpc_link" "eks" {
-  count = var.eks_cluster_name != null ? 1 : 0
 
-  name        = "${var.api_name}-eks-vpc-link"
-  description = "VPC Link for ${var.api_name} to connect to EKS cluster ${var.eks_cluster_name}"
-  target_arns = length(data.aws_lb.eks_nlb) > 0 ? [data.aws_lb.eks_nlb[0].arn] : []
-
-  tags = merge(
-    {
-      Name        = "${var.api_name}-eks-vpc-link"
-      Environment = var.environment
-      Cluster     = var.eks_cluster_name
-    },
-    var.tags
-  )
-}
 
 
 # CloudWatch Log Group for API Gateway

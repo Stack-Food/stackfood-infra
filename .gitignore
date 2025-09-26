@@ -18,3 +18,9 @@ terraform.rc
 
 # Terraform plan output
 *.tfplan
+
+# Sensitive files
+*.pem
+*.key
+*.crt
+*.zip
