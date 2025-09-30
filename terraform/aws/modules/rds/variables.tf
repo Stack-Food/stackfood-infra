@@ -33,8 +33,19 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "subnet_ids" {
+variable "private_subnet_ids" {
   description = "A list of VPC subnet IDs to place the RDS instance"
+  type        = list(string)
+}
+
+variable "db_name" {
+  description = "The name of the database to create when the DB instance is created"
+  type        = string
+  default     = "stackfood"
+}
+
+variable "public_subnet_ids" {
+  description = "A list of public VPC subnet IDs"
   type        = list(string)
 }
 
@@ -80,6 +91,11 @@ variable "storage_encrypted" {
   description = "Specifies whether the DB instance is encrypted"
   type        = bool
   default     = true
+}
+variable "publicly_accessible" {
+  description = "Specifies whether the RDS instance is publicly accessible"
+  type        = bool
+  default     = false
 }
 
 variable "kms_key_id" {
