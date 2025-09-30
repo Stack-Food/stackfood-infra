@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: photoapp
+spec:
+selector:
+  matchLabels:
+    app: photoapp
+replicas: 3
+template:
+  metadata:
+    labels:
+      app: photoapp
+  spec:
+    containers:
+      - image: ravindrasingh6969/nodeapp:latest
+        name: photoapp
+        ports:
+          - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+name: photoapp
+spec:
+ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+type: ClusterIP
+selector:
+  app: photoapp
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+name: photoapp
+annotations:
+  # ✅ Annotations corretas para NGINX Ingress
+  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  # Opcional: configurações adicionais do NGINX
+  nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+spec:
+ingressClassName: nginx # ✅ Usando NGINX
+tls:
+  - hosts:
+      - myapp.stackfood.com.br
+    secretName: stackfood-tls # ✅ Certificado via Secret
+rules:
+  - host: myapp.stackfood.com.br
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: photoapp
+              port:
+                number: 80

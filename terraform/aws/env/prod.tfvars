@@ -120,13 +120,13 @@ rds_instances = {
     storage_encrypted            = false         # Simplified for AWS Academy
     db_instance_class            = "db.t3.micro" # Changed to supported instance type
     db_username                  = "stackfood"
-    db_password                  = "postgre" # Ensure this meets complexity requirements
-    manage_master_user_password  = true
+    db_password                  = "postgres" # Ensure this meets complexity requirements
+    manage_master_user_password  = false
     engine                       = "postgres" # Lowercase as required
     engine_version               = "16.3"     # Updated version
     major_engine_version         = "16"
     identifier                   = "stackfood-prod-postgres"
-    publicly_accessible          = false
+    publicly_accessible          = true
     multi_az                     = false # Disabled for cost savings
     performance_insights_enabled = false # Enhanced monitoring not supported
     port                         = 5432
@@ -176,8 +176,9 @@ lambda_functions = {
 ##########################
 # API Gateway Configuration #
 ##########################
+
 api_gateways = {
-  "stackfood-api" = {
+  "StackFood.API" = {
     description          = "StackFood Production API Gateway"
     stage_name           = "prod"
     endpoint_type        = "REGIONAL"
@@ -185,18 +186,17 @@ api_gateways = {
     enable_access_logs   = true
     xray_tracing_enabled = false
 
-    # CORS Configuration simples
+    # CORS Configuration
     cors_allow_origins     = ["*"]
-    cors_allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    cors_allow_headers     = ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"]
+    cors_allow_methods     = ["GET", "POST", "PUT", "DELETE"]
+    cors_allow_headers     = ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"]
     cors_allow_credentials = false
 
-    # Sem throttling para POC
     cache_cluster_enabled = false
 
-    # API Resources Structure - Reorganizada para evitar conflitos
+    # API Resources Structure - Corrigida para corresponder ao swagger.json
     resources = {
-      # Auth resources (para lambdas de autenticação)
+      # Auth resources (para autenticação)
       "auth" = {
         path_part = "auth"
       }
@@ -209,12 +209,12 @@ api_gateways = {
         parent_id = null # Will be set to auth resource ID
       }
 
-      # API resources - estrutura reorganizada
+      # API root resource
       "api" = {
         path_part = "api"
       }
 
-      # Customers - com estrutura própria
+      # Customers resources - exatamente como no swagger
       "api-customers" = {
         path_part = "customers"
         parent_id = null # Will be set to api resource ID
@@ -224,42 +224,42 @@ api_gateways = {
         parent_id = null # Will be set to api-customers resource ID
       }
 
-      # Orders - com estrutura própria
-      "api-orders" = {
-        path_part = "orders"
+      # Order resources - singular como no swagger (/api/order)
+      "api-order" = {
+        path_part = "order"
         parent_id = null # Will be set to api resource ID
       }
-      "api-orders-id" = {
-        path_part = "{orderId}"
-        parent_id = null # Will be set to api-orders resource ID
+      "api-order-id" = {
+        path_part = "{id}"
+        parent_id = null # Will be set to api-order resource ID
       }
-      "api-orders-id-payment" = {
+      "api-order-id-payment" = {
         path_part = "payment"
-        parent_id = null # Will be set to api-orders-id resource ID
+        parent_id = null # Will be set to api-order-id resource ID
       }
-      "api-orders-id-status" = {
+      "api-order-id-change-status" = {
         path_part = "change-status"
-        parent_id = null # Will be set to api-orders-id resource ID
+        parent_id = null # Will be set to api-order-id resource ID
       }
 
-      # Products - com estrutura própria
-      "api-products" = {
-        path_part = "products"
+      # Product resources - singular como no swagger (/api/product)
+      "api-product" = {
+        path_part = "product"
         parent_id = null # Will be set to api resource ID
       }
-      "api-products-all" = {
+      "api-product-all" = {
         path_part = "all"
-        parent_id = null # Will be set to api-products resource ID
+        parent_id = null # Will be set to api-product resource ID
       }
-      "api-products-id" = {
-        path_part = "{productId}"
-        parent_id = null # Will be set to api-products resource ID
+      "api-product-id" = {
+        path_part = "{id}"
+        parent_id = null # Will be set to api-product resource ID
       }
     }
 
-    # API Methods - Incluindo auth e rotas do Swagger
+    # API Methods - Todos os endpoints do swagger
     methods = {
-      # Auth endpoints (para lambdas de autenticação)
+      # Auth endpoints
       "auth-cpf-post" = {
         resource_key  = "auth-cpf"
         http_method   = "POST"
@@ -275,96 +275,102 @@ api_gateways = {
       "customers-post" = {
         resource_key  = "api-customers"
         http_method   = "POST"
-        authorization = "NONE" # Lambda de criação de usuário
+        authorization = "NONE"
       }
-      "customers-get-cpf" = {
+      "customers-cpf-get" = {
         resource_key  = "api-customers-cpf"
         http_method   = "GET"
-        authorization = "NONE" # EKS backend (protegido via JWT na aplicação)
+        authorization = "NONE"
         request_parameters = {
           "method.request.path.cpf" = true
         }
       }
 
       # Order endpoints
-      "orders-get" = {
-        resource_key  = "api-orders"
+      "order-get" = {
+        resource_key  = "api-order"
         http_method   = "GET"
         authorization = "NONE"
+        request_parameters = {
+          "method.request.querystring.status" = false
+        }
       }
-      "orders-post" = {
-        resource_key  = "api-orders"
+      "order-post" = {
+        resource_key  = "api-order"
         http_method   = "POST"
         authorization = "NONE"
       }
-      "orders-get-id" = {
-        resource_key  = "api-orders-id"
+      "order-id-get" = {
+        resource_key  = "api-order-id"
         http_method   = "GET"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.orderId" = true
+          "method.request.path.id" = true
         }
       }
-      "orders-payment-put" = {
-        resource_key  = "api-orders-id-payment"
+      "order-payment-put" = {
+        resource_key  = "api-order-id-payment"
         http_method   = "PUT"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.orderId" = true
+          "method.request.path.id" = true
         }
       }
-      "orders-status-put" = {
-        resource_key  = "api-orders-id-status"
+      "order-change-status-put" = {
+        resource_key  = "api-order-id-change-status"
         http_method   = "PUT"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.orderId" = true
+          "method.request.path.id" = true
         }
       }
 
       # Product endpoints
-      "products-all-get" = {
-        resource_key  = "api-products-all"
-        http_method   = "GET"
-        authorization = "NONE"
-      }
-      "products-get-id" = {
-        resource_key  = "api-products-id"
+      "product-all-get" = {
+        resource_key  = "api-product-all"
         http_method   = "GET"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.productId" = true
+          "method.request.querystring.category" = false
         }
       }
-      "products-delete-id" = {
-        resource_key  = "api-products-id"
+      "product-id-get" = {
+        resource_key  = "api-product-id"
+        http_method   = "GET"
+        authorization = "NONE"
+        request_parameters = {
+          "method.request.path.id" = true
+        }
+      }
+      "product-id-delete" = {
+        resource_key  = "api-product-id"
         http_method   = "DELETE"
         authorization = "NONE"
         request_parameters = {
-          "method.request.path.productId" = true
+          "method.request.path.id" = true
         }
       }
-      "products-post" = {
-        resource_key  = "api-products"
+      "product-post" = {
+        resource_key  = "api-product"
         http_method   = "POST"
         authorization = "NONE"
       }
-      "products-put" = {
-        resource_key  = "api-products"
+      "product-put" = {
+        resource_key  = "api-product"
         http_method   = "PUT"
         authorization = "NONE"
       }
     }
 
-    # Integrações com roteamento inteligente: Auth → Lambda, API → EKS/Lambda
+    # Integrações
     integrations = {
-      # Auth integrations (Lambda)
+      # Auth integrations 
       "auth-cpf-post-integration" = {
         method_key              = "auth-cpf-post"
         resource_key            = "auth-cpf"
         integration_http_method = "POST"
         type                    = "AWS_PROXY"
-        integration_type        = "lambda"
+        integration_type        = "eks"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
       "auth-validate-post-integration" = {
@@ -372,23 +378,21 @@ api_gateways = {
         resource_key            = "auth-validate"
         integration_http_method = "POST"
         type                    = "AWS_PROXY"
-        integration_type        = "lambda"
+        integration_type        = "eks"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
 
-      # Customer creation integration (Lambda)
+      # Customer integrations
       "customers-post-integration" = {
         method_key              = "customers-post"
         resource_key            = "api-customers"
         integration_http_method = "POST"
         type                    = "AWS_PROXY"
-        integration_type        = "lambda"
+        integration_type        = "eks"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
-
-      # API integrations (EKS)
-      "customers-get-cpf-integration" = {
-        method_key              = "customers-get-cpf"
+      "customers-cpf-get-integration" = {
+        method_key              = "customers-cpf-get"
         resource_key            = "api-customers-cpf"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
@@ -401,114 +405,121 @@ api_gateways = {
       }
 
       # Order integrations (EKS)
-      "orders-get-integration" = {
-        method_key              = "orders-get"
-        resource_key            = "api-orders"
+      "order-get-integration" = {
+        method_key              = "order-get"
+        resource_key            = "api-order"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/orders"
+        eks_path                = "/api/order"
         passthrough_behavior    = "WHEN_NO_MATCH"
+        request_parameters = {
+          "integration.request.querystring.status" = "method.request.querystring.status"
+        }
       }
-      "orders-post-integration" = {
-        method_key              = "orders-post"
-        resource_key            = "api-orders"
+      "order-post-integration" = {
+        method_key              = "order-post"
+        resource_key            = "api-order"
         integration_http_method = "POST"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/orders"
+        eks_path                = "/api/order"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
-      "orders-get-id-integration" = {
-        method_key              = "orders-get-id"
-        resource_key            = "api-orders-id"
+      "order-id-get-integration" = {
+        method_key              = "order-id-get"
+        resource_key            = "api-order-id"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/orders/{orderId}"
+        eks_path                = "/api/order/{id}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.orderId" = "method.request.path.orderId"
+          "integration.request.path.id" = "method.request.path.id"
         }
       }
-      "orders-payment-put-integration" = {
-        method_key              = "orders-payment-put"
-        resource_key            = "api-orders-id-payment"
+      "order-payment-put-integration" = {
+        method_key              = "order-payment-put"
+        resource_key            = "api-order-id-payment"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/orders/{orderId}/payment"
+        eks_path                = "/api/order/{id}/payment"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.orderId" = "method.request.path.orderId"
+          "integration.request.path.id" = "method.request.path.id"
         }
       }
-      "orders-status-put-integration" = {
-        method_key              = "orders-status-put"
-        resource_key            = "api-orders-id-status"
+      "order-change-status-put-integration" = {
+        method_key              = "order-change-status-put"
+        resource_key            = "api-order-id-change-status"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/orders/{orderId}/change-status"
+        eks_path                = "/api/order/{id}/change-status"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.orderId" = "method.request.path.orderId"
+          "integration.request.path.id" = "method.request.path.id"
         }
       }
 
       # Product integrations (EKS)
-      "products-all-get-integration" = {
-        method_key              = "products-all-get"
-        resource_key            = "api-products-all"
+      "product-all-get-integration" = {
+        method_key              = "product-all-get"
+        resource_key            = "api-product-all"
         integration_http_method = "GET"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/products/all"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-      "products-get-id-integration" = {
-        method_key              = "products-get-id"
-        resource_key            = "api-products-id"
-        integration_http_method = "GET"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/products/{productId}"
+        eks_path                = "/api/product/all"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.productId" = "method.request.path.productId"
+          "integration.request.querystring.category" = "method.request.querystring.category"
         }
       }
-      "products-delete-id-integration" = {
-        method_key              = "products-delete-id"
-        resource_key            = "api-products-id"
+      "product-id-get-integration" = {
+        method_key              = "product-id-get"
+        resource_key            = "api-product-id"
+        integration_http_method = "GET"
+        type                    = "HTTP_PROXY"
+        integration_type        = "eks"
+        eks_path                = "/api/product/{id}"
+        passthrough_behavior    = "WHEN_NO_MATCH"
+        request_parameters = {
+          "integration.request.path.id" = "method.request.path.id"
+        }
+      }
+      "product-id-delete-integration" = {
+        method_key              = "product-id-delete"
+        resource_key            = "api-product-id"
         integration_http_method = "DELETE"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/products/{productId}"
+        eks_path                = "/api/product/{id}"
         passthrough_behavior    = "WHEN_NO_MATCH"
         request_parameters = {
-          "integration.request.path.productId" = "method.request.path.productId"
+          "integration.request.path.id" = "method.request.path.id"
         }
       }
-      "products-post-integration" = {
-        method_key              = "products-post"
-        resource_key            = "api-products"
+      "product-post-integration" = {
+        method_key              = "product-post"
+        resource_key            = "api-product"
         integration_http_method = "POST"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/products"
+        eks_path                = "/api/product"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
-      "products-put-integration" = {
-        method_key              = "products-put"
-        resource_key            = "api-products"
+      "product-put-integration" = {
+        method_key              = "product-put"
+        resource_key            = "api-product"
         integration_http_method = "PUT"
         type                    = "HTTP_PROXY"
         integration_type        = "eks"
-        eks_path                = "/api/products"
+        eks_path                = "/api/product"
         passthrough_behavior    = "WHEN_NO_MATCH"
       }
     }
+
 
     # Method Responses - Incluindo auth endpoints
     method_responses = {
@@ -676,11 +687,6 @@ api_gateways = {
 
     # Sem Usage Plan Keys para POC
     usage_plan_keys = {}
-
-    # Lambda Permissions para as funções de auth e user creation
-    # Removidas temporariamente para evitar dependência circular
-    # As permissões serão adicionadas manualmente após deploy das Lambda functions
-    lambda_permissions = {}
   }
 }
 

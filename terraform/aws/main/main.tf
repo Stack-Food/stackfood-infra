@@ -122,8 +122,10 @@ module "rds" {
 
   # Network Settings
   vpc_id                  = module.vpc.vpc_id
-  subnet_ids              = module.vpc.private_subnet_ids
+  private_subnet_ids      = module.vpc.private_subnet_ids
+  public_subnet_ids       = module.vpc.public_subnet_ids
   allowed_security_groups = [module.eks.cluster_security_group_id]
+  publicly_accessible     = each.value.publicly_accessible
 
   # Database Settings
   instance_class              = each.value.db_instance_class
@@ -134,7 +136,7 @@ module "rds" {
   db_username                 = each.value.db_username
   db_password                 = lookup(each.value, "db_password", null)                  # Optional password
   manage_master_user_password = lookup(each.value, "manage_master_user_password", false) # Secure password management
-
+  db_name                     = "stackfood"
   # IAM Role Settings
   rds_role_name = var.rds_role_name
 
@@ -162,45 +164,12 @@ module "nginx-ingress" {
   ssl_certificate_arn = module.acm.certificate_arn
 }
 
-# Lambda Functions
-module "lambda" {
-  for_each   = var.lambda_functions
-  source     = "../modules/lambda/"
-  depends_on = [module.vpc]
-
-  # General Settings
-  function_name = each.key
-  description   = each.value.description
-  environment   = var.environment
-  tags          = var.tags
-
-  # Code and Runtime - condicionalmente baseado no package_type
-  package_type     = each.value.package_type
-  runtime          = try(each.value.runtime, "dotnet8")
-  handler          = try(each.value.handler, null)
-  filename         = try(each.value.filename, null)
-  source_code_hash = try(each.value.source_code_hash, null)
-  image_uri        = each.value.image_uri
-
-  # Network Settings (VPC)
-  vpc_id     = each.value.vpc_access ? module.vpc.vpc_id : null
-  subnet_ids = each.value.vpc_access ? module.vpc.private_subnet_ids : []
-
-  # Function Configuration
-  memory_size           = each.value.memory_size
-  timeout               = each.value.timeout
-  environment_variables = each.value.environment_variables
-
-  # IAM Role Settings
-  lambda_role_name = var.lambda_role_name
-}
-
 # API Gateway
 module "api_gateway" {
   for_each = var.api_gateways
   source   = "../modules/api-gateway/"
   # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  depends_on = [module.lambda, module.eks, module.nginx-ingress]
+  depends_on = [module.eks, module.nginx-ingress, module.acm]
 
   # General Settings
   api_name    = each.key
@@ -209,46 +178,11 @@ module "api_gateway" {
   tags        = var.tags
 
   # Simplified variables for single Lambda and EKS cluster
-  aws_region           = var.aws_region
-  lambda_function_name = "stackfood-auth" # Single Lambda function name
-  eks_cluster_name     = var.eks_cluster_name
-  vpc_id               = module.vpc.vpc_id
-
-  # Stage Configuration
-  stage_name    = each.value.stage_name
-  endpoint_type = each.value.endpoint_type
-
-  # CORS Configuration
-  enable_cors            = each.value.enable_cors
-  cors_allow_origins     = each.value.cors_allow_origins
-  cors_allow_methods     = each.value.cors_allow_methods
-  cors_allow_headers     = each.value.cors_allow_headers
-  cors_allow_credentials = each.value.cors_allow_credentials
-
-  # Monitoring and Logging
-  enable_access_logs    = each.value.enable_access_logs
-  xray_tracing_enabled  = each.value.xray_tracing_enabled
-  log_retention_in_days = 7
-
-  # Performance
-  throttle_settings     = each.value.throttle_settings
-  cache_cluster_enabled = each.value.cache_cluster_enabled
-  cache_cluster_size    = each.value.cache_cluster_size
-
-  # API Configuration
-  resources             = each.value.resources
-  methods               = each.value.methods
-  integrations          = each.value.integrations
-  method_responses      = each.value.method_responses
-  integration_responses = each.value.integration_responses
-
-  # API Keys and Usage Plans
-  api_keys        = each.value.api_keys
-  usage_plans     = each.value.usage_plans
-  usage_plan_keys = each.value.usage_plan_keys
-
-  # Lambda Permissions
-  lambda_permissions = each.value.lambda_permissions
+  eks_cluster_name    = var.eks_cluster_name
+  vpc_id              = module.vpc.vpc_id
+  private_subnet_ids  = module.vpc.private_subnet_ids
+  public_subnet_ids   = module.vpc.public_subnet_ids
+  acm_certificate_arn = module.acm.certificate_arn
 }
 
 # Cognito Module
