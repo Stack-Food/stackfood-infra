@@ -7,10 +7,21 @@ metadata:
   annotations:
     service.alpha.kubernetes.io/app-protocols: '{"http":"HTTP","https":"HTTPS"}'
 spec:
-  type: NodePort
+  type: ClusterIP
+  # ports:
+  #   - port: 80
+  #     targetPort: 5039
+  #     protocol: TCP
+  #     name: http
+  #   - port: 7189
+  #     targetPort: 7189
+  #     protocol: TCP
+  #     name: https
+  # selector:
+  #   app: stackfood-api
   ports:
-    - port: 5039
-      targetPort: 5039
+    - port: 80 #service port  #kubeproxy will open port on worker node to which can route traffic to alb
+      targetPort: 5039 #container port
       protocol: TCP
       name: http
     - port: 7189

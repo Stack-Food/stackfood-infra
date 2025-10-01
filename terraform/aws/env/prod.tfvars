@@ -71,35 +71,36 @@ eks_enable_remote_management = true
 eks_management_cidr_blocks   = ["0.0.0.0/0"] # Ajuste para seu IP específico em produção
 
 eks_node_groups = {
-  "api" = {
+  api = {
     desired_size   = 2
     max_size       = 3
     min_size       = 2
+    instance_types = ["c5.xlarge"]
     capacity_type  = "ON_DEMAND"
-    instance_types = ["c1.xlarge"]
     disk_size      = 100
-    # labels = {
-    #   "role"                        = "api"
-    #   "node-role.kubernetes.io/api" = "true"
-    #   "app.kubernetes.io/component" = "backend"
-    #   "app.kubernetes.io/part-of"   = "stackfood"
-    # }
-  },
-  "worker" = {
+    labels = {
+      "role"                        = "api"
+      "node-role.kubernetes.io/api" = "true"
+      "app.kubernetes.io/component" = "backend"
+      "app.kubernetes.io/part-of"   = "stackfood"
+    }
+  }
+  worker = {
     desired_size   = 2
     max_size       = 3
     min_size       = 2
+    instance_types = ["c5.xlarge"]
     capacity_type  = "ON_DEMAND"
-    instance_types = ["c1.xlarge"]
     disk_size      = 100
-    # labels = {
-    #   "role"                           = "worker"
-    #   "node-role.kubernetes.io/worker" = "true"
-    #   "app.kubernetes.io/component"    = "worker"
-    #   "app.kubernetes.io/part-of"      = "stackfood"
-    # }
+    labels = {
+      "role"                           = "worker"
+      "node-role.kubernetes.io/worker" = "true"
+      "app.kubernetes.io/component"    = "worker"
+      "app.kubernetes.io/part-of"      = "stackfood"
+    }
   }
 }
+
 
 ########################
 # NGINX Ingress Configuration # 

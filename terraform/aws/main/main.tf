@@ -80,6 +80,12 @@ module "eks" {
       instance_types = ["c5.xlarge"]
       capacity_type  = "ON_DEMAND"
       disk_size      = 100
+      labels = {
+        "role"                        = "api"
+        "node-role.kubernetes.io/api" = "true"
+        "app.kubernetes.io/component" = "backend"
+        "app.kubernetes.io/part-of"   = "stackfood"
+      }
     }
     worker = {
       desired_size   = 2
@@ -88,6 +94,12 @@ module "eks" {
       instance_types = ["c5.xlarge"]
       capacity_type  = "ON_DEMAND"
       disk_size      = 100
+      labels = {
+        "role"                           = "worker"
+        "node-role.kubernetes.io/worker" = "true"
+        "app.kubernetes.io/component"    = "worker"
+        "app.kubernetes.io/part-of"      = "stackfood"
+      }
     }
   }
 

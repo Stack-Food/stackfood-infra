@@ -139,10 +139,6 @@ variable "eks_authentication_mode" {
   type        = string
 }
 
-variable "eks_node_groups" {
-  description = "Map of EKS Node Group configurations"
-}
-
 variable "eks_log_retention_in_days" {
   description = "Number of days to retain CloudWatch logs"
   type        = number
