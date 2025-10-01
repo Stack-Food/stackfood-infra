@@ -46,3 +46,53 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+variable "custom_domain_name" {
+  description = "Custom domain name for the API Gateway"
+  type        = string
+  default     = ""
+}
+
+variable "stage_name" {
+  description = "The name of the deployment stage"
+  type        = string
+  default     = "v1"
+}
+
+variable "route_key" {
+  description = "The route key for the API Gateway route"
+  type        = string
+  default     = "ANY /{proxy+}"
+}
+
+variable "cors_configuration" {
+  description = "CORS configuration for the API Gateway"
+  type = object({
+    allow_credentials = optional(bool, false)
+    allow_headers     = optional(list(string), ["*"])
+    allow_methods     = optional(list(string), ["*"])
+    allow_origins     = optional(list(string), ["*"])
+    expose_headers    = optional(list(string), ["*"])
+    max_age           = optional(number, 86400)
+  })
+  default = {
+    allow_credentials = false
+    allow_headers     = ["*"]
+    allow_methods     = ["*"]
+    allow_origins     = ["*"]
+    expose_headers    = ["*"]
+    max_age           = 86400
+  }
+}
+
+variable "security_group_name" {
+  description = "Name for the VPC Link security group"
+  type        = string
+  default     = "api-gateway-vpc-link"
+}
+
+variable "vpc_link_name" {
+  description = "Name for the VPC Link"
+  type        = string
+  default     = "api-gateway-vpc-link"
+}

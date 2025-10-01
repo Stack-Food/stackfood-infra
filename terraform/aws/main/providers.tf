@@ -20,8 +20,8 @@ terraform {
   }
 
   backend "s3" {
-    bucket  = "stackfood1-s3-tfstate-fiap"
-    key     = "luiz/terraform.tfstate"
+    bucket  = "stackfood-s3-tfstate-fiap"
+    key     = "terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
   }

@@ -4,17 +4,17 @@ resource "aws_apigatewayv2_api" "main" {
   region        = data.aws_region.current.region
   description   = "Stackfood API Gateway integrated with EKS NLB"
   cors_configuration {
-    allow_credentials = false
-    allow_headers     = ["*"]
-    allow_methods     = ["*"]
-    allow_origins     = ["*"]
-    expose_headers    = ["*"]
-    max_age           = 86400
+    allow_credentials = var.cors_configuration.allow_credentials
+    allow_headers     = var.cors_configuration.allow_headers
+    allow_methods     = var.cors_configuration.allow_methods
+    allow_origins     = var.cors_configuration.allow_origins
+    expose_headers    = var.cors_configuration.expose_headers
+    max_age           = var.cors_configuration.max_age
   }
 }
 resource "aws_apigatewayv2_stage" "this" {
   api_id      = aws_apigatewayv2_api.main.id
-  name        = "v1"
+  name        = var.stage_name
   auto_deploy = true
 }
 
@@ -25,20 +25,18 @@ resource "aws_apigatewayv2_integration" "this" {
   integration_method = "ANY"
   connection_type    = "VPC_LINK"
   connection_id      = aws_apigatewayv2_vpc_link.eks.id
-  request_parameters = {
-    "overwrite:header.Host" = "myapp.stackfood.com.br"
 
-  }
 }
 
 resource "aws_apigatewayv2_route" "catch_all" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "ANY /{proxy+}"
+  route_key = var.route_key
   target    = "integrations/${aws_apigatewayv2_integration.this.id}"
 }
 
 resource "aws_apigatewayv2_domain_name" "this" {
-  domain_name = "api.stackfood.com.br"
+  count       = var.custom_domain_name != "" ? 1 : 0
+  domain_name = var.custom_domain_name
 
   domain_name_configuration {
     certificate_arn = var.acm_certificate_arn
@@ -48,7 +46,8 @@ resource "aws_apigatewayv2_domain_name" "this" {
 }
 
 resource "aws_apigatewayv2_api_mapping" "this" {
+  count       = var.custom_domain_name != "" ? 1 : 0
   api_id      = aws_apigatewayv2_api.main.id
-  domain_name = aws_apigatewayv2_domain_name.this.id
+  domain_name = aws_apigatewayv2_domain_name.this[0].id
   stage       = aws_apigatewayv2_stage.this.id
 }

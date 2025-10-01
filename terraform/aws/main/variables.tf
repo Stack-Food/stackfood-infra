@@ -205,21 +205,35 @@ variable "eks_cluster_role_name" {
   description = "Name of the IAM role to use for the EKS cluster"
   type        = string
 }
-
-variable "eks_node_role_name" {
-  description = "Name of the IAM role to use for the EKS node groups"
-  type        = string
-}
-
 ##########################
 # API Gateway Configuration #
 ##########################
 
-# variable "api_gateways" {
-#   description = "API Gateways values"
-# }
 variable "api_gateways" {
   description = "Map of API Gateways to create"
+  # type = map(object({
+  #   description         = string
+  #   custom_domain_name  = optional(string, "")
+  #   stage_name          = optional(string, "v1")
+  #   route_key           = optional(string, "ANY /{proxy+}")
+  #   security_group_name = optional(string, "api-gateway-vpc-link")
+  #   vpc_link_name       = optional(string, "api-gateway-vpc-link")
+  #   cors_configuration = optional(object({
+  #     allow_credentials = optional(bool, false)
+  #     allow_headers     = optional(list(string), ["*"])
+  #     allow_methods     = optional(list(string), ["*"])
+  #     allow_origins     = optional(list(string), ["*"])
+  #     expose_headers    = optional(list(string), ["*"])
+  #     max_age           = optional(number, 86400)
+  #     }), {
+  #     allow_credentials = false
+  #     allow_headers     = ["*"]
+  #     allow_methods     = ["*"]
+  #     allow_origins     = ["*"]
+  #     expose_headers    = ["*"]
+  #     max_age           = 86400
+  #   })
+  # }))
 }
 
 ##########################

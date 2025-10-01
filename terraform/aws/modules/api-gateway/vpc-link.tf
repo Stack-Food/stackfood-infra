@@ -36,7 +36,7 @@
 # }
 
 resource "aws_security_group" "vpc_link" {
-  name   = "vpc-link"
+  name   = var.security_group_name
   vpc_id = var.vpc_id
 
   egress {
@@ -54,7 +54,7 @@ resource "aws_security_group" "vpc_link" {
 }
 
 resource "aws_apigatewayv2_vpc_link" "eks" {
-  name               = "eks"
+  name               = var.vpc_link_name
   security_group_ids = [aws_security_group.vpc_link.id]
   subnet_ids         = var.public_subnet_ids
 }

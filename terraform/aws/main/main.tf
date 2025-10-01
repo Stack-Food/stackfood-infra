@@ -195,6 +195,14 @@ module "api_gateway" {
   private_subnet_ids  = module.vpc.private_subnet_ids
   public_subnet_ids   = module.vpc.public_subnet_ids
   acm_certificate_arn = module.acm.certificate_arn
+
+  # New configurable variables
+  custom_domain_name  = each.value.custom_domain_name
+  stage_name          = each.value.stage_name
+  route_key           = each.value.route_key
+  security_group_name = each.value.security_group_name
+  vpc_link_name       = each.value.vpc_link_name
+  cors_configuration  = each.value.cors_configuration
 }
 
 # Cognito Module
