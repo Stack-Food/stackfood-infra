@@ -8,6 +8,7 @@ module "vpc" {
   ngw_name         = "${var.vpc_name}-ngw"
   route_table_name = "${var.vpc_name}-rt"
   environment      = var.environment
+  cluster_name     = var.eks_cluster_name
   tags             = var.tags
 
   # VPC Settings
@@ -61,7 +62,7 @@ module "eks" {
   node_role_name    = "LabRole"
 
   # Configurações de endpoint
-  endpoint_private_access = false
+  endpoint_private_access = true
   endpoint_public_access  = true
 
   # Configuração de logs
@@ -133,11 +134,11 @@ module "rds" {
   tags                 = var.tags
 
   # Network Settings
-  vpc_id                  = module.vpc.vpc_id
-  private_subnet_ids      = module.vpc.private_subnet_ids
-  public_subnet_ids       = module.vpc.public_subnet_ids
-  allowed_security_groups = [module.eks.cluster_security_group_id]
-  publicly_accessible     = each.value.publicly_accessible
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  #allowed_security_groups = [module.eks.cluster_security_group_id]
+  publicly_accessible = each.value.publicly_accessible
 
   # Database Settings
   instance_class              = each.value.db_instance_class

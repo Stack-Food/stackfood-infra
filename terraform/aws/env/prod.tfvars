@@ -53,12 +53,6 @@ public_subnets = {
 }
 
 ######################
-# Load Balancer Configuration #
-######################
-
-
-
-######################
 # EKS Configuration #
 ######################
 eks_cluster_name           = "stackfood-prod-eks"
@@ -112,7 +106,6 @@ rds_instances = {
 ######################
 lambda_role_name      = "LabRole"
 eks_cluster_role_name = "LabRole"
-eks_node_role_name    = "LabRole"
 rds_role_name         = "LabRole"
 
 ######################

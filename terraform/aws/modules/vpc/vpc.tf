@@ -21,25 +21,13 @@ resource "aws_vpc" "vpc" {
   )
 }
 
-resource "aws_vpc_ipv4_cidr_block_association" "vpc-cidr" {
-  for_each = {
-    for vpc_cidr_block in var.vpc_cidr_blocks :
-    index(var.vpc_cidr_blocks, vpc_cidr_block) => vpc_cidr_block
-    if index(var.vpc_cidr_blocks, vpc_cidr_block) != 0
-  }
-
-  vpc_id     = aws_vpc.vpc.id
-  cidr_block = each.value
-}
-
 # Subnets Privadas
 resource "aws_subnet" "subnet-private" {
   for_each = var.subnets_private
 
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = each.value.cidr_block
-  availability_zone       = try(each.value.availability_zone, data.aws_availability_zones.availability_zones.names[index(keys(var.subnets_private), each.key) % length(data.aws_availability_zones.availability_zones.names)])
-  map_public_ip_on_launch = false
+  vpc_id            = aws_vpc.vpc.id
+  cidr_block        = each.value.cidr_block
+  availability_zone = try(each.value.availability_zone, data.aws_availability_zones.availability_zones.names[index(keys(var.subnets_private), each.key) % length(data.aws_availability_zones.availability_zones.names)])
 
   tags = merge(
     {
@@ -48,6 +36,9 @@ resource "aws_subnet" "subnet-private" {
       Environment                       = var.environment
       "kubernetes.io/role/internal-elb" = "1"
     },
+    var.cluster_name != "" ? {
+      "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    } : {},
     var.tags
   )
 }
@@ -68,6 +59,9 @@ resource "aws_subnet" "subnet-public" {
       Environment              = var.environment
       "kubernetes.io/role/elb" = "1"
     },
+    var.cluster_name != "" ? {
+      "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    } : {},
     var.tags
   )
 }
@@ -83,15 +77,12 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# Elastic IPs para NAT Gateways
+# EIPs para NAT Gateway
 resource "aws_eip" "ngw-ip" {
-  for_each = var.subnets_public
-  domain   = "vpc"
-
-  depends_on = [aws_internet_gateway.igw]
+  domain = "vpc"
 
   tags = {
-    Name              = join("-", [var.vpc_name, "eip", each.key])
+    Name              = join("-", [var.vpc_name, "eip", "nat"])
     Terraform_Managed = "true"
     Environment       = var.environment
   }
@@ -101,18 +92,16 @@ resource "aws_eip" "ngw-ip" {
   }
 }
 
-# NAT Gateways
+# NAT Gateway - Usando apenas um para reduzir custos
 resource "aws_nat_gateway" "ngw" {
-  for_each = var.subnets_public
-
-  allocation_id     = aws_eip.ngw-ip[each.key].id
-  subnet_id         = aws_subnet.subnet-public[each.key].id
+  allocation_id     = aws_eip.ngw-ip.id
+  subnet_id         = aws_subnet.subnet-public[keys(var.subnets_public)[0]].id
   connectivity_type = "public"
 
   depends_on = [aws_internet_gateway.igw]
 
   tags = {
-    Name              = join("-", [var.ngw_name, each.key])
+    Name              = var.ngw_name
     Terraform_Managed = "true"
     Environment       = var.environment
   }
@@ -122,37 +111,17 @@ resource "aws_nat_gateway" "ngw" {
 # Route Tables #
 ###############
 
-# Locals para mapear subnets privadas com NAT Gateways
-locals {
-  # Cria um mapeamento baseado na AZ ou índice para garantir consistência
-  private_nat_mapping = {
-    for private_key, private_subnet in var.subnets_private :
-    private_key => {
-      nat_gateway_key = try(
-        # Tenta encontrar um NAT Gateway na mesma AZ
-        [for public_key, public_subnet in var.subnets_public :
-          public_key if try(public_subnet.availability_zone, "") == try(private_subnet.availability_zone, "")
-        ][0],
-        # Se não encontrar, usa o primeiro NAT Gateway disponível
-        keys(var.subnets_public)[index(keys(var.subnets_private), private_key) % length(keys(var.subnets_public))]
-      )
-    }
-  }
-}
-
-# Route Tables para Subnets Privadas
+# Route Table para Subnets Privadas - Uma única tabela para todas
 resource "aws_route_table" "route-table-private" {
-  for_each = var.subnets_private
-
   vpc_id = aws_vpc.vpc.id
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.ngw[local.private_nat_mapping[each.key].nat_gateway_key].id
+    nat_gateway_id = aws_nat_gateway.ngw.id
   }
 
   tags = {
-    Name              = join("-", [var.route_table_name, "private", each.key])
+    Name              = join("-", [var.route_table_name, "private"])
     Terraform_Managed = "true"
     Environment       = var.environment
   }
@@ -165,7 +134,7 @@ resource "aws_route_table_association" "route_table_subnet_association-private" 
   for_each = var.subnets_private
 
   subnet_id      = aws_subnet.subnet-private[each.key].id
-  route_table_id = aws_route_table.route-table-private[each.key].id
+  route_table_id = aws_route_table.route-table-private.id
 }
 
 # Route Table para Subnets Públicas

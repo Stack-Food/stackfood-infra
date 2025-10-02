@@ -74,7 +74,7 @@ resource "aws_cognito_user_pool_client" "this" {
 
   # Fluxos de autenticação permitidos
   explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",     # Para autenticação padrão
+    "ALLOW_USER_PASSWORD_AUTH", # Para autenticação padrão
     "ALLOW_CUSTOM_AUTH",        # Para autenticação customizada com CPF
     "ALLOW_REFRESH_TOKEN_AUTH"  # Para renovar tokens
   ]
