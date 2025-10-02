@@ -19,17 +19,34 @@ resource "aws_apigatewayv2_stage" "this" {
 }
 
 resource "aws_apigatewayv2_integration" "this" {
-  api_id             = aws_apigatewayv2_api.main.id
-  integration_uri    = data.aws_lb_listener.selected443[0].arn
+  api_id = aws_apigatewayv2_api.main.id
+
+  # Usar HTTP_PROXY para redirecionar para o NLB do NGINX Ingress
   integration_type   = "HTTP_PROXY"
   integration_method = "ANY"
-  connection_type    = "VPC_LINK"
-  connection_id      = aws_apigatewayv2_vpc_link.eks.id
 
+  # URI do NLB do NGINX Ingress usando locals
+  integration_uri = local.integration_uri
+
+  # Usar VPC Link para conectar privadamente
+  connection_type = "VPC_LINK"
+  connection_id   = aws_apigatewayv2_vpc_link.eks.id
+
+  # Configurações de timeout
+  timeout_milliseconds = 29000
+
+  # Configurações de request/response
+  request_parameters = {
+    "overwrite:header.Host" = "$request.header.Host"
+  }
+
+  # Passar todos os headers
+  passthrough_behavior = "WHEN_NO_MATCH"
 }
 
 resource "aws_apigatewayv2_route" "catch_all" {
-  api_id    = aws_apigatewayv2_api.main.id
+  api_id = aws_apigatewayv2_api.main.id
+
   route_key = var.route_key
   target    = "integrations/${aws_apigatewayv2_integration.this.id}"
 }

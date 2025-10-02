@@ -62,3 +62,38 @@ output "security_group_id" {
   description = "The ID of the VPC Link security group"
   value       = aws_security_group.vpc_link.id
 }
+
+# Outputs para debugging da integração com NLB
+output "nlb_dns_name" {
+  description = "The DNS name of the NGINX Ingress NLB"
+  value       = length(data.aws_lb.eks_nlb) > 0 ? data.aws_lb.eks_nlb[0].dns_name : null
+}
+
+output "nlb_arn" {
+  description = "The ARN of the NGINX Ingress NLB"
+  value       = length(data.aws_lb.eks_nlb) > 0 ? data.aws_lb.eks_nlb[0].arn : null
+}
+
+output "nlb_zone_id" {
+  description = "The zone ID of the NGINX Ingress NLB"
+  value       = length(data.aws_lb.eks_nlb) > 0 ? data.aws_lb.eks_nlb[0].zone_id : null
+}
+
+output "integration_uri" {
+  description = "The integration URI used by API Gateway to connect to NLB"
+  value       = local.integration_uri
+}
+
+output "integration_id" {
+  description = "The ID of the API Gateway integration"
+  value       = aws_apigatewayv2_integration.this.id
+}
+
+output "route_id" {
+  description = "The ID of the API Gateway route"
+  value       = aws_apigatewayv2_route.catch_all.id
+}
+
+output "hello_base_url" {
+  value = aws_apigatewayv2_stage.this.invoke_url
+}
