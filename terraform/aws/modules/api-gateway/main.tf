@@ -32,19 +32,10 @@ resource "aws_apigatewayv2_integration" "this" {
   connection_type = "VPC_LINK"
   connection_id   = aws_apigatewayv2_vpc_link.eks.id
 
-  # Configurações de timeout
-  timeout_milliseconds = 29000
-
-  # Configurações de request/response
+  # Configurações de request/response - simplificadas para evitar problemas com cabeçalhos restritos
   request_parameters = {
     "overwrite:header.Host" = "api.stackfood.com.br"
-    # "append:header.X-Forwarded-For"   = "$context.identity.sourceIp"
-    # "append:header.X-Forwarded-Proto" = "$context.protocol"
-    # "append:header.X-Forwarded-Port"  = "$context.domainPrefix"
   }
-
-  # Passar todos os headers
-  passthrough_behavior = "WHEN_NO_MATCH"
 }
 
 resource "aws_apigatewayv2_route" "catch_all" {
