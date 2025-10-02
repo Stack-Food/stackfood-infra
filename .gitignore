@@ -18,3 +18,7 @@ terraform.rc
 
 # Terraform plan output
 *.tfplan
+
+# ZIP files
+*.zip
+
