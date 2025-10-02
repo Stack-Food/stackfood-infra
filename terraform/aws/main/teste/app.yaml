@@ -36,20 +36,32 @@ kind: Ingress
 metadata:
   name: myapp
   annotations:
-    # Ingress class to use the NGINX Ingress Controlle
-    # AWS-specific annotations for SSL and the load balancer
+    # Ingress class to use the NGINX Ingress Controller
+    # NGINX specific annotations for better API Gateway integration
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # nginx.ingress.kubernetes.io/use-regex: "true"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+    # nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    # Original ALB annotations - mantendo para referência
     alb.ingress.kubernetes.io/scheme: "internet-facing"
     alb.ingress.kubernetes.io/target-type: "ip"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-south-1:434605749312:certificate/0245c0a5-0867-4372-8206-4a5e4ceda0bd"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:412061512527:certificate/024830fb-7075-4caf-8e2a-8903e2077634"
     alb.ingress.kubernetes.io/ssl-redirect: "443"
 spec:
   ingressClassName: nginx
   rules:
-    - host: myapp.stackfood.com.br
+    - host: api.stackfood.com.br
       http:
         paths:
           - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp
+                port:
+                  number: 80
+          - path: /api/v1/
             pathType: Prefix
             backend:
               service:
