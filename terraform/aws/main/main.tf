@@ -174,10 +174,13 @@ module "lambda" {
   environment   = var.environment
   tags          = var.tags
 
+  # Bucket para armazenar artefatos da Lambda
+  bucket_name = "stackfood-lambda-artifacts"
+
   # Code and Runtime - condicionalmente baseado no package_type
   package_type     = each.value.package_type
   runtime          = try(each.value.runtime, "dotnet8")
-  handler          = try(each.value.handler, null)
+  handler          = each.value.handler
   filename         = try(each.value.filename, null)
   source_code_hash = try(each.value.source_code_hash, null)
   image_uri        = each.value.image_uri
