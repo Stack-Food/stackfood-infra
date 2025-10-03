@@ -14,6 +14,14 @@ resource "aws_security_group" "cluster" {
   }
 
   ingress {
+    description = "All traffic from within the security group"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  ingress {
     description = "HTTP"
     from_port   = 80
     to_port     = 80

@@ -74,3 +74,9 @@ variable "subnets_public" {
     }
   }
 }
+
+variable "cluster_name" {
+  description = "The name of the EKS cluster to integrate with the VPC."
+  type        = string
+  default     = null
+}

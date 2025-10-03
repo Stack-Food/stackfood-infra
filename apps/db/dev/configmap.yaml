@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: stackfood-db-config
-  namespace: stackfood-dev
-data:
-  POSTGRES_DB: "stackfood"
-  POSTGRES_USER: "postgres"
