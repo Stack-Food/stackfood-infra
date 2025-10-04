@@ -96,3 +96,8 @@ variable "vpc_link_name" {
   type        = string
   default     = "api-gateway-vpc-link"
 }
+
+variable "lambda_invoke_arn" {
+  type        = string
+  description = "ARN de invocação da Lambda"
+}
