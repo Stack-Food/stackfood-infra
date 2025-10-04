@@ -7,19 +7,57 @@ data "aws_iam_role" "lambda_role" {
   name = var.lambda_role_name
 }
 
-# CloudWatch Log Group for Lambda
-resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.function_name}"
-  retention_in_days = var.log_retention_in_days
-  kms_key_id        = var.log_kms_key_id
+resource "aws_s3_bucket" "this" {
+  bucket = var.bucket_name
 
   tags = merge(
     {
-      Name        = "/aws/lambda/${var.function_name}"
+      Name        = var.bucket_name
       Environment = var.environment
     },
     var.tags
   )
+}
+
+resource "aws_s3_bucket_versioning" "this" {
+  bucket = aws_s3_bucket.this.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# 1. Cria um arquivo .zip em memória a partir do placeholder
+data "archive_file" "placeholder" {
+  type        = "zip"
+  source_file = "${path.module}/empty-function.zip"
+  output_path = "${path.module}/empty-function.zip"
+}
+
+# 2. Faz o upload do placeholder .zip para o S3
+resource "aws_s3_object" "lambda_placeholder" {
+  bucket = aws_s3_bucket.this.id
+  key    = "${var.function_name}.zip"
+  source = data.archive_file.placeholder.output_path
+  etag   = data.archive_file.placeholder.output_md5
 }
 
 # Security group for Lambda if deployed in VPC
@@ -53,9 +91,12 @@ resource "aws_lambda_function" "this" {
   package_type  = var.package_type
 
   # For ZIP packages
-  runtime  = var.package_type == "Zip" ? var.runtime : null
-  handler  = var.package_type == "Zip" ? var.handler : null
-  filename = data.archive_file.lambda_placeholder.output_path
+  runtime           = var.package_type == "Zip" ? var.runtime : null
+  handler           = var.package_type == "Zip" ? var.handler : null
+  s3_bucket         = var.package_type == "Zip" ? var.bucket_name : null
+  s3_key            = var.package_type == "Zip" ? "${var.function_name}.zip" : null
+  s3_object_version = var.package_type == "Zip" ? var.s3_object_version : null
+  timeout           = 30
 
   # Environment variables
   dynamic "environment" {
@@ -83,49 +124,10 @@ resource "aws_lambda_function" "this" {
   )
   lifecycle {
     ignore_changes = [
-      filename,
+      s3_key,
+      s3_object_version,
       source_code_hash,
       last_modified,
     ]
-  }
-  depends_on = [aws_cloudwatch_log_group.lambda]
-}
-
-# Lambda Permission for API Gateway
-resource "aws_lambda_permission" "api_gateway" {
-  count         = var.create_api_gateway_permission ? 1 : 0
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.this.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = var.api_gateway_source_arn
-}
-
-# Lambda Permission for other services
-resource "aws_lambda_permission" "other" {
-  count         = length(var.additional_lambda_permissions)
-  statement_id  = var.additional_lambda_permissions[count.index].statement_id
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.this.function_name
-  principal     = var.additional_lambda_permissions[count.index].principal
-  source_arn    = lookup(var.additional_lambda_permissions[count.index], "source_arn", null)
-}
-
-# Lambda Alias
-resource "aws_lambda_alias" "this" {
-  count            = var.create_alias ? 1 : 0
-  name             = var.alias_name
-  description      = var.alias_description
-  function_name    = aws_lambda_function.this.function_name
-  function_version = var.function_version != null ? var.function_version : aws_lambda_function.this.version
-
-  # Routing config for canary deployments
-  dynamic "routing_config" {
-    for_each = var.routing_additional_version_weight != null ? [1] : []
-    content {
-      additional_version_weights = {
-        (var.routing_additional_version) = var.routing_additional_version_weight
-      }
-    }
   }
 }

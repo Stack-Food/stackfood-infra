@@ -111,6 +111,7 @@ rds_instances = {
 lambda_role_name      = "LabRole"
 eks_cluster_role_name = "LabRole"
 rds_role_name         = "LabRole"
+lambda_role_name      = "LabRole"
 
 ######################
 # Lambda Configuration #
@@ -123,9 +124,8 @@ lambda_functions = {
     memory_size = 256
     runtime     = "dotnet8"
     timeout     = 30
-    vpc_access  = false
-    handler     = "index.handler"
-    filename    = "function.zip"
+    vpc_access  = true
+    handler     = "StackFood.Lambda::StackFood.Lambda.Function::FunctionHandler"
     environment_variables = {
       USER_POOL_ID           = ""
       CLIENT_ID              = ""

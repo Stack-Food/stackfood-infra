@@ -177,6 +177,42 @@ module "nginx-ingress" {
   ssl_certificate_arn = module.acm.certificate_arn
 }
 
+# Lambda Functions
+module "lambda" {
+  for_each   = var.lambda_functions
+  source     = "../modules/lambda/"
+  depends_on = [module.vpc]
+
+  # General Settings
+  function_name = each.key
+  description   = each.value.description
+  environment   = var.environment
+  tags          = var.tags
+
+  # Bucket para armazenar artefatos da Lambda
+  bucket_name = "stackfood-lambda-artifacts"
+
+  # Code and Runtime - condicionalmente baseado no package_type
+  package_type     = each.value.package_type
+  runtime          = try(each.value.runtime, "dotnet8")
+  handler          = each.value.handler
+  filename         = try(each.value.filename, null)
+  source_code_hash = try(each.value.source_code_hash, null)
+  image_uri        = each.value.image_uri
+
+  # Network Settings (VPC)
+  vpc_id     = each.value.vpc_access ? module.vpc.vpc_id : null
+  subnet_ids = each.value.vpc_access ? module.vpc.private_subnet_ids : []
+
+  # Function Configuration
+  memory_size           = each.value.memory_size
+  timeout               = each.value.timeout
+  environment_variables = each.value.environment_variables
+
+  # IAM Role Settings
+  lambda_role_name = var.lambda_role_name
+}
+
 # API Gateway
 module "api_gateway" {
   for_each = var.api_gateways
@@ -204,6 +240,7 @@ module "api_gateway" {
   security_group_name = each.value.security_group_name
   vpc_link_name       = each.value.vpc_link_name
   cors_configuration  = each.value.cors_configuration
+  lambda_invoke_arn   = module.lambda.function_invoke_arn
 }
 
 # Cognito Module
