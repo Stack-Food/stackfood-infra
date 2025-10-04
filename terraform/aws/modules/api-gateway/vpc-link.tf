@@ -38,23 +38,6 @@ resource "aws_security_group" "vpc_link" {
   )
 }
 
-resource "aws_api_gateway_vpc_link" "eks" {
-  name               = var.vpc_link_name
-  security_group_ids = [aws_security_group.vpc_link.id]
-  # Use apenas subnets privadas para o VPC Link (mais seguro)
-  subnet_ids = var.private_subnet_ids
-
-  tags = merge(
-    {
-      Name        = var.vpc_link_name
-      Environment = var.environment
-      Cluster     = var.eks_cluster_name
-      Purpose     = "Connect API Gateway to NGINX Ingress NLB"
-    },
-    var.tags
-  )
-}
-
 
 resource "null_resource" "wait_for_nlb" {
   triggers = {

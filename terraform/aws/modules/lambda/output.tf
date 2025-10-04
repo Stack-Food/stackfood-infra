@@ -31,11 +31,12 @@ output "security_group_id" {
 }
 
 output "bucket_id" {
-  description = "O ID do bucket S3."
+  description = "The ID of the S3 bucket."
   value       = aws_s3_bucket.this.id
 }
 
 output "bucket_arn" {
-  description = "O ARN do bucket S3."
+  description = "The ARN of the S3 bucket."
   value       = aws_s3_bucket.this.arn
 }
+
