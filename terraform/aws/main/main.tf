@@ -45,80 +45,80 @@ module "acm" {
 }
 
 # EKS Module - Usando módulo personalizado compatível com AWS Academy
-# module "eks" {
-#   source = "../modules/eks/"
+module "eks" {
+  source = "../modules/eks/"
 
-#   # Configurações básicas do cluster
-#   cluster_name       = var.eks_cluster_name
-#   kubernetes_version = var.kubernetes_version
+  # Configurações básicas do cluster
+  cluster_name       = var.eks_cluster_name
+  kubernetes_version = var.kubernetes_version
 
-#   # Configurações de VPC
-#   vpc_id             = module.vpc.vpc_id
-#   public_subnet_ids  = module.vpc.public_subnet_ids
-#   private_subnet_ids = module.vpc.private_subnet_ids
+  # Configurações de VPC
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
 
-#   # Configuração de IAM (usando a LabRole)
-#   cluster_role_name = "LabRole"
-#   node_role_name    = "LabRole"
+  # Configuração de IAM (usando a LabRole)
+  cluster_role_name = "LabRole"
+  node_role_name    = "LabRole"
 
-#   # Configurações de endpoint
-#   endpoint_private_access = true
-#   endpoint_public_access  = true
+  # Configurações de endpoint
+  endpoint_private_access = true
+  endpoint_public_access  = true
 
-#   # Configuração de logs
-#   log_retention_in_days = 30
-#   log_kms_key_id        = var.eks_kms_key_arn
+  # Configuração de logs
+  log_retention_in_days = 30
+  log_kms_key_id        = var.eks_kms_key_arn
 
-#   # Configuração de criptografia
-#   kms_key_arn = var.eks_kms_key_arn
+  # Configuração de criptografia
+  kms_key_arn = var.eks_kms_key_arn
 
-#   # Configuração dos grupos de nós
-#   node_groups = {
-#     api = {
-#       desired_size   = 2
-#       max_size       = 3
-#       min_size       = 2
-#       instance_types = ["c5.xlarge"]
-#       capacity_type  = "ON_DEMAND"
-#       disk_size      = 100
-#       labels = {
-#         "role"                        = "api"
-#         "node-role.kubernetes.io/api" = "true"
-#         "app.kubernetes.io/component" = "backend"
-#         "app.kubernetes.io/part-of"   = "stackfood"
-#       }
-#     }
-#     worker = {
-#       desired_size   = 2
-#       max_size       = 3
-#       min_size       = 2
-#       instance_types = ["c5.xlarge"]
-#       capacity_type  = "ON_DEMAND"
-#       disk_size      = 100
-#       labels = {
-#         "role"                           = "worker"
-#         "node-role.kubernetes.io/worker" = "true"
-#         "app.kubernetes.io/component"    = "worker"
-#         "app.kubernetes.io/part-of"      = "stackfood"
-#       }
-#     }
-#   }
+  # Configuração dos grupos de nós
+  node_groups = {
+    api = {
+      desired_size   = 2
+      max_size       = 3
+      min_size       = 2
+      instance_types = ["c5.xlarge"]
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 100
+      labels = {
+        "role"                        = "api"
+        "node-role.kubernetes.io/api" = "true"
+        "app.kubernetes.io/component" = "backend"
+        "app.kubernetes.io/part-of"   = "stackfood"
+      }
+    }
+    worker = {
+      desired_size   = 2
+      max_size       = 3
+      min_size       = 2
+      instance_types = ["c5.xlarge"]
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 100
+      labels = {
+        "role"                           = "worker"
+        "node-role.kubernetes.io/worker" = "true"
+        "app.kubernetes.io/component"    = "worker"
+        "app.kubernetes.io/part-of"      = "stackfood"
+      }
+    }
+  }
 
-#   # Configurações de acesso remoto
-#   enable_remote_management = var.eks_enable_remote_management
-#   management_cidr_blocks   = var.eks_management_cidr_blocks
-#   vpc_cidr                 = var.vpc_cidr_blocks[0]
+  # Configurações de acesso remoto
+  enable_remote_management = var.eks_enable_remote_management
+  management_cidr_blocks   = var.eks_management_cidr_blocks
+  vpc_cidr                 = var.vpc_cidr_blocks[0]
 
-#   # Modo de autenticação
-#   authentication_mode = var.eks_authentication_mode
+  # Modo de autenticação
+  authentication_mode = var.eks_authentication_mode
 
-#   # Tags
-#   environment = var.environment
-#   tags        = var.tags
+  # Tags
+  environment = var.environment
+  tags        = var.tags
 
-#   # Dependências
-#   depends_on = [module.vpc]
-# }
+  # Dependências
+  depends_on = [module.vpc]
+}
 
 # RDS Module
 module "rds" {
@@ -165,17 +165,17 @@ module "rds" {
 }
 
 # NGINX Ingress
-# module "nginx-ingress" {
-#   source     = "../modules/kubernetes/nginx-ingress"
-#   depends_on = [module.eks, module.acm]
+module "nginx-ingress" {
+  source     = "../modules/kubernetes/nginx-ingress"
+  depends_on = [module.eks, module.acm]
 
-#   ingress_name        = var.nginx_ingress_name
-#   ingress_repository  = var.nginx_ingress_repository
-#   ingress_chart       = var.nginx_ingress_chart
-#   ingress_namespace   = var.nginx_ingress_namespace
-#   ingress_version     = var.nginx_ingress_version
-#   ssl_certificate_arn = module.acm.certificate_arn
-# }
+  ingress_name        = var.nginx_ingress_name
+  ingress_repository  = var.nginx_ingress_repository
+  ingress_chart       = var.nginx_ingress_chart
+  ingress_namespace   = var.nginx_ingress_namespace
+  ingress_version     = var.nginx_ingress_version
+  ssl_certificate_arn = module.acm.certificate_arn
+}
 
 # Lambda Functions
 module "lambda" {
@@ -218,8 +218,7 @@ module "api_gateway" {
   for_each = var.api_gateways
   source   = "../modules/api-gateway/"
   # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  #depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
-  depends_on = [module.acm, module.lambda]
+  depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
 
   # General Settings
   api_name    = each.key
