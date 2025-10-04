@@ -13,13 +13,13 @@ resource "aws_security_group" "cluster" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Allow communication with node groups
+  # Allow communication with node groups (using VPC CIDR to avoid cyclic dependency)
   ingress {
-    description     = "HTTPS from node groups"
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.node_group.id]
+    description = "HTTPS from node groups"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
   # Allow communication within VPC CIDR
@@ -68,13 +68,13 @@ resource "aws_security_group" "node_group" {
     self        = true
   }
 
-  # Allow kubelet API from cluster
+  # Allow kubelet API from cluster (using VPC CIDR to avoid cyclic dependency)
   ingress {
-    description     = "Kubelet API from cluster"
-    from_port       = 10250
-    to_port         = 10250
-    protocol        = "tcp"
-    security_groups = [aws_security_group.cluster.id]
+    description = "Kubelet API from cluster"
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
   # Allow NodePort services
@@ -120,13 +120,13 @@ resource "aws_security_group" "node_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Allow communication from cluster control plane
+  # Allow communication from cluster control plane (using VPC CIDR to avoid cyclic dependency)
   ingress {
-    description     = "All traffic from cluster"
-    from_port       = 1025
-    to_port         = 65535
-    protocol        = "tcp"
-    security_groups = [aws_security_group.cluster.id]
+    description = "All traffic from cluster"
+    from_port   = 1025
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
   # Allow SSH access if needed (optional - remove if not needed)
