@@ -1,46 +1,46 @@
 # ID e ARN da API Gateway REST
 output "api_gateway_id" {
   description = "The ID of the API Gateway REST"
-  value       = aws_api_gateway_rest_api.main.id
+  value       = aws_api_gateway_rest_api.this.id
 }
 
 output "api_gateway_arn" {
   description = "The ARN of the API Gateway REST"
-  value       = aws_api_gateway_rest_api.main.arn
+  value       = aws_api_gateway_rest_api.this.arn
 }
 
 # Endpoint base da API
 output "api_gateway_execution_arn" {
   description = "The execution ARN of the API Gateway REST"
-  value       = aws_api_gateway_rest_api.main.execution_arn
+  value       = aws_api_gateway_rest_api.this.execution_arn
 }
 
 # Stage info
 output "api_gateway_stage_name" {
   description = "The stage name"
-  value       = aws_api_gateway_stage.this.stage_name
+  value       = aws_api_gateway_stage.dev.stage_name
 }
 
 output "api_gateway_stage_invoke_url" {
   description = "The full invoke URL for the stage"
-  value       = "${aws_api_gateway_deployment.this.invoke_url}${aws_api_gateway_stage.this.stage_name}"
+  value       = aws_api_gateway_stage.dev.invoke_url
 }
 
 # Custom domain (se estiver usando)
-output "custom_domain_name" {
-  description = "The custom domain name of the API Gateway"
-  value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.this[0].domain_name : null
-}
+# output "custom_domain_name" {
+#   description = "The custom domain name of the API Gateway"
+#   value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.this[0].domain_name : null
+# }
 
-output "custom_domain_name_target_domain_name" {
-  description = "The target domain name for the custom domain"
-  value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.this[0].regional_domain_name : null
-}
+# output "custom_domain_name_target_domain_name" {
+#   description = "The target domain name for the custom domain"
+#   value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.this[0].regional_domain_name : null
+# }
 
-output "custom_domain_name_hosted_zone_id" {
-  description = "The hosted zone ID for the custom domain"
-  value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.this[0].regional_zone_id : null
-}
+# output "custom_domain_name_hosted_zone_id" {
+#   description = "The hosted zone ID for the custom domain"
+#   value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.this[0].regional_zone_id : null
+# }
 
 # VPC Link (caso esteja integrando com NLB no EKS)
 output "vpc_link_id" {
@@ -53,10 +53,10 @@ output "vpc_link_arn" {
   value       = aws_api_gateway_vpc_link.eks.arn
 }
 
-output "security_group_id" {
-  description = "The ID of the VPC Link security group"
-  value       = aws_security_group.vpc_link.id
-}
+# output "security_group_id" {
+#   description = "The ID of the VPC Link security group"
+#   value       = aws_security_group.vpc_link.id
+# }
 
 # NLB debugging
 output "nlb_dns_name" {

@@ -218,7 +218,7 @@ module "api_gateway" {
   for_each = var.api_gateways
   source   = "../modules/api-gateway/"
   # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  depends_on = [module.eks, module.nginx-ingress, module.acm]
+  depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
 
   # General Settings
   api_name    = each.key
@@ -240,7 +240,7 @@ module "api_gateway" {
   security_group_name = each.value.security_group_name
   vpc_link_name       = each.value.vpc_link_name
   cors_configuration  = each.value.cors_configuration
-  lambda_invoke_arn   = module.lambda.function_invoke_arn
+  lambda_invoke_arn   = module.lambda["stackfood-auth"].function_invoke_arn
 }
 
 # Cognito Module
