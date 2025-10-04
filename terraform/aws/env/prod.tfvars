@@ -108,7 +108,6 @@ rds_instances = {
 ######################
 # IAM Configuration #
 ######################
-lambda_role_name      = "LabRole"
 eks_cluster_role_name = "LabRole"
 rds_role_name         = "LabRole"
 lambda_role_name      = "LabRole"
