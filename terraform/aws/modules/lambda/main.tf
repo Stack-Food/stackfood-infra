@@ -45,13 +45,6 @@ resource "aws_s3_bucket_public_access_block" "this" {
   restrict_public_buckets = true
 }
 
-# 1. Cria um arquivo .zip em memória a partir do placeholder
-# data "archive_file" "placeholder" {
-#   type        = "zip"
-#   source_file = "${path.module}/empty-function.zip"
-#   output_path = "${path.module}/empty-function.zip"
-# }
-
 # 2. Faz o upload do placeholder .zip para o S3
 resource "aws_s3_object" "lambda_placeholder" {
   bucket = aws_s3_bucket.this.id
