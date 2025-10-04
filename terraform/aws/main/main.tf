@@ -62,7 +62,7 @@ module "eks" {
   node_role_name    = "LabRole"
 
   # Configurações de endpoint
-  endpoint_private_access = true
+  endpoint_private_access = false
   endpoint_public_access  = true
 
   # Configuração de logs
