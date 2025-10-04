@@ -53,6 +53,12 @@ variable "custom_domain_name" {
   default     = ""
 }
 
+variable "base_path" {
+  description = "Base path for the custom domain mapping (empty for root path)"
+  type        = string
+  default     = "v1"
+}
+
 variable "stage_name" {
   description = "The name of the deployment stage"
   type        = string

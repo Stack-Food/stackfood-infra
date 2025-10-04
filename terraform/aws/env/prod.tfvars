@@ -141,6 +141,7 @@ api_gateways = {
   "stackfood-api" = {
     description         = "StackFood API Gateway for production environment"
     custom_domain_name  = "api.stackfood.com.br"
+    base_path           = "v1" # Empty for root path, or specify a path like "v1" for api.domain.com/v1
     stage_name          = "v1"
     route_key           = "ANY /{proxy+}"
     security_group_name = "stackfood-prod-api-gateway-vpc-link-sg"

@@ -235,6 +235,7 @@ module "api_gateway" {
 
   # New configurable variables
   custom_domain_name   = each.value.custom_domain_name
+  base_path            = each.value.base_path
   stage_name           = each.value.stage_name
   route_key            = each.value.route_key
   security_group_name  = each.value.security_group_name

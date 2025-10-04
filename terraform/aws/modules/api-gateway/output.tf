@@ -53,6 +53,11 @@ output "custom_domain_name_hosted_zone_id" {
   value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.this[0].regional_zone_id : null
 }
 
+output "custom_domain_base_path_mapping_id" {
+  description = "The ID of the base path mapping"
+  value       = var.custom_domain_name != "" ? aws_api_gateway_base_path_mapping.this[0].id : null
+}
+
 # VPC Link (caso esteja integrando com NLB no EKS)
 output "vpc_link_id" {
   description = "The ID of the VPC Link"

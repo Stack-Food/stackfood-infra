@@ -214,6 +214,7 @@ variable "api_gateways" {
   # type = map(object({
   #   description         = string
   #   custom_domain_name  = optional(string, "")
+  #   base_path           = optional(string, "")
   #   stage_name          = optional(string, "v1")
   #   route_key           = optional(string, "ANY /{proxy+}")
   #   security_group_name = optional(string, "api-gateway-vpc-link")

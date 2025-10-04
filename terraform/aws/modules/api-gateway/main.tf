@@ -115,3 +115,31 @@ resource "aws_api_gateway_stage" "dev" {
   deployment_id = aws_api_gateway_deployment.this.id
   stage_name    = var.stage_name
 }
+
+
+resource "aws_api_gateway_domain_name" "this" {
+  count                    = var.custom_domain_name != "" ? 1 : 0
+  domain_name              = var.custom_domain_name
+  regional_certificate_arn = var.acm_certificate_arn
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+
+  tags = var.tags
+}
+
+# Base Path Mapping - conecta o custom domain ao stage da API
+resource "aws_api_gateway_base_path_mapping" "this" {
+  count       = var.custom_domain_name != "" ? 1 : 0
+  api_id      = aws_api_gateway_rest_api.this.id
+  stage_name  = aws_api_gateway_stage.dev.stage_name
+  domain_name = aws_api_gateway_domain_name.this[0].domain_name
+  base_path   = var.base_path
+
+  depends_on = [
+    aws_api_gateway_domain_name.this,
+    aws_api_gateway_stage.dev
+  ]
+}
+
