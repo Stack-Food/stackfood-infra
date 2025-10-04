@@ -3,6 +3,9 @@ name: "AWS / PROD / Terraform Apply"
 on:
   workflow_dispatch:
 
+env:
+  BACKEND_S3_BUCKET: ${{ vars.BACKEND_S3_BUCKET }}
+  BACKEND_S3_KEY: ${{ vars.BACKEND_S3_KEY }}
 jobs:
   plan_and_apply:
     name: Plan and Apply
@@ -37,11 +40,13 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -input=false -no-color -out=tfplan
+          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -var="backend_s3_bucket=$BACKEND_S3_BUCKET" -var="backend_s3_key=$BACKEND_S3_KEY" -input=false -no-color -out=tfplan
           terraform show -no-color tfplan
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
+          BACKEND_S3_BUCKET: ${{ vars.BACKEND_S3_BUCKET }}
+          BACKEND_S3_KEY: ${{ vars.BACKEND_S3_KEY }}
 
       - name: Create artifacts directory
         if: always()
@@ -66,10 +71,12 @@ jobs:
       - name: Terraform Apply
         if: steps.plan.outcome == 'success'
         id: apply
-        run: terraform apply -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -auto-approve -input=false -no-color tfplan
+        run: terraform apply -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -var="backend_s3_bucket=$BACKEND_S3_BUCKET" -var="backend_s3_key=$BACKEND_S3_KEY" -auto-approve -input=false -no-color tfplan
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
+          BACKEND_S3_BUCKET: ${{ vars.BACKEND_S3_BUCKET }}
+          BACKEND_S3_KEY: ${{ vars.BACKEND_S3_KEY }}
 
       - name: Post Plan Failure
         if: steps.plan.outcome == 'failure'
