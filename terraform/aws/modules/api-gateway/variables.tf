@@ -104,5 +104,5 @@ variable "lambda_invoke_arn" {
 
 variable "lambda_function_name" {
   type        = string
-  description = "Nome da função Lambda para criar o permission"
+  description = "Lambda Function name to be integrated with API Gateway"
 }
