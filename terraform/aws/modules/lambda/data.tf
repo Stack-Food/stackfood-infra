@@ -1,4 +1,4 @@
-data "archive_file" "lambda_placeholder" {
+data "archive_file" "placeholder" {
   type        = "zip"
   output_path = "${path.module}/empty-function.zip"
 

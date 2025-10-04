@@ -1,1 +1,3 @@
-Hello World!
+// Placeholder file for Lambda function: ${function_name}
+// This is a temporary placeholder that will be replaced during deployment
+console.log('Lambda function ${function_name} placeholder - replace with actual deployment package');
