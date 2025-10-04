@@ -177,12 +177,48 @@ module "nginx-ingress" {
   ssl_certificate_arn = module.acm.certificate_arn
 }
 
+# Lambda Functions
+module "lambda" {
+  for_each   = var.lambda_functions
+  source     = "../modules/lambda/"
+  depends_on = [module.vpc]
+
+  # General Settings
+  function_name = each.key
+  description   = each.value.description
+  environment   = var.environment
+  tags          = var.tags
+
+  # Bucket para armazenar artefatos da Lambda
+  bucket_name = "stackfood-lambda-artifacts-1"
+
+  # Code and Runtime - condicionalmente baseado no package_type
+  package_type     = each.value.package_type
+  runtime          = try(each.value.runtime, "dotnet8")
+  handler          = each.value.handler
+  filename         = try(each.value.filename, null)
+  source_code_hash = try(each.value.source_code_hash, null)
+  image_uri        = each.value.image_uri
+
+  # Network Settings (VPC)
+  vpc_id     = each.value.vpc_access ? module.vpc.vpc_id : null
+  subnet_ids = each.value.vpc_access ? module.vpc.private_subnet_ids : []
+
+  # Function Configuration
+  memory_size           = each.value.memory_size
+  timeout               = each.value.timeout
+  environment_variables = each.value.environment_variables
+
+  # IAM Role Settings
+  lambda_role_name = var.lambda_role_name
+}
+
 # API Gateway
 module "api_gateway" {
   for_each = var.api_gateways
   source   = "../modules/api-gateway/"
   # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  depends_on = [module.eks, module.nginx-ingress, module.acm]
+  depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
 
   # General Settings
   api_name    = each.key
@@ -198,12 +234,14 @@ module "api_gateway" {
   acm_certificate_arn = module.acm.certificate_arn
 
   # New configurable variables
-  custom_domain_name  = each.value.custom_domain_name
-  stage_name          = each.value.stage_name
-  route_key           = each.value.route_key
-  security_group_name = each.value.security_group_name
-  vpc_link_name       = each.value.vpc_link_name
-  cors_configuration  = each.value.cors_configuration
+  custom_domain_name   = each.value.custom_domain_name
+  stage_name           = each.value.stage_name
+  route_key            = each.value.route_key
+  security_group_name  = each.value.security_group_name
+  vpc_link_name        = each.value.vpc_link_name
+  cors_configuration   = each.value.cors_configuration
+  lambda_invoke_arn    = module.lambda["stackfood-auth"].function_invoke_arn
+  lambda_function_name = module.lambda["stackfood-auth"].function_name
 }
 
 # Cognito Module

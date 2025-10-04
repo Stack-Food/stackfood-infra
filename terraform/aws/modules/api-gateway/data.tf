@@ -1,5 +1,8 @@
 data "aws_region" "current" {}
 
+data "aws_caller_identity" "current" {}
+
+
 # Data source para buscar o Network Load Balancer do EKS NGINX Ingress
 # Busca por NLB criado pelo NGINX Ingress Controller
 data "aws_lb" "eks_nlb" {

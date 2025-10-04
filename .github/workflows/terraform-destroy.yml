@@ -2,7 +2,6 @@ name: "AWS / PROD / Terraform Destroy"
 
 on:
   workflow_dispatch:
-
 jobs:
   plan_and_destroy:
     name: Plan and Destroy
@@ -35,7 +34,6 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        continue-on-error: true
         run: |
           terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -input=false -no-color -out=tfplan
           terraform show -no-color tfplan
@@ -66,11 +64,11 @@ jobs:
       - name: Terraform Destroy
         if: steps.plan.outcome == 'success'
         id: destroy
-        continue-on-error: true
         run: terraform destroy -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -auto-approve -input=false -no-color
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
+
       - name: Post Plan Failure
         if: steps.plan.outcome == 'failure'
         uses: mshick/add-pr-comment@v2

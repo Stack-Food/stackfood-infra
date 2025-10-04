@@ -96,3 +96,13 @@ variable "vpc_link_name" {
   type        = string
   default     = "api-gateway-vpc-link"
 }
+
+variable "lambda_invoke_arn" {
+  type        = string
+  description = "ARN de invoke da Lambda"
+}
+
+variable "lambda_function_name" {
+  type        = string
+  description = "Lambda Function name to be integrated with API Gateway"
+}

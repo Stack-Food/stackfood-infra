@@ -12,6 +12,11 @@ variable "environment" {
   type        = string
 }
 
+variable "bucket_name" {
+  description = "O nome do bucket S3."
+  type        = string
+}
+
 ######################
 # Optional Variables #
 ######################
