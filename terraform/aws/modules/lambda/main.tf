@@ -100,8 +100,8 @@ resource "aws_lambda_function" "this" {
   # For ZIP packages
   runtime           = var.package_type == "Zip" ? var.runtime : null
   handler           = var.package_type == "Zip" ? var.handler : null
-  s3_bucket         = var.package_type == "Zip" ? var.bucket_name : null
-  s3_key            = var.package_type == "Zip" ? "${var.function_name}.zip" : null
+  s3_bucket         = var.package_type == "Zip" ? aws_s3_bucket.this.id : null
+  s3_key            = var.package_type == "Zip" ? aws_s3_object.lambda_placeholder.key : null
   s3_object_version = var.package_type == "Zip" ? var.s3_object_version : null
   timeout           = 30
 
@@ -129,12 +129,15 @@ resource "aws_lambda_function" "this" {
     },
     var.tags
   )
+
+  # Ensure S3 object is created before Lambda function
+  depends_on = [aws_s3_object.lambda_placeholder]
+
   lifecycle {
     ignore_changes = [
       s3_key,
       s3_object_version,
       source_code_hash,
-      last_modified,
     ]
   }
 }
