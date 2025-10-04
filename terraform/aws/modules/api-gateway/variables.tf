@@ -101,3 +101,8 @@ variable "lambda_invoke_arn" {
   type        = string
   description = "ARN de invoke da Lambda"
 }
+
+variable "lambda_function_name" {
+  type        = string
+  description = "Nome da função Lambda para criar o permission"
+}

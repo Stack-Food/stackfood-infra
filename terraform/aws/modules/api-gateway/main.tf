@@ -28,15 +28,30 @@ resource "aws_api_gateway_integration" "auth_lambda" {
   uri                     = var.lambda_invoke_arn
 }
 
+# Lambda Permission - permite que API Gateway invoque a Lambda
+resource "aws_lambda_permission" "api_gateway_invoke" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.this.execution_arn}/*/*"
+}
+
 # Deploy da API
 resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.this.id
 
   triggers = {
-    redeployment = sha1(jsonencode(aws_api_gateway_integration.auth_lambda))
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_integration.auth_lambda,
+      aws_lambda_permission.api_gateway_invoke
+    ]))
   }
 
-  depends_on = [aws_api_gateway_integration.auth_lambda]
+  depends_on = [
+    aws_api_gateway_integration.auth_lambda,
+    aws_lambda_permission.api_gateway_invoke
+  ]
 }
 
 # Stage dev
