@@ -3,9 +3,6 @@ name: "AWS / PROD / Terraform Apply"
 on:
   workflow_dispatch:
 
-env:
-  BACKEND_S3_BUCKET: ${{ vars.BACKEND_S3_BUCKET }}
-  BACKEND_S3_KEY: ${{ vars.BACKEND_S3_KEY }}
 jobs:
   plan_and_apply:
     name: Plan and Apply
