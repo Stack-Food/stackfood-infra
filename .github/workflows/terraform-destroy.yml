@@ -35,7 +35,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -var="backend_s3_bucket=$BACKEND_S3_BUCKET" -var="backend_s3_key=$BACKEND_S3_KEY" -input=false -no-color -out=tfplan
+          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -input=false -no-color -out=tfplan
           terraform show -no-color tfplan
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -64,7 +64,7 @@ jobs:
       - name: Terraform Destroy
         if: steps.plan.outcome == 'success'
         id: destroy
-        run: terraform destroy -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -var="backend_s3_bucket=$BACKEND_S3_BUCKET" -var="backend_s3_key=$BACKEND_S3_KEY" -auto-approve -input=false -no-color
+        run: terraform destroy -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -auto-approve -input=false -no-color
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
