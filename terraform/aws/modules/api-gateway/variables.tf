@@ -99,5 +99,5 @@ variable "vpc_link_name" {
 
 variable "lambda_invoke_arn" {
   type        = string
-  description = "ARN de invocação da Lambda"
+  description = "ARN de invoke da Lambda"
 }
