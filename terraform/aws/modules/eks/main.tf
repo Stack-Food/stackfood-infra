@@ -70,6 +70,12 @@ resource "aws_eks_node_group" "main" {
     max_unavailable = 1
   }
 
+  # Remote access configuration
+  remote_access {
+    ec2_ssh_key               = lookup(each.value, "key_name", null)
+    source_security_group_ids = [aws_security_group.node_group.id]
+  }
+
   #release_version = nonsensitive(data.aws_ssm_parameter.eks_ami_release_version.value)
   ami_type       = "AL2023_x86_64_STANDARD"
   capacity_type  = each.value.capacity_type
