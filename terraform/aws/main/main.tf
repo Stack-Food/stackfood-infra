@@ -214,34 +214,36 @@ module "lambda" {
 }
 
 # API Gateway
-# module "api_gateway" {
-#   for_each = var.api_gateways
-#   source   = "../modules/api-gateway/"
-#   # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-#   depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
+module "api_gateway" {
+  for_each = var.api_gateways
+  source   = "../modules/api-gateway/"
+  # Dependencies - Garantir que Lambda functions sejam criadas primeiro
+  #depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
+  depends_on = [module.acm, module.lambda]
 
-#   # General Settings
-#   api_name    = each.key
-#   description = each.value.description
-#   environment = var.environment
-#   tags        = var.tags
+  # General Settings
+  api_name    = each.key
+  description = each.value.description
+  environment = var.environment
+  tags        = var.tags
 
-#   # Simplified variables for single Lambda and EKS cluster
-#   eks_cluster_name    = var.eks_cluster_name
-#   vpc_id              = module.vpc.vpc_id
-#   private_subnet_ids  = module.vpc.private_subnet_ids
-#   public_subnet_ids   = module.vpc.public_subnet_ids
-#   acm_certificate_arn = module.acm.certificate_arn
+  # Simplified variables for single Lambda and EKS cluster
+  eks_cluster_name    = var.eks_cluster_name
+  vpc_id              = module.vpc.vpc_id
+  private_subnet_ids  = module.vpc.private_subnet_ids
+  public_subnet_ids   = module.vpc.public_subnet_ids
+  acm_certificate_arn = module.acm.certificate_arn
 
-#   # New configurable variables
-#   custom_domain_name  = each.value.custom_domain_name
-#   stage_name          = each.value.stage_name
-#   route_key           = each.value.route_key
-#   security_group_name = each.value.security_group_name
-#   vpc_link_name       = each.value.vpc_link_name
-#   cors_configuration  = each.value.cors_configuration
-#   lambda_invoke_arn   = module.lambda["stackfood-auth"].function_invoke_arn
-# }
+  # New configurable variables
+  custom_domain_name   = each.value.custom_domain_name
+  stage_name           = each.value.stage_name
+  route_key            = each.value.route_key
+  security_group_name  = each.value.security_group_name
+  vpc_link_name        = each.value.vpc_link_name
+  cors_configuration   = each.value.cors_configuration
+  lambda_invoke_arn    = module.lambda["stackfood-auth"].function_invoke_arn
+  lambda_function_name = module.lambda["stackfood-auth"].function_name
+}
 
 # Cognito Module
 module "cognito" {

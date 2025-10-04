@@ -19,6 +19,16 @@ variable "tags" {
   default     = {}
 }
 
+variable "backend_s3_bucket" {
+  description = "S3 bucket for Terraform remote state"
+  type        = string
+}
+
+variable "backend_s3_key" {
+  description = "S3 key for Terraform remote state"
+  type        = string
+}
+
 ######################
 # Domain Configuration #
 ######################
