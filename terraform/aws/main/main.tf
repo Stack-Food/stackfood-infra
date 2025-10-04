@@ -165,17 +165,17 @@ module "rds" {
 }
 
 # NGINX Ingress
-module "nginx-ingress" {
-  source     = "../modules/kubernetes/nginx-ingress"
-  depends_on = [module.eks, module.acm]
+# module "nginx-ingress" {
+#   source     = "../modules/kubernetes/nginx-ingress"
+#   depends_on = [module.eks, module.acm]
 
-  ingress_name        = var.nginx_ingress_name
-  ingress_repository  = var.nginx_ingress_repository
-  ingress_chart       = var.nginx_ingress_chart
-  ingress_namespace   = var.nginx_ingress_namespace
-  ingress_version     = var.nginx_ingress_version
-  ssl_certificate_arn = module.acm.certificate_arn
-}
+#   ingress_name        = var.nginx_ingress_name
+#   ingress_repository  = var.nginx_ingress_repository
+#   ingress_chart       = var.nginx_ingress_chart
+#   ingress_namespace   = var.nginx_ingress_namespace
+#   ingress_version     = var.nginx_ingress_version
+#   ssl_certificate_arn = module.acm.certificate_arn
+# }
 
 # Lambda Functions
 module "lambda" {
