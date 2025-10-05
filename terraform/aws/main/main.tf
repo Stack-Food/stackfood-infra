@@ -190,7 +190,7 @@ module "lambda" {
   tags          = var.tags
 
   # Bucket para armazenar artefatos da Lambda
-  bucket_name = "stackfood-lambda-artifacts-1"
+  bucket_name = "stackfood-lambda-artifacts-2025"
 
   # Code and Runtime - condicionalmente baseado no package_type
   package_type     = each.value.package_type
