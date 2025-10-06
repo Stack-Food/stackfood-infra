@@ -1,3 +1,8 @@
+# Random ID for unique resource naming
+resource "random_id" "bucket_id" {
+  byte_length = 4
+}
+
 # VPC Module
 module "vpc" {
   source = "../modules/vpc/"
@@ -78,9 +83,9 @@ module "eks" {
       desired_size   = 1
       max_size       = 3
       min_size       = 1
-      instance_types = ["t3.medium"]
+      instance_types = ["t3.large"]
       capacity_type  = "ON_DEMAND"
-      disk_size      = 20
+      disk_size      = 40
       labels = {
         "role" = "api"
       }
@@ -89,9 +94,9 @@ module "eks" {
       desired_size   = 1
       max_size       = 3
       min_size       = 1
-      instance_types = ["t3.medium"]
+      instance_types = ["t3.large"]
       capacity_type  = "ON_DEMAND"
-      disk_size      = 20
+      disk_size      = 40
       labels = {
         "role" = "worker"
       }
@@ -184,7 +189,7 @@ module "lambda" {
   tags          = var.tags
 
   # Bucket para armazenar artefatos da Lambda
-  bucket_name = "stackfood-lambda-artifacts-1"
+  bucket_name = "stackfood-lambda-artifacts-${random_id.bucket_id.hex}"
 
   # Code and Runtime - condicionalmente baseado no package_type
   package_type     = each.value.package_type
