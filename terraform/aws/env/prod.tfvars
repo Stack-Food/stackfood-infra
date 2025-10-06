@@ -2,9 +2,8 @@ aws_region  = "us-east-1"
 environment = "prod"
 
 tags = {
-  Project    = "StackFood"
-  Team       = "DevOps"
-  CostCenter = "IT"
+  Project = "StackFood"
+  Team    = "SOAT-FIAP"
 }
 
 ######################
@@ -19,7 +18,7 @@ cloudflare_zone_id = "09f31a057e454d7d71ab44b6b5960723" # Substitua pelo seu Zon
 ######################
 # VPC Configuration #
 ######################
-vpc_name        = "stackfood-prod-vpc"
+vpc_name        = "stackfood-vpc"
 vpc_cidr_blocks = ["10.0.0.0/16"]
 
 private_subnets = {
@@ -61,14 +60,14 @@ public_subnets = {
 ######################
 # EKS Configuration #
 ######################
-eks_cluster_name           = "stackfood-prod-eks"
+eks_cluster_name           = "stackfood-eks"
 kubernetes_version         = "1.33"
 eks_endpoint_public_access = true
 eks_authentication_mode    = "API_AND_CONFIG_MAP"
 
 # Remote Management Configuration
 eks_enable_remote_management = true
-eks_management_cidr_blocks   = ["0.0.0.0/0"] # Ajuste para seu IP específico em produção
+eks_management_cidr_blocks   = ["0.0.0.0/0"]
 
 ########################
 # NGINX Ingress Configuration # 
@@ -83,7 +82,7 @@ nginx_ingress_version    = "4.10.0"
 # RDS Configuration #
 ######################
 rds_instances = {
-  "stackfood-prod-db" = {
+  "stackfood-db" = {
     # AWS Academy compliant settings
     allocated_storage            = 20            # Changed from 50 to 20 (within 100GB limit)
     storage_encrypted            = false         # Simplified for AWS Academy
@@ -94,7 +93,7 @@ rds_instances = {
     engine                       = "postgres" # Lowercase as required
     engine_version               = "16.3"     # Updated version
     major_engine_version         = "16"
-    identifier                   = "stackfood-prod-postgres"
+    identifier                   = "stackfood-postgres"
     publicly_accessible          = true
     multi_az                     = false # Disabled for cost savings
     performance_insights_enabled = false # Enhanced monitoring not supported
@@ -144,8 +143,8 @@ api_gateways = {
     base_path           = "v1" # Empty for root path, or specify a path like "v1" for api.domain.com/v1
     stage_name          = "v1"
     route_key           = "ANY /{proxy+}"
-    security_group_name = "stackfood-prod-api-gateway-vpc-link-sg"
-    vpc_link_name       = "stackfood-prod-api-gateway-vpc-link"
+    security_group_name = "stackfood-api-gateway-vpc-link-sg"
+    vpc_link_name       = "stackfood-api-gateway-vpc-link"
     cors_configuration = {
       allow_credentials = false
       allow_headers     = ["*"]
@@ -161,7 +160,7 @@ api_gateways = {
 ##########################
 cognito_user_pools = {
   "stackfood-users" = {
-    name                                          = "stackfood-prod-users"
+    name                                          = "stackfood-users"
     alias_attributes                              = ["preferred_username"] # CPF será usado via preferred_username
     auto_verified_attributes                      = []                     # Sem verificação automática (apenas CPF)
     attributes_require_verification_before_update = []                     # Nenhum atributo requer verificação antes de atualizar
@@ -195,7 +194,7 @@ cognito_user_pools = {
     }
 
     # Domain for hosted UI (opcional para POC)
-    domain = "stackfood-prod"
+    domain = "stackfood-users-domain"
 
     # Client Applications - Configurado para autenticação sem senha
     clients = {
@@ -213,8 +212,8 @@ cognito_user_pools = {
         allowed_oauth_flows                  = ["implicit"]
         allowed_oauth_flows_user_pool_client = true
         allowed_oauth_scopes                 = ["openid", "profile", "aws.cognito.signin.user.admin"]
-        callback_urls                        = ["http://localhost:3000/callback", "https://stackfood-prod.com/callback"]
-        logout_urls                          = ["http://localhost:3000/logout", "https://stackfood-prod.com/logout"]
+        callback_urls                        = ["http://localhost:3000/callback", "https://stackfood.com.br/callback"]
+        logout_urls                          = ["http://localhost:3000/logout", "https://stackfood.com.br/logout"]
 
         # Autenticação customizada para CPF sem senha
         explicit_auth_flows           = ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
