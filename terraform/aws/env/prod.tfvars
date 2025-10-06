@@ -23,30 +23,30 @@ vpc_name        = "stackfood-prod-vpc"
 vpc_cidr_blocks = ["10.0.0.0/16"]
 
 private_subnets = {
-  "private1" = {
+  "1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.1.0/24"
   },
-  "private2" = {
+  "2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.2.0/24"
   },
-  "private3" = {
+  "3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.3.0/24"
   }
 }
 
 public_subnets = {
-  "public1" = {
+  "1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.101.0/24"
   },
-  "public2" = {
+  "2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.102.0/24"
   },
-  "public3" = {
+  "3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.103.0/24"
   }
@@ -61,7 +61,7 @@ public_subnets = {
 ######################
 # EKS Configuration #
 ######################
-eks_cluster_name           = "stackfood-prod-eks-2"
+eks_cluster_name           = "stackfood-prod-eks"
 kubernetes_version         = "1.33"
 eks_endpoint_public_access = true
 eks_authentication_mode    = "API_AND_CONFIG_MAP"

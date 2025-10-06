@@ -43,18 +43,14 @@ resource "aws_subnet" "subnet-private" {
 
   tags = merge(
     {
-      Name                              = join("-", [var.vpc_name, "private", each.key])
-      Terraform_Managed                 = "true"
-      Environment                       = var.environment
-      "kubernetes.io/role/internal-elb" = "1"
+      Name                                        = join("-", [var.vpc_name, "private", each.key])
+      Terraform_Managed                           = "true"
+      Environment                                 = var.environment
+      "kubernetes.io/role/internal-elb"           = "1"
+      "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     },
     var.tags
   )
-}
-
-moved {
-  from = aws_subnet.subnet
-  to   = aws_subnet.subnet-private
 }
 
 resource "aws_subnet" "subnet-public" {
@@ -67,10 +63,11 @@ resource "aws_subnet" "subnet-public" {
 
   tags = merge(
     {
-      Name                     = join("-", [var.vpc_name, "public", each.key])
-      Terraform_Managed        = "true"
-      Environment              = var.environment
-      "kubernetes.io/role/elb" = "1"
+      Name                                        = join("-", [var.vpc_name, "public", each.key])
+      Terraform_Managed                           = "true"
+      Environment                                 = var.environment
+      "kubernetes.io/role/elb"                    = "1"
+      "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     },
     var.tags
   )

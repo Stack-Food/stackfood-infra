@@ -75,31 +75,25 @@ module "eks" {
   # Configuração dos grupos de nós
   node_groups = {
     api = {
-      desired_size   = 2
+      desired_size   = 1
       max_size       = 3
-      min_size       = 2
-      instance_types = ["c1.xlarge"]
+      min_size       = 1
+      instance_types = ["t3.medium"]
       capacity_type  = "ON_DEMAND"
-      disk_size      = 100
+      disk_size      = 20
       labels = {
-        "role"                        = "api"
-        "node-role.kubernetes.io/api" = "true"
-        "app.kubernetes.io/component" = "backend"
-        "app.kubernetes.io/part-of"   = "stackfood"
+        "role" = "api"
       }
     }
     worker = {
-      desired_size   = 2
+      desired_size   = 1
       max_size       = 3
-      min_size       = 2
-      instance_types = ["c1.xlarge"]
+      min_size       = 1
+      instance_types = ["t3.medium"]
       capacity_type  = "ON_DEMAND"
-      disk_size      = 100
+      disk_size      = 20
       labels = {
-        "role"                           = "worker"
-        "node-role.kubernetes.io/worker" = "true"
-        "app.kubernetes.io/component"    = "worker"
-        "app.kubernetes.io/part-of"      = "stackfood"
+        "role" = "worker"
       }
     }
   }
