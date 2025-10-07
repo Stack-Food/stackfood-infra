@@ -12,6 +12,7 @@
 - [🚀 Sobre o Projeto](#-sobre-o-projeto)
 - [🏗️ Arquitetura da Solução](#%EF%B8%8F-arquitetura-da-solução)
 - [📂 Estrutura do Projeto](#-estrutura-do-projeto)
+- [🧩 Módulos Terraform](#-módulos-terraform)
 - [☁️ Infraestrutura AWS (Terraform)](#%EF%B8%8F-infraestrutura-aws-terraform)
 - [🐳 Kubernetes & GitOps](#-kubernetes--gitops)
 - [🚀 Guia de Implantação](#-guia-de-implantação)
@@ -104,6 +105,85 @@ stackfood-infra/
 │   └── namespaces/            # 📦 Namespaces
 ├── .github/workflows/      # 🔄 CI/CD Pipelines
 └── scripts/                # 🛠️ Scripts de automação
+```
+
+## 🧩 Módulos Terraform
+
+A infraestrutura é organizada em módulos reutilizáveis, cada um com responsabilidade específica:
+
+### 📚 Índice de Módulos
+
+| Módulo             | Descrição                                  | Documentação                                                                |
+| ------------------ | ------------------------------------------ | --------------------------------------------------------------------------- |
+| **🌐 VPC**         | Rede virtual com subnets públicas/privadas | [📖 VPC README](terraform/aws/modules/vpc/README.md)                        |
+| **☸️ EKS**         | Cluster Kubernetes gerenciado              | [📖 EKS README](terraform/aws/modules/eks/README.md)                        |
+| **🗄️ RDS**         | Banco PostgreSQL com alta disponibilidade  | [📖 RDS README](terraform/aws/modules/rds/README.md)                        |
+| **🔐 Cognito**     | Autenticação com User Pools duplos         | [📖 Cognito README](terraform/aws/modules/cognito/README.md)                |
+| **🚪 API Gateway** | Gateway com roteamento híbrido             | [📖 API Gateway README](terraform/aws/modules/api-gateway/README.md)        |
+| **⚡ Lambda**      | Funções serverless para auth               | [📖 Lambda README](terraform/aws/modules/lambda/README.md)                  |
+| **🔒 ACM**         | Certificados SSL/TLS gerenciados           | [📖 ACM README](terraform/aws/modules/acm/README.md)                        |
+| **🌍 DNS**         | Gerenciamento DNS via Cloudflare           | [📖 DNS README](terraform/aws/modules/dns/README.md)                        |
+| **🚀 ArgoCD**      | GitOps com OIDC integration                | [📖 ArgoCD README](terraform/aws/modules/kubernetes/argocd/README.md)       |
+| **🌐 NGINX**       | Ingress Controller para EKS                | [📖 NGINX README](terraform/aws/modules/kubernetes/nginx-ingress/README.md) |
+
+### 🏗️ Arquitetura de Módulos
+
+```
+Terraform Modules
+├── 🌐 VPC Module
+│   ├── Public Subnets (3 AZs)
+│   ├── Private Subnets (3 AZs)
+│   ├── Internet Gateway
+│   └── NAT Gateways
+├── ☸️ EKS Module
+│   ├── Control Plane (Managed)
+│   ├── Worker Nodes (Auto-scaling)
+│   └── Add-ons (CNI, CoreDNS)
+├── 🔐 Authentication Stack
+│   ├── Cognito (App + ArgoCD Pools)
+│   ├── Lambda (Auth Functions)
+│   └── API Gateway (Routing)
+├── 🗄️ Data Layer
+│   ├── RDS PostgreSQL
+│   └── EBS Volumes
+├── 🌍 Networking
+│   ├── DNS (Cloudflare)
+│   ├── ACM (SSL Certificates)
+│   └── Load Balancers
+└── 🐳 Kubernetes Services
+    ├── ArgoCD (GitOps)
+    └── NGINX Ingress
+```
+
+### 🎯 Características dos Módulos
+
+- **🔧 Configuráveis**: Variáveis para diferentes ambientes
+- **🔄 Reutilizáveis**: Design modular para múltiplos projetos
+- **📊 Observáveis**: Outputs estruturados para integração
+- **🛡️ Seguros**: Políticas de segurança por padrão
+- **📈 Escaláveis**: Suporte a auto-scaling e alta disponibilidade
+- **💰 Otimizados**: Configurações de custo para AWS Academy
+
+### 🚀 Uso dos Módulos
+
+```hcl
+# Exemplo de uso integrado
+module "vpc" {
+  source = "../modules/vpc/"
+  # ... configurações
+}
+
+module "eks" {
+  source = "../modules/eks/"
+  vpc_id = module.vpc.vpc_id
+  # ... configurações
+}
+
+module "cognito" {
+  source = "../modules/cognito/"
+  # Cria 2 User Pools automaticamente
+  # ... configurações
+}
 ```
 
 ## ☁️ Infraestrutura AWS (Terraform)
