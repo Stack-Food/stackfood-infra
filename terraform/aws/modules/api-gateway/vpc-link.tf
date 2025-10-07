@@ -5,7 +5,7 @@ resource "null_resource" "wait_for_nlb" {
 
   provisioner "local-exec" {
     command = <<EOT
-      for i in {1..60}; do
+      for i in $(seq 1 60); do
         state=$(aws elbv2 describe-load-balancers --load-balancer-arns ${data.aws_lb.eks_nlb[0].arn} --region ${data.aws_region.current.region} --query 'LoadBalancers[0].State.Code' --output text)
         if [ "$state" = "active" ]; then
           exit 0
