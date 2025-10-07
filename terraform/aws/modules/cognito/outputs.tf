@@ -155,23 +155,3 @@ output "stackfood_user_created" {
   description = "Confirmation that stackfood user was created"
   value       = var.create_argocd_user_pool ? "User 'stackfood' created with admin privileges in ArgoCD User Pool" : "ArgoCD User Pool not created"
 }
-
-# Summary output
-output "user_pools_summary" {
-  description = "Resumo dos User Pools criados neste módulo"
-  value = {
-    app_user_pool = var.create_app_user_pool ? {
-      id      = aws_cognito_user_pool.app[0].id
-      name    = aws_cognito_user_pool.app[0].name
-      purpose = "API Gateway e aplicação principal"
-      users   = ["convidado (guest)"]
-    } : null
-
-    argocd_user_pool = var.create_argocd_user_pool ? {
-      id      = aws_cognito_user_pool.argocd[0].id
-      name    = aws_cognito_user_pool.argocd[0].name
-      purpose = "Autenticação ArgoCD OIDC"
-      users   = ["stackfood (admin)"]
-    } : null
-  }
-}
