@@ -128,8 +128,3 @@ output "user_pools_summary" {
     } : null
   }
 }
-
-output "stackfood_user_created" {
-  description = "Confirmation that stackfood user was created"
-  value       = "User 'stackfood' created with admin privileges"
-}
