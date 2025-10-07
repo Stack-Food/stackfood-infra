@@ -37,7 +37,6 @@ output "argocd_access_info" {
 output "team_users_info" {
   description = "Informações dos usuários da equipe criados"
   value       = module.cognito.argocd_team_users_created
-  sensitive   = true
 }
 
 output "dns_records_created" {
