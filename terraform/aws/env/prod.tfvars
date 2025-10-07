@@ -22,30 +22,30 @@ vpc_name        = "stackfood-vpc"
 vpc_cidr_blocks = ["10.0.0.0/16"]
 
 private_subnets = {
-  "1" = {
+  "a1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.1.0/24"
   },
-  "2" = {
+  "b2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.2.0/24"
   },
-  "3" = {
+  "c3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.3.0/24"
   }
 }
 
 public_subnets = {
-  "1" = {
+  "a1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.101.0/24"
   },
-  "2" = {
+  "b2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.102.0/24"
   },
-  "3" = {
+  "c3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.103.0/24"
   }

@@ -10,14 +10,14 @@ metadata:
   annotations:
     service.alpha.kubernetes.io/app-protocols: '{"http":"HTTP","https":"HTTPS"}'
 spec:
-  type: ClusterIP # Alterado para ClusterIP já que o Ingress vai expor o serviço
+  type: ClusterIP # ClusterIP já que o Ingress vai expor o serviço
   ports:
     - port: 80
       targetPort: 5039
       protocol: TCP
       name: http
     - port: 443
-      targetPort: 7189
+      targetPort: 7189 # Porta HTTPS da aplicação
       protocol: TCP
       name: https
   selector:

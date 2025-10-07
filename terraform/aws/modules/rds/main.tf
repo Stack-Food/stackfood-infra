@@ -6,7 +6,7 @@
 resource "aws_db_subnet_group" "this" {
   name        = var.db_subnet_group_name != null ? var.db_subnet_group_name : "${var.identifier}-subnet-group"
   description = "Database subnet group for ${var.identifier}"
-  subnet_ids  = concat(var.private_subnet_ids, var.public_subnet_ids)
+  subnet_ids  = var.public_subnet_ids
 
   tags = merge(
     {
