@@ -254,14 +254,12 @@ module "cognito" {
   guest_user_password = "Convidado123!"
 
   # Configurações básicas
-  create_app_user_pool    = true # Criar User Pool da aplicação
-  create_argocd_user_pool = true # Criar User Pool do ArgoCD
+  create_app_user_pool = true # Criar User Pool da aplicação
 
   # Configurações do User Pool ArgoCD
   stackfood_admin_password = var.argocd_admin_password
   argocd_team_users        = var.argocd_team_users
   argocd_team_password     = var.argocd_team_password
-  create_team_users        = length(var.argocd_team_users) > 0 # Criar usuários se a lista não estiver vazia
 
   # Configurações ArgoCD OIDC
   argocd_callback_urls = [
@@ -286,7 +284,7 @@ module "argocd" {
   cognito_user_pool_id  = module.cognito.argocd_user_pool_id
   cognito_client_id     = module.cognito.argocd_client_id
   cognito_client_secret = module.cognito.argocd_client_secret
-  cognito_region        = data.aws_region.current.name
+  cognito_region        = data.aws_region.current.region
 
   # Configurações de grupos
   admin_group_name    = "argocd-admin"

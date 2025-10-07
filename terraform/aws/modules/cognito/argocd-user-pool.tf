@@ -1,11 +1,9 @@
 
 ###########################
-# ArgoCD Dedicated User Pool #
+# ArgoCD User Pool        #
 ###########################
 
 resource "aws_cognito_user_pool" "argocd" {
-  count = var.create_argocd_user_pool ? 1 : 0
-
   name = "${var.user_pool_name}-argocd"
 
   # Configuração específica para ArgoCD
@@ -18,31 +16,6 @@ resource "aws_cognito_user_pool" "argocd" {
     require_numbers   = true
     require_symbols   = false
     require_uppercase = true
-  }
-
-  # Schema para ArgoCD
-  schema {
-    attribute_data_type = "String"
-    name                = "email"
-    required            = true
-    mutable             = true
-
-    string_attribute_constraints {
-      min_length = 1
-      max_length = 256
-    }
-  }
-
-  schema {
-    attribute_data_type = "String"
-    name                = "name"
-    required            = false
-    mutable             = true
-
-    string_attribute_constraints {
-      min_length = 1
-      max_length = 256
-    }
   }
 
   # Configurações de verificação
@@ -74,47 +47,32 @@ resource "aws_cognito_user_pool" "argocd" {
 
 # ArgoCD User Pool Domain
 resource "aws_cognito_user_pool_domain" "argocd" {
-  count = var.create_argocd_user_pool ? 1 : 0
-
   domain       = "${var.user_pool_name}-argocd"
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  user_pool_id = aws_cognito_user_pool.argocd.id
 }
 
 ###########################
-# ArgoCD User & Groups    #
+# ArgoCD Groups           #
 ###########################
 
 # ArgoCD Admin Group
 resource "aws_cognito_user_group" "argocd_admin" {
-  count = var.create_argocd_user_pool ? 1 : 0
-
   name         = "argocd-admin"
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  user_pool_id = aws_cognito_user_pool.argocd.id
   description  = "ArgoCD Administrator Group"
   precedence   = 1
 }
 
-# ArgoCD Readonly Group
-resource "aws_cognito_user_group" "argocd_readonly" {
-  count = var.create_argocd_user_pool ? 1 : 0
+###########################
+# StackFood Admin User    #
+###########################
 
-  name         = "argocd-readonly"
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
-  description  = "ArgoCD Read-only Group"
-  precedence   = 2
-}
-
-# StackFood Admin User
 resource "aws_cognito_user" "stackfood_admin" {
-  count = var.create_argocd_user_pool ? 1 : 0
-
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  user_pool_id = aws_cognito_user_pool.argocd.id
   username     = "stackfood"
   password     = var.stackfood_admin_password
 
-  # Suprime o e-mail de boas-vindas, o que, em conjunto com a definição da senha,
-  # cria o usuário com o status CONFIRMED, tornando a senha "permanente"
-  # e não exigindo alteração no primeiro login.
+  # Suprime o e-mail de boas-vindas, criando usuário confirmado
   message_action = "SUPPRESS"
 
   attributes = {
@@ -126,11 +84,9 @@ resource "aws_cognito_user" "stackfood_admin" {
 
 # Add StackFood user to ArgoCD admin group
 resource "aws_cognito_user_in_group" "stackfood_admin_group" {
-  count = var.create_argocd_user_pool ? 1 : 0
-
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
-  username     = aws_cognito_user.stackfood_admin[0].username
-  group_name   = aws_cognito_user_group.argocd_admin[0].name
+  user_pool_id = aws_cognito_user_pool.argocd.id
+  username     = aws_cognito_user.stackfood_admin.username
+  group_name   = aws_cognito_user_group.argocd_admin.name
 }
 
 ###########################
@@ -139,9 +95,9 @@ resource "aws_cognito_user_in_group" "stackfood_admin_group" {
 
 # Criar usuários da equipe
 resource "aws_cognito_user" "team_users" {
-  for_each = local.team_users
+  for_each = var.argocd_team_users
 
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  user_pool_id = aws_cognito_user_pool.argocd.id
   username     = each.key
   password     = var.argocd_team_password
 
@@ -153,23 +109,15 @@ resource "aws_cognito_user" "team_users" {
     email          = each.value.email
     email_verified = false # Será verificado quando o usuário acessar o email
   }
-
-  # Aguarda a criação do User Pool
-  depends_on = [aws_cognito_user_pool.argocd]
 }
 
 # Adicionar usuários da equipe ao grupo admin
 resource "aws_cognito_user_in_group" "team_users_admin_group" {
-  for_each = local.team_users
+  for_each = var.argocd_team_users
 
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  user_pool_id = aws_cognito_user_pool.argocd.id
   username     = aws_cognito_user.team_users[each.key].username
-  group_name   = aws_cognito_user_group.argocd_admin[0].name
-
-  depends_on = [
-    aws_cognito_user.team_users,
-    aws_cognito_user_group.argocd_admin
-  ]
+  group_name   = aws_cognito_user_group.argocd_admin.name
 }
 
 ###########################
@@ -177,10 +125,8 @@ resource "aws_cognito_user_in_group" "team_users_admin_group" {
 ###########################
 
 resource "aws_cognito_user_pool_client" "argocd" {
-  count = var.create_argocd_user_pool ? 1 : 0
-
   name         = "${var.user_pool_name}-argocd-client"
-  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  user_pool_id = aws_cognito_user_pool.argocd.id
 
   # Generate secret for OIDC integration
   generate_secret = true
@@ -221,4 +167,3 @@ resource "aws_cognito_user_pool_client" "argocd" {
   read_attributes  = ["email", "email_verified", "name", "phone_number"]
   write_attributes = ["email", "name", "phone_number"]
 }
-

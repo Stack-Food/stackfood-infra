@@ -58,55 +58,54 @@ output "user_pool_endpoint" {
 # ArgoCD OIDC Configuration (Dedicated User Pool)
 output "argocd_oidc_config" {
   description = "Configuração OIDC para ArgoCD (User Pool dedicado)"
-  value = var.create_argocd_user_pool ? {
-    user_pool_id   = aws_cognito_user_pool.argocd[0].id
-    user_pool_arn  = aws_cognito_user_pool.argocd[0].arn
-    client_id      = aws_cognito_user_pool_client.argocd[0].id
-    client_secret  = aws_cognito_user_pool_client.argocd[0].client_secret
-    issuer_url     = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.argocd[0].id}"
-    domain         = aws_cognito_user_pool_domain.argocd[0].domain
-    admin_group    = aws_cognito_user_group.argocd_admin[0].name
-    readonly_group = aws_cognito_user_group.argocd_readonly[0].name
-    endpoint       = aws_cognito_user_pool.argocd[0].endpoint
-  } : null
+  value = {
+    user_pool_id  = aws_cognito_user_pool.argocd.id
+    user_pool_arn = aws_cognito_user_pool.argocd.arn
+    client_id     = aws_cognito_user_pool_client.argocd.id
+    client_secret = aws_cognito_user_pool_client.argocd.client_secret
+    issuer_url    = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.argocd.id}"
+    domain        = aws_cognito_user_pool_domain.argocd.domain
+    admin_group   = aws_cognito_user_group.argocd_admin.name
+    endpoint      = aws_cognito_user_pool.argocd.endpoint
+  }
   sensitive = true
 }
 
 # ArgoCD User Pool specific outputs
 output "argocd_user_pool_id" {
   description = "ID do Cognito User Pool dedicado para ArgoCD"
-  value       = var.create_argocd_user_pool ? aws_cognito_user_pool.argocd[0].id : null
+  value       = aws_cognito_user_pool.argocd.id
 }
 
 output "argocd_user_pool_arn" {
   description = "ARN do Cognito User Pool dedicado para ArgoCD"
-  value       = var.create_argocd_user_pool ? aws_cognito_user_pool.argocd[0].arn : null
+  value       = aws_cognito_user_pool.argocd.arn
 }
 
 output "argocd_client_id" {
   description = "ID do client ArgoCD"
-  value       = var.create_argocd_user_pool ? aws_cognito_user_pool_client.argocd[0].id : null
+  value       = aws_cognito_user_pool_client.argocd.id
 }
 
 output "argocd_client_secret" {
   description = "Secret do client ArgoCD"
-  value       = var.create_argocd_user_pool ? aws_cognito_user_pool_client.argocd[0].client_secret : null
+  value       = aws_cognito_user_pool_client.argocd.client_secret
   sensitive   = true
 }
 
 output "argocd_domain" {
   description = "Domínio do User Pool ArgoCD"
-  value       = var.create_argocd_user_pool ? aws_cognito_user_pool_domain.argocd[0].domain : null
+  value       = aws_cognito_user_pool_domain.argocd.domain
 }
 
 output "argocd_issuer_url" {
   description = "URL do issuer OIDC para ArgoCD"
-  value       = var.create_argocd_user_pool ? "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.argocd[0].id}" : null
+  value       = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.argocd.id}"
 }
 
 output "argocd_team_users_created" {
   description = "Lista dos usuários da equipe criados no ArgoCD"
-  value = var.create_argocd_user_pool && var.create_team_users && length(var.argocd_team_users) > 0 ? {
+  value = length(var.argocd_team_users) > 0 ? {
     users = [
       for username, user in var.argocd_team_users : {
         username = username
@@ -118,7 +117,6 @@ output "argocd_team_users_created" {
     access_url = "https://argo.stackfood.com.br"
     group      = "argocd-admin"
     note       = "Emails de convite foram enviados para todos os usuários"
-    source     = "Configurado via prod.tfvars"
   } : null
   sensitive = true
 }
@@ -132,26 +130,17 @@ output "user_pools_summary" {
       purpose = "Autenticação da aplicação principal"
       users   = ["convidado (guest)"]
     } : null
-    argocd_user_pool = var.create_argocd_user_pool ? {
-      name    = "${var.user_pool_name}-argocd"
-      id      = aws_cognito_user_pool.argocd[0].id
-      purpose = "Autenticação exclusiva do ArgoCD"
-      admin_users = concat(
-        ["stackfood (admin)"],
-        var.create_team_users ? [
-          "leonardo.duarte",
-          "luiz.felipe",
-          "leonardo.lemos",
-          "rodrigo.silva",
-          "vinicius.targa"
-        ] : []
-      )
-      total_users = var.create_team_users ? 6 : 1
-    } : null
+    argocd_user_pool = {
+      name        = "${var.user_pool_name}-argocd"
+      id          = aws_cognito_user_pool.argocd.id
+      purpose     = "Autenticação exclusiva do ArgoCD"
+      admin_users = concat(["stackfood (admin)"], keys(var.argocd_team_users))
+      total_users = 1 + length(var.argocd_team_users)
+    }
   }
 }
 
 output "stackfood_user_created" {
   description = "Confirmation that stackfood user was created"
-  value       = var.create_argocd_user_pool ? "User 'stackfood' created with admin privileges in ArgoCD User Pool" : "ArgoCD User Pool not created"
+  value       = "User 'stackfood' created with admin privileges in ArgoCD User Pool"
 }

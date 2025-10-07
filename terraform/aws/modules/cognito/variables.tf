@@ -21,13 +21,7 @@ variable "guest_user_password" {
   sensitive   = true
 }
 
-# ArgoCD User Pool Configuration
-variable "create_argocd_user_pool" {
-  description = "Criar User Pool para ArgoCD"
-  type        = bool
-  default     = true
-}
-
+# ArgoCD Configuration
 variable "stackfood_admin_password" {
   description = "Senha para o usuário administrador stackfood"
   type        = string
@@ -49,12 +43,6 @@ variable "argocd_team_password" {
   type        = string
   sensitive   = true
   default     = "StackFood@2025"
-}
-
-variable "create_team_users" {
-  description = "Criar usuários da equipe no ArgoCD"
-  type        = bool
-  default     = true
 }
 
 variable "argocd_callback_urls" {
