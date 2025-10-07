@@ -15,6 +15,7 @@ output "argocd_cognito_info" {
     user_pool_id  = module.cognito.argocd_user_pool_id
     user_pool_arn = module.cognito.argocd_user_pool_arn
     client_id     = module.cognito.argocd_client_id
+    client_secret = module.cognito.argocd_client_secret
     domain        = module.cognito.argocd_domain
     issuer_url    = module.cognito.argocd_issuer_url
   }
