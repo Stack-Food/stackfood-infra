@@ -1,41 +1,33 @@
 global:
   domain: https://${argocd_subdomain}.${domain_name}
-
 configs:
   params:
     "server.insecure": true
   cm:
     create: true
-    # OIDC Configuration for AWS Cognito
+  rbac:
+    create: true
+    policy.default: ""
+    policy.csv: |
+      g, argocd-readonly, role:readonly
+      g, argocd-admin, role:admin
+    scopes: "[groups]"
+repoServer:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+server:
+  config:
+    url: "https://${argocd_subdomain}.${domain_name}"
     oidc.config: |
-      name: Cognito
+      name: admin
       issuer: https://cognito-idp.${cognito_region}.amazonaws.com/${cognito_user_pool_id}
       clientId: ${cognito_client_id}
       clientSecret: ${cognito_client_secret}
       redirectUri: https://${argocd_subdomain}.${domain_name}/api/dex/callback
       requestedScopes: ["email", "openid", "phone"]
       requestedIDTokenClaims: {"groups": {"essential": true}}
-  rbac:
-    create: true
-    policy.default: ""
-    policy.csv: |
-      g, ${admin_group_name}, role:admin
-      g, ${readonly_group_name}, role:readonly
-    scopes: "[groups]"
-
-repoServer:
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-
-server:
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  config:
-    url: "https://${argocd_subdomain}.${domain_name}"
   extraArgs:
     - --insecure
   ingress:
@@ -47,6 +39,6 @@ server:
       nlb.ingress.kubernetes.io/scheme: internet-facing
       nlb.ingress.kubernetes.io/target-type: instance
       nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-      nlb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-south-1:434605749312:certificate/50eeb484-0d88-4617-bdf6-1d339f2f3b48"
+      nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
     hosts:
       - ${argocd_subdomain}.${domain_name}
