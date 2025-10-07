@@ -1,11 +1,18 @@
 variable "user_pool_name" {
-  description = "Nome do Cognito User Pool"
+  description = "Nome base para os Cognito User Pools"
   type        = string
 }
 
 variable "environment" {
-  description = "dev"
+  description = "Ambiente (dev, staging, prod)"
   type        = string
+}
+
+# Application User Pool Configuration
+variable "create_app_user_pool" {
+  description = "Criar User Pool para a aplicação"
+  type        = bool
+  default     = true
 }
 
 variable "guest_user_password" {
@@ -14,10 +21,11 @@ variable "guest_user_password" {
   sensitive   = true
 }
 
-variable "argocd_user_pool_name" {
-  description = "Nome do User Pool para ArgoCD"
-  type        = string
-  default     = "argocd-user-pool"
+# ArgoCD User Pool Configuration
+variable "create_argocd_user_pool" {
+  description = "Criar User Pool para ArgoCD"
+  type        = bool
+  default     = true
 }
 
 variable "stackfood_admin_password" {

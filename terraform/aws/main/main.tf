@@ -254,7 +254,8 @@ module "cognito" {
   guest_user_password = "Convidado123!"
 
   # Configurações básicas
-  argocd_user_pool_name = "stackfood-argocd"
+  create_app_user_pool    = true # Criar User Pool da aplicação
+  create_argocd_user_pool = true # Criar User Pool do ArgoCD
 
   # Senhas
   stackfood_admin_password = "Fiap@2025"
@@ -278,15 +279,15 @@ module "argocd" {
   environment      = var.environment
   chart_version    = "4.0.0"
 
-  # Configurações Cognito
-  cognito_user_pool_id  = module.cognito.user_pool_id
-  cognito_client_id     = module.cognito.argocd_oidc_config.client_id
-  cognito_client_secret = module.cognito.argocd_oidc_config.client_secret
+  # Configurações Cognito - USANDO O USER POOL ARGOCD DO MÓDULO UNIFICADO
+  cognito_user_pool_id  = module.cognito.argocd_user_pool_id
+  cognito_client_id     = module.cognito.argocd_client_id
+  cognito_client_secret = module.cognito.argocd_client_secret
   cognito_region        = data.aws_region.current.name
 
   # Configurações de grupos
-  admin_group_name    = module.cognito.argocd_oidc_config.admin_group
-  readonly_group_name = module.cognito.argocd_oidc_config.readonly_group
+  admin_group_name    = "argocd-admin"
+  readonly_group_name = "argocd-readonly"
 
   # Certificado SSL (opcional)
   certificate_arn = module.acm.certificate_arn
@@ -309,12 +310,13 @@ module "dns" {
   domain_name        = var.domain_name
   environment        = var.environment
   eks_cluster_name   = var.eks_cluster_name
+
   # Configurações ArgoCD
   create_argocd_record = true
   argocd_subdomain     = "argo"
 
   # DNS Settings
-  proxied = false
+  proxied = true
   ttl     = 300
 
   # Tags
