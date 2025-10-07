@@ -263,7 +263,7 @@ module "cognito" {
 
   # Configurações ArgoCD OIDC
   argocd_callback_urls = [
-    "https://argo.${var.domain_name}/api/dex/callback"
+    "https://argo.${var.domain_name}/auth/callback"
   ]
   argocd_logout_urls = [
     "https://argo.${var.domain_name}"
@@ -302,6 +302,8 @@ module "argocd" {
     module.eks
   ]
 }
+
+
 
 module "dns" {
   source = "../modules/dns/"
