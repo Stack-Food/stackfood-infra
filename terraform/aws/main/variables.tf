@@ -139,10 +139,6 @@ variable "eks_authentication_mode" {
   type        = string
 }
 
-variable "eks_node_groups" {
-  description = "Map of EKS Node Group configurations"
-}
-
 variable "eks_log_retention_in_days" {
   description = "Number of days to retain CloudWatch logs"
   type        = number
@@ -209,141 +205,12 @@ variable "eks_cluster_role_name" {
   description = "Name of the IAM role to use for the EKS cluster"
   type        = string
 }
-
-variable "eks_node_role_name" {
-  description = "Name of the IAM role to use for the EKS node groups"
-  type        = string
-}
-
 ##########################
 # API Gateway Configuration #
 ##########################
 
-# variable "api_gateways" {
-#   description = "API Gateways values"
-# }
 variable "api_gateways" {
   description = "Map of API Gateways to create"
-  type = map(object({
-    description          = optional(string, "")
-    stage_name           = string
-    endpoint_type        = optional(string, "REGIONAL")
-    enable_cors          = optional(bool, true)
-    enable_access_logs   = optional(bool, true)
-    xray_tracing_enabled = optional(bool, false)
-
-    # CORS Configuration
-    cors_allow_origins     = optional(list(string), ["*"])
-    cors_allow_methods     = optional(list(string), ["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-    cors_allow_headers     = optional(list(string), ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"])
-    cors_allow_credentials = optional(bool, false)
-
-    # Throttling
-    throttle_settings = optional(object({
-      rate_limit  = number
-      burst_limit = number
-    }))
-
-    # Caching
-    cache_cluster_enabled = optional(bool, false)
-    cache_cluster_size    = optional(string, "0.5")
-
-    # Resources and Methods
-    resources = optional(map(object({
-      path_part = string
-      parent_id = optional(string)
-    })), {})
-
-    methods = optional(map(object({
-      resource_key         = optional(string)
-      resource_id          = optional(string)
-      http_method          = string
-      authorization        = optional(string, "NONE")
-      authorizer_id        = optional(string)
-      authorization_scopes = optional(list(string))
-      api_key_required     = optional(bool, false)
-      operation_name       = optional(string)
-      request_models       = optional(map(string))
-      request_validator_id = optional(string)
-      request_parameters   = optional(map(bool))
-    })), {})
-
-    integrations = optional(map(object({
-      method_key              = string
-      resource_key            = optional(string)
-      resource_id             = optional(string)
-      integration_http_method = string
-      type                    = string
-      connection_type         = optional(string)
-      connection_id           = optional(string)
-      credentials             = optional(string)
-      request_templates       = optional(map(string))
-      request_parameters      = optional(map(string))
-      passthrough_behavior    = optional(string, "WHEN_NO_MATCH")
-      cache_key_parameters    = optional(list(string))
-      cache_namespace         = optional(string)
-      content_handling        = optional(string)
-      timeout_milliseconds    = optional(number, 29000)
-      tls_config = optional(object({
-        insecure_skip_verification = bool
-      }))
-    })), {})
-
-    method_responses = optional(map(object({
-      method_key          = string
-      resource_key        = optional(string)
-      resource_id         = optional(string)
-      status_code         = string
-      response_models     = optional(map(string))
-      response_parameters = optional(map(bool))
-    })), {})
-
-    integration_responses = optional(map(object({
-      method_key          = string
-      method_response_key = string
-      resource_key        = optional(string)
-      resource_id         = optional(string)
-      response_templates  = optional(map(string))
-      response_parameters = optional(map(string))
-      selection_pattern   = optional(string)
-      content_handling    = optional(string)
-    })), {})
-
-    # API Keys and Usage Plans
-    api_keys = optional(map(object({
-      name        = string
-      description = optional(string)
-      enabled     = optional(bool, true)
-    })), {})
-
-    usage_plans = optional(map(object({
-      name         = string
-      description  = optional(string)
-      product_code = optional(string)
-      quota_settings = optional(object({
-        limit  = number
-        period = string
-        offset = optional(number)
-      }))
-      throttle_settings = optional(object({
-        rate_limit  = number
-        burst_limit = number
-      }))
-    })), {})
-
-    usage_plan_keys = optional(map(object({
-      api_key    = string
-      usage_plan = string
-    })), {})
-
-    # Lambda Permissions
-    lambda_permissions = optional(map(object({
-      statement_id  = string
-      function_name = string
-      qualifier     = optional(string)
-    })), {})
-  }))
-  default = {}
 }
 
 ##########################
@@ -510,4 +377,3 @@ variable "nginx_ingress_version" {
   description = "Version of the NGINX Ingress Helm chart"
   type        = string
 }
-

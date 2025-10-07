@@ -62,10 +62,32 @@ resource "aws_eks_addon" "vpc_cni" {
   ]
 }
 
-resource "aws_eks_addon" "ebs_csi_driver" {
+# resource "aws_eks_addon" "ebs_csi_driver" {
+#   cluster_name                = aws_eks_cluster.main.name
+#   addon_name                  = "aws-ebs-csi-driver"
+#   addon_version               = data.aws_eks_addon_version.ebs_csi_driver.version
+#   resolve_conflicts_on_create = "OVERWRITE"
+#   resolve_conflicts_on_update = "OVERWRITE"
+#   preserve                    = true
+
+#   tags = merge(
+#     {
+#       Name        = "${var.cluster_name}-ebs-csi-driver"
+#       Environment = var.environment
+#     },
+#     var.tags
+#   )
+
+#   depends_on = [
+#     aws_eks_node_group.main,
+#     aws_eks_cluster.main
+#   ]
+# }
+
+resource "aws_eks_addon" "metrics_server" {
   cluster_name                = aws_eks_cluster.main.name
-  addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = data.aws_eks_addon_version.ebs_csi_driver.version
+  addon_name                  = "metrics-server"
+  addon_version               = data.aws_eks_addon_version.metrics_server.version
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
   preserve                    = true
@@ -79,6 +101,29 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   )
 
   depends_on = [
-    aws_eks_node_group.main
+    aws_eks_node_group.main,
+    aws_eks_cluster.main
+  ]
+}
+
+resource "aws_eks_addon" "prometheus_node_exporter" {
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "prometheus-node-exporter"
+  addon_version               = data.aws_eks_addon_version.prometheus_node_exporter.version
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+  preserve                    = true
+
+  tags = merge(
+    {
+      Name        = "${var.cluster_name}-ebs-csi-driver"
+      Environment = var.environment
+    },
+    var.tags
+  )
+
+  depends_on = [
+    aws_eks_node_group.main,
+    aws_eks_cluster.main
   ]
 }

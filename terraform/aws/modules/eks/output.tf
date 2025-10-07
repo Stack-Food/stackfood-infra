@@ -57,10 +57,18 @@ output "addons" {
       arn     = aws_eks_addon.vpc_cni.arn
       version = aws_eks_addon.vpc_cni.addon_version
     }
-    ebs_csi_driver = {
-      arn     = aws_eks_addon.ebs_csi_driver.arn
-      version = aws_eks_addon.ebs_csi_driver.addon_version
+    metrics_server = {
+      arn     = aws_eks_addon.metrics_server.arn
+      version = aws_eks_addon.metrics_server.addon_version
     }
+    prometheus_node_exporter = {
+      arn     = aws_eks_addon.prometheus_node_exporter.arn
+      version = aws_eks_addon.prometheus_node_exporter.addon_version
+    }
+    # ebs_csi_driver = {
+    #   arn     = aws_eks_addon.ebs_csi_driver.arn
+    #   version = aws_eks_addon.ebs_csi_driver.addon_version
+    # }
   }
 }
 

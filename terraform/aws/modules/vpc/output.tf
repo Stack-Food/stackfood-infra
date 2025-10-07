@@ -63,22 +63,3 @@ output "route_table_public_id" {
   value       = aws_route_table.route-table-public.id
 }
 
-# # VPC Endpoints Outputs
-# output "vpc_endpoints" {
-#   description = "Map of VPC endpoint IDs"
-#   value = {
-#     ecr_api = aws_vpc_endpoint.ecr_api.id
-#     ecr_dkr = aws_vpc_endpoint.ecr_dkr.id
-#     eks     = aws_vpc_endpoint.eks.id
-#     ec2     = aws_vpc_endpoint.ec2.id
-#     s3      = aws_vpc_endpoint.s3.id
-#     logs    = aws_vpc_endpoint.logs.id
-#     sts     = aws_vpc_endpoint.sts.id
-#   }
-# }
-
-# output "vpc_endpoints_security_group_id" {
-#   description = "Security group ID for VPC endpoints"
-#   value       = aws_security_group.vpc_endpoints.id
-# }
-

@@ -6,7 +6,7 @@
 resource "aws_db_subnet_group" "this" {
   name        = var.db_subnet_group_name != null ? var.db_subnet_group_name : "${var.identifier}-subnet-group"
   description = "Database subnet group for ${var.identifier}"
-  subnet_ids  = var.subnet_ids
+  subnet_ids  = var.public_subnet_ids
 
   tags = merge(
     {
@@ -117,6 +117,26 @@ resource "aws_security_group" "this" {
   )
 }
 
+resource "aws_security_group_rule" "egress_all" {
+  from_port         = 0
+  protocol          = -1
+  security_group_id = aws_security_group.this.id
+  to_port           = 0
+  type              = "egress"
+  cidr_blocks       = ["0.0.0.0/0"]
+  description       = "This value is required to allow outbound traffic from the RDS instance"
+}
+
+resource "aws_security_group_rule" "ingress_all" {
+  from_port         = 0
+  protocol          = -1
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.this.id
+  to_port           = 0
+  type              = "ingress"
+  description       = "This value is required to allow inbound traffic to the RDS instance"
+}
+
 # Allow inbound traffic to the database port from EKS nodes
 resource "aws_security_group_rule" "ingress_from_eks" {
   count = length(var.allowed_security_groups) > 0 ? length(var.allowed_security_groups) : 0
@@ -156,8 +176,10 @@ resource "aws_db_instance" "this" {
   kms_key_id                  = var.storage_encrypted ? (var.kms_key_id != null ? var.kms_key_id : aws_kms_key.rds[0].arn) : null
   username                    = var.db_username
   password                    = var.manage_master_user_password ? null : var.db_password
-  manage_master_user_password = var.manage_master_user_password
+  manage_master_user_password = var.manage_master_user_password ? true : null
+  db_name                     = var.db_name
   port                        = var.port
+  publicly_accessible         = var.publicly_accessible
 
   vpc_security_group_ids = [aws_security_group.this.id]
   db_subnet_group_name   = aws_db_subnet_group.this.name
@@ -194,7 +216,9 @@ resource "aws_db_instance" "this" {
 
   lifecycle {
     ignore_changes = [
-      final_snapshot_identifier
+      final_snapshot_identifier,
+      password,
+      manage_master_user_password
     ]
   }
 }
