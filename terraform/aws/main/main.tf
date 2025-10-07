@@ -303,7 +303,32 @@ module "argocd" {
   ]
 }
 
+# ArgoCD Applications
+module "argocd_applications" {
+  source = "../modules/kubernetes/argocd-applications"
 
+  # ArgoCD Configuration
+  namespace    = "argocd"
+  project_name = "stackfood"
+
+  # Repository Configuration
+  source_repo_url = "https://github.com/Stack-Food/stackfood-api.git"
+  target_revision = "master"
+
+  # Namespace Configuration - Simplificado para um namespace único
+  api_namespace    = "stackfood"
+  worker_namespace = "stackfood"
+
+  # Sync Policy (Conservative for production)
+  enable_auto_sync = false # Manual sync for production
+  enable_self_heal = true
+  enable_prune     = true
+
+  # Development environment opcional
+  enable_develop_environment = false # Desabilitado por padrão
+
+  depends_on = [module.argocd]
+}
 
 module "dns" {
   source = "../modules/dns/"
