@@ -103,7 +103,7 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: stackfood-prod
+  name: stackfood
 ```
 
 ### Aplicações
@@ -215,10 +215,11 @@ Para implantar a infraestrutura na AWS:
    terraform init
    ```
 4. Aplique a configuração para o ambiente desejado:
+
    ```bash
    # Para ambiente de desenvolvimento
    terraform apply -var-file=env/dev.tfvars
-   
+
    # Para ambiente de produção
    terraform apply -var-file=env/prod.tfvars
    ```
