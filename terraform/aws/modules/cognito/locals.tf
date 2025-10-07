@@ -10,7 +10,12 @@ locals {
     Module      = "cognito"
     ManagedBy   = "terraform"
   }
-  
+
   app_pool_name    = "${var.user_pool_name}-app"
   argocd_pool_name = "${var.user_pool_name}-argocd"
+}
+
+# Definição dos usuários da equipe vindos das variáveis
+locals {
+  team_users = var.create_argocd_user_pool && var.create_team_users ? var.argocd_team_users : {}
 }
