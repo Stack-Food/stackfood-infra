@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: stackfood-worker-config
-  namespace: stackfood
-data:
-  ASPNETCORE_ENVIRONMENT: "Development"
-  ConnectionStrings__DefaultConnection: "Host=stackfood-db.stackfood-prod.svc.cluster.local;Port=5432;Database=stackfood;Username=postgres;Password=password"
