@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: stackfood-api-config
-  namespace: stackfood-prod
+  namespace: stackfood
 data:
   ASPNETCORE_ENVIRONMENT: "Development"
   ASPNETCORE_URLS: "http://+:5039;https://+:7189"
