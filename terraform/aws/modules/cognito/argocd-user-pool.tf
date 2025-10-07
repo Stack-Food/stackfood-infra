@@ -101,14 +101,17 @@ resource "aws_cognito_user" "team_users" {
   username     = each.key
   password     = var.argocd_team_password
 
-  # Força o usuário a alterar a senha no primeiro login
-  message_action = "RESEND"
+  # Força a criação de usuários permanentes (sem e-mail de convite inicial)
+  message_action = "SUPPRESS"
 
   attributes = {
     name           = each.value.name
     email          = each.value.email
-    email_verified = false # Será verificado quando o usuário acessar o email
+    email_verified = true # Marcado como verificado para evitar problemas de criação
   }
+
+  # Garantir que o user pool seja criado antes dos usuários
+  depends_on = [aws_cognito_user_pool.argocd]
 }
 
 # Adicionar usuários da equipe ao grupo admin
@@ -118,6 +121,12 @@ resource "aws_cognito_user_in_group" "team_users_admin_group" {
   user_pool_id = aws_cognito_user_pool.argocd.id
   username     = aws_cognito_user.team_users[each.key].username
   group_name   = aws_cognito_user_group.argocd_admin.name
+
+  # Garantir que os usuários e grupos sejam criados antes da associação
+  depends_on = [
+    aws_cognito_user.team_users,
+    aws_cognito_user_group.argocd_admin
+  ]
 }
 
 ###########################
