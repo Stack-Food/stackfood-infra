@@ -1,16 +1,15 @@
 resource "aws_api_gateway_rest_api" "this" {
   name        = var.api_name
-  description = "REST API integrada com Lambda e EKS"
+  description = "REST API integrada com Lambda"
 }
 
-# recurso /auth (para Lambda)
+# recurso /auth
 resource "aws_api_gateway_resource" "auth" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
   path_part   = "auth"
 }
 
-# recurso /customer (para Lambda)
 resource "aws_api_gateway_resource" "customer" {
   rest_api_id = aws_api_gateway_rest_api.this.id
   parent_id   = aws_api_gateway_rest_api.this.root_resource_id
@@ -23,6 +22,7 @@ resource "aws_api_gateway_method" "customer_post" {
   http_method   = "POST"
   authorization = "NONE"
 }
+
 
 # integração com Lambda
 resource "aws_api_gateway_integration" "customer_lambda" {
@@ -86,15 +86,10 @@ resource "aws_api_gateway_deployment" "this" {
     redeployment = sha1(jsonencode([
       aws_api_gateway_resource.auth,
       aws_api_gateway_resource.customer,
-      aws_api_gateway_resource.eks_proxy,
       aws_api_gateway_method.auth_post,
       aws_api_gateway_method.customer_post,
-      aws_api_gateway_method.root_any,
-      aws_api_gateway_method.eks_proxy_any,
       aws_api_gateway_integration.auth_lambda,
       aws_api_gateway_integration.customer_lambda,
-      aws_api_gateway_integration.root_eks_http,
-      aws_api_gateway_integration.eks_proxy_http,
       aws_lambda_permission.auth_api_gateway_invoke,
       aws_lambda_permission.customer_api_gateway_invoke
     ]))
@@ -103,12 +98,8 @@ resource "aws_api_gateway_deployment" "this" {
   depends_on = [
     aws_api_gateway_method.auth_post,
     aws_api_gateway_method.customer_post,
-    aws_api_gateway_method.root_any,
-    aws_api_gateway_method.eks_proxy_any,
     aws_api_gateway_integration.auth_lambda,
     aws_api_gateway_integration.customer_lambda,
-    aws_api_gateway_integration.root_eks_http,
-    aws_api_gateway_integration.eks_proxy_http,
     aws_lambda_permission.auth_api_gateway_invoke,
     aws_lambda_permission.customer_api_gateway_invoke
   ]
@@ -144,13 +135,10 @@ resource "aws_api_gateway_base_path_mapping" "this" {
   api_id      = aws_api_gateway_rest_api.this.id
   stage_name  = aws_api_gateway_stage.dev.stage_name
   domain_name = aws_api_gateway_domain_name.this[0].domain_name
-  base_path   = var.base_path == "" ? null : var.base_path
+  base_path   = var.base_path
 
   depends_on = [
     aws_api_gateway_domain_name.this,
     aws_api_gateway_stage.dev
   ]
 }
-
-
-
