@@ -101,7 +101,6 @@ resource "aws_eks_addon" "metrics_server" {
   )
 
   depends_on = [
-    aws_eks_node_group.main,
     aws_eks_cluster.main
   ]
 }
@@ -123,7 +122,6 @@ resource "aws_eks_addon" "prometheus_node_exporter" {
   )
 
   depends_on = [
-    aws_eks_node_group.main,
     aws_eks_cluster.main
   ]
 }
