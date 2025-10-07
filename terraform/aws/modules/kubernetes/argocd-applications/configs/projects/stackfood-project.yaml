@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ${project_name}
+  namespace: ${namespace}
+  labels:
+    app.kubernetes.io/name: ${project_name}
+    app.kubernetes.io/part-of: stackfood
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/managed-by: terraform
+spec:
+  description: StackFood Project - Food Service Platform
+
+  # Git repositories que este projeto pode acessar
+  sourceRepos:
+    - "${source_repo_url}"
+    - "https://github.com/Stack-Food/stackfood-infra.git"
+    - "https://github.com/Stack-Food/*"
+
+  # Clusters de destino
+  destinations:
+    - namespace: "${api_namespace}"
+      server: "${destination_server}"
+    - namespace: "${worker_namespace}"
+      server: "${destination_server}"
+    - namespace: "${namespace}"
+      server: "${destination_server}"
+    - namespace: "default"
+      server: "${destination_server}"
+
+  # Recursos permitidos
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: "networking.k8s.io"
+      kind: Ingress
+    - group: "extensions"
+      kind: Ingress
+
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: "apps"
+      kind: Deployment
+    - group: "apps"
+      kind: ReplicaSet
+    - group: "autoscaling"
+      kind: HorizontalPodAutoscaler
+    - group: "networking.k8s.io"
+      kind: Ingress
+    - group: "extensions"
+      kind: Ingress
+
+  # RBAC policies
+  roles:
+    - name: developer
+      description: Developers role with limited access
+      policies:
+        - p, proj:stackfood:developer, applications, get, stackfood/*, allow
+        - p, proj:stackfood:developer, applications, sync, stackfood/*, allow
+      groups:
+        - argocd-admin
+
+    - name: admin
+      description: Administrators with full access
+      policies:
+        - p, proj:stackfood:admin, applications, *, stackfood/*, allow
+        - p, proj:stackfood:admin, repositories, *, *, allow
+      groups:
+        - argocd-admin

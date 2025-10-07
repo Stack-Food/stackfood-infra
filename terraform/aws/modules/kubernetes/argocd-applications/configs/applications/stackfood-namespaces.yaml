@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stackfood-namespaces
+  namespace: ${namespace}
+  labels:
+    app.kubernetes.io/name: stackfood-namespaces
+    app.kubernetes.io/part-of: stackfood
+    app.kubernetes.io/component: infrastructure
+    app.kubernetes.io/managed-by: terraform
+    tier: base
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: ${project_name}
+
+  source:
+    repoURL: ${source_repo_url}
+    targetRevision: ${target_revision}
+    path: manifests/namespaces
+
+  destination:
+    server: ${destination_server}
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=false
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+
+  revisionHistoryLimit: 5
+
+  info:
+    - name: Description
+      value: StackFood Namespaces - Base Infrastructure
+    - name: Purpose
+      value: Creates stackfood namespace
