@@ -6,29 +6,29 @@
 resource "aws_cognito_user_pool" "argocd" {
   name = "${var.user_pool_name}-argocd"
 
-  # Configuração específica para ArgoCD
-  alias_attributes = ["email", "preferred_username"]
-
-  # Política de senha para ArgoCD
-  password_policy {
-    minimum_length    = 8
-    require_lowercase = true
-    require_numbers   = true
-    require_symbols   = false
-    require_uppercase = true
-  }
-
-  # Configurações de verificação
+  # Sign-in options: username only (sem alias_attributes)
+  
+  # Política de senha padrão do Cognito (sem especificar para usar default)
+  
+  # Configurações de verificação e recuperação
   auto_verified_attributes = ["email"]
+  
+  # Account recovery settings - email only
+  account_recovery_setting {
+    recovery_mechanism {
+      name     = "verified_email"
+      priority = 1
+    }
+  }
 
   # Configuração de email
   email_configuration {
     email_sending_account = "COGNITO_DEFAULT"
   }
 
-  # Admin create user config
+  # Admin create user config - self registration disabled
   admin_create_user_config {
-    allow_admin_create_user_only = false
+    allow_admin_create_user_only = true
 
     invite_message_template {
       email_message = "Olá {username}! Bem-vindo ao ArgoCD StackFood! 🚀\n\nSua conta foi criada com sucesso. Use as credenciais abaixo para acessar:\n\nURL: https://argo.stackfood.com.br\nUsername: {username}\nSenha temporária: {####}\n\nVocê será solicitado a alterar sua senha no primeiro login.\n\nEquipe StackFood"
@@ -162,8 +162,10 @@ resource "aws_cognito_user_pool_client" "argocd" {
 
   # Auth flows
   explicit_auth_flows = [
+    "ALLOW_USER_SRP_AUTH",
     "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH"
+    "ALLOW_REFRESH_TOKEN_AUTH",
+    "ALLOW_ADMIN_USER_PASSWORD_AUTH"
   ]
 
   # Prevent user existence errors
