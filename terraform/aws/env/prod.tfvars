@@ -272,3 +272,35 @@ cognito_user_pools = {
     ]
   }
 }
+
+######################
+# ArgoCD Users Configuration #
+######################
+
+# Usuários da equipe StackFood para ArgoCD
+argocd_team_users = {
+  "leonardo.duarte" = {
+    name  = "Leonardo Duarte"
+    email = "leo.duarte.dev@gmail.com"
+  }
+  "luiz.felipe" = {
+    name  = "Luiz Felipe Maia"
+    email = "luiz.felipeam@hotmail.com"
+  }
+  "leonardo.lemos" = {
+    name  = "Leonardo Luiz Lemos"
+    email = "leoo_lemos@outlook.com"
+  }
+  "rodrigo.silva" = {
+    name  = "Rodrigo Rodriguez Figueiredo de Oliveira Silva"
+    email = "rodrigorfig1@gmail.com"
+  }
+  "vinicius.targa" = {
+    name  = "Vinicius Targa Gonçalves"
+    email = "viniciustarga@gmail.com"
+  }
+}
+
+# Senhas para usuários ArgoCD
+argocd_admin_password = "Fiap@2025"
+argocd_team_password  = "StackFood@2025"

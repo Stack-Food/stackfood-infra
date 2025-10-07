@@ -104,6 +104,53 @@ output "argocd_issuer_url" {
   value       = var.create_argocd_user_pool ? "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.argocd[0].id}" : null
 }
 
+output "argocd_team_users_created" {
+  description = "Lista dos usuários da equipe criados no ArgoCD"
+  value = var.create_argocd_user_pool && var.create_team_users && length(var.argocd_team_users) > 0 ? {
+    users = [
+      for username, user in var.argocd_team_users : {
+        username = username
+        name     = user.name
+        email    = user.email
+      }
+    ]
+    password   = var.argocd_team_password
+    access_url = "https://argo.stackfood.com.br"
+    group      = "argocd-admin"
+    note       = "Emails de convite foram enviados para todos os usuários"
+    source     = "Configurado via prod.tfvars"
+  } : null
+  sensitive = true
+}
+
+output "user_pools_summary" {
+  description = "Resumo dos User Pools criados"
+  value = {
+    app_user_pool = var.create_app_user_pool ? {
+      name    = "${var.user_pool_name}-app"
+      id      = aws_cognito_user_pool.app[0].id
+      purpose = "Autenticação da aplicação principal"
+      users   = ["convidado (guest)"]
+    } : null
+    argocd_user_pool = var.create_argocd_user_pool ? {
+      name    = "${var.user_pool_name}-argocd"
+      id      = aws_cognito_user_pool.argocd[0].id
+      purpose = "Autenticação exclusiva do ArgoCD"
+      admin_users = concat(
+        ["stackfood (admin)"],
+        var.create_team_users ? [
+          "leonardo.duarte",
+          "luiz.felipe",
+          "leonardo.lemos",
+          "rodrigo.silva",
+          "vinicius.targa"
+        ] : []
+      )
+      total_users = var.create_team_users ? 6 : 1
+    } : null
+  }
+}
+
 output "stackfood_user_created" {
   description = "Confirmation that stackfood user was created"
   value       = var.create_argocd_user_pool ? "User 'stackfood' created with admin privileges in ArgoCD User Pool" : "ArgoCD User Pool not created"

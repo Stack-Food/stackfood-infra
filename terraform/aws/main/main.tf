@@ -257,8 +257,11 @@ module "cognito" {
   create_app_user_pool    = true # Criar User Pool da aplicação
   create_argocd_user_pool = true # Criar User Pool do ArgoCD
 
-  # Senhas
-  stackfood_admin_password = "Fiap@2025"
+  # Configurações do User Pool ArgoCD
+  stackfood_admin_password = var.argocd_admin_password
+  argocd_team_users        = var.argocd_team_users
+  argocd_team_password     = var.argocd_team_password
+  create_team_users        = length(var.argocd_team_users) > 0 # Criar usuários se a lista não estiver vazia
 
   # Configurações ArgoCD OIDC
   argocd_callback_urls = [

@@ -35,6 +35,28 @@ variable "stackfood_admin_password" {
   default     = "Fiap@2025"
 }
 
+variable "argocd_team_users" {
+  description = "Map de usuários da equipe para o ArgoCD"
+  type = map(object({
+    name  = string
+    email = string
+  }))
+  default = {}
+}
+
+variable "argocd_team_password" {
+  description = "Senha para os usuários da equipe ArgoCD"
+  type        = string
+  sensitive   = true
+  default     = "StackFood@2025"
+}
+
+variable "create_team_users" {
+  description = "Criar usuários da equipe no ArgoCD"
+  type        = bool
+  default     = true
+}
+
 variable "argocd_callback_urls" {
   description = "List of callback URLs for ArgoCD OIDC"
   type        = list(string)

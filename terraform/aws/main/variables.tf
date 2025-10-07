@@ -377,3 +377,30 @@ variable "nginx_ingress_version" {
   description = "Version of the NGINX Ingress Helm chart"
   type        = string
 }
+
+######################
+# ArgoCD Configuration #
+######################
+
+variable "argocd_team_users" {
+  description = "Map de usuários da equipe para o ArgoCD"
+  type = map(object({
+    name  = string
+    email = string
+  }))
+  default = {}
+}
+
+variable "argocd_admin_password" {
+  description = "Senha para o usuário administrador stackfood do ArgoCD"
+  type        = string
+  sensitive   = true
+  default     = "Fiap@2025"
+}
+
+variable "argocd_team_password" {
+  description = "Senha para os usuários da equipe ArgoCD"
+  type        = string
+  sensitive   = true
+  default     = "StackFood@2025"
+}

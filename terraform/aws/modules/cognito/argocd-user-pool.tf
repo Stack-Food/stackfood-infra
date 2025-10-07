@@ -58,9 +58,9 @@ resource "aws_cognito_user_pool" "argocd" {
     allow_admin_create_user_only = false
 
     invite_message_template {
-      email_message = "Bem-vindo ao ArgoCD StackFood! Seu username é {username} e sua senha temporária é {####}"
-      email_subject = "Acesso ao ArgoCD StackFood"
-      sms_message   = "Seu username é {username} e sua senha temporária é {####}"
+      email_message = "Olá {username}! Bem-vindo ao ArgoCD StackFood! 🚀\n\nSua conta foi criada com sucesso. Use as credenciais abaixo para acessar:\n\nURL: https://argo.stackfood.com.br\nUsername: {username}\nSenha temporária: {####}\n\nVocê será solicitado a alterar sua senha no primeiro login.\n\nEquipe StackFood"
+      email_subject = "🚀 Acesso ao ArgoCD StackFood - Bem-vindo à equipe!"
+      sms_message   = "StackFood ArgoCD - Username: {username}, Senha temporária: {####}"
     }
   }
 
@@ -76,7 +76,7 @@ resource "aws_cognito_user_pool" "argocd" {
 resource "aws_cognito_user_pool_domain" "argocd" {
   count = var.create_argocd_user_pool ? 1 : 0
 
-  domain       = "${var.user_pool_name}-argocd-${var.environment}"
+  domain       = "${var.user_pool_name}-argocd"
   user_pool_id = aws_cognito_user_pool.argocd[0].id
 }
 
@@ -131,6 +131,45 @@ resource "aws_cognito_user_in_group" "stackfood_admin_group" {
   user_pool_id = aws_cognito_user_pool.argocd[0].id
   username     = aws_cognito_user.stackfood_admin[0].username
   group_name   = aws_cognito_user_group.argocd_admin[0].name
+}
+
+###########################
+# Team Users for ArgoCD   #
+###########################
+
+# Criar usuários da equipe
+resource "aws_cognito_user" "team_users" {
+  for_each = local.team_users
+
+  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  username     = each.key
+  password     = var.argocd_team_password
+
+  # Força o usuário a alterar a senha no primeiro login
+  message_action = "RESEND"
+
+  attributes = {
+    name           = each.value.name
+    email          = each.value.email
+    email_verified = false # Será verificado quando o usuário acessar o email
+  }
+
+  # Aguarda a criação do User Pool
+  depends_on = [aws_cognito_user_pool.argocd]
+}
+
+# Adicionar usuários da equipe ao grupo admin
+resource "aws_cognito_user_in_group" "team_users_admin_group" {
+  for_each = local.team_users
+
+  user_pool_id = aws_cognito_user_pool.argocd[0].id
+  username     = aws_cognito_user.team_users[each.key].username
+  group_name   = aws_cognito_user_group.argocd_admin[0].name
+
+  depends_on = [
+    aws_cognito_user.team_users,
+    aws_cognito_user_group.argocd_admin
+  ]
 }
 
 ###########################
