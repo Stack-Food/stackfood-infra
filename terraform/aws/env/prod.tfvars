@@ -2,9 +2,8 @@ aws_region  = "us-east-1"
 environment = "prod"
 
 tags = {
-  Project    = "StackFood"
-  Team       = "DevOps"
-  CostCenter = "IT"
+  Project = "StackFood"
+  Team    = "SOAT-FIAP"
 }
 
 ######################
@@ -19,34 +18,34 @@ cloudflare_zone_id = "09f31a057e454d7d71ab44b6b5960723" # Substitua pelo seu Zon
 ######################
 # VPC Configuration #
 ######################
-vpc_name        = "stackfood-prod-vpc"
+vpc_name        = "stackfood-vpc"
 vpc_cidr_blocks = ["10.0.0.0/16"]
 
 private_subnets = {
-  "private1" = {
+  "1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.1.0/24"
   },
-  "private2" = {
+  "2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.2.0/24"
   },
-  "private3" = {
+  "3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.3.0/24"
   }
 }
 
 public_subnets = {
-  "public1" = {
+  "1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.101.0/24"
   },
-  "public2" = {
+  "2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.102.0/24"
   },
-  "public3" = {
+  "3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.103.0/24"
   }
@@ -61,45 +60,14 @@ public_subnets = {
 ######################
 # EKS Configuration #
 ######################
-eks_cluster_name           = "stackfood-prod-eks"
+eks_cluster_name           = "stackfood-eks"
 kubernetes_version         = "1.33"
 eks_endpoint_public_access = true
 eks_authentication_mode    = "API_AND_CONFIG_MAP"
 
 # Remote Management Configuration
 eks_enable_remote_management = true
-eks_management_cidr_blocks   = ["0.0.0.0/0"] # Ajuste para seu IP específico em produção
-
-eks_node_groups = {
-  "api" = {
-    desired_size   = 2
-    max_size       = 3
-    min_size       = 2
-    capacity_type  = "ON_DEMAND"
-    instance_types = ["c1.xlarge"]
-    disk_size      = 100
-    # labels = {
-    #   "role"                        = "api"
-    #   "node-role.kubernetes.io/api" = "true"
-    #   "app.kubernetes.io/component" = "backend"
-    #   "app.kubernetes.io/part-of"   = "stackfood"
-    # }
-  },
-  "worker" = {
-    desired_size   = 2
-    max_size       = 3
-    min_size       = 2
-    capacity_type  = "ON_DEMAND"
-    instance_types = ["c1.xlarge"]
-    disk_size      = 100
-    # labels = {
-    #   "role"                           = "worker"
-    #   "node-role.kubernetes.io/worker" = "true"
-    #   "app.kubernetes.io/component"    = "worker"
-    #   "app.kubernetes.io/part-of"      = "stackfood"
-    # }
-  }
-}
+eks_management_cidr_blocks   = ["0.0.0.0/0"]
 
 ########################
 # NGINX Ingress Configuration # 
@@ -114,19 +82,19 @@ nginx_ingress_version    = "4.10.0"
 # RDS Configuration #
 ######################
 rds_instances = {
-  "stackfood-prod-db" = {
+  "stackfood-db" = {
     # AWS Academy compliant settings
     allocated_storage            = 20            # Changed from 50 to 20 (within 100GB limit)
     storage_encrypted            = false         # Simplified for AWS Academy
     db_instance_class            = "db.t3.micro" # Changed to supported instance type
     db_username                  = "stackfood"
-    db_password                  = "postgre" # Ensure this meets complexity requirements
-    manage_master_user_password  = true
+    db_password                  = "postgres" # Ensure this meets complexity requirements
+    manage_master_user_password  = false
     engine                       = "postgres" # Lowercase as required
     engine_version               = "16.3"     # Updated version
     major_engine_version         = "16"
-    identifier                   = "stackfood-prod-postgres"
-    publicly_accessible          = false
+    identifier                   = "stackfood-postgres"
+    publicly_accessible          = true
     multi_az                     = false # Disabled for cost savings
     performance_insights_enabled = false # Enhanced monitoring not supported
     port                         = 5432
@@ -136,19 +104,12 @@ rds_instances = {
     backup_retention_period      = 7
   }
 }
-
 ######################
 # IAM Configuration #
 ######################
-lambda_role_name      = "LabRole"
 eks_cluster_role_name = "LabRole"
-eks_node_role_name    = "LabRole"
 rds_role_name         = "LabRole"
-
-# lambda_role_name      = "LabRole"
-# eks_cluster_role_name = "c173096a4485959l11267681t1w623941-LabEksClusterRole-PYvjzWerQxXl"
-# eks_node_role_name    = "c173096a4485959l11267681t1w623941524-LabEksNodeRole-u7CI3SEcaNrk"
-# rds_role_name         = "LabRole"
+lambda_role_name      = "LabRole"
 
 ######################
 # Lambda Configuration #
@@ -161,9 +122,8 @@ lambda_functions = {
     memory_size = 256
     runtime     = "dotnet8"
     timeout     = 30
-    vpc_access  = false
-    handler     = "index.handler"
-    filename    = "function.zip"
+    vpc_access  = true
+    handler     = "StackFood.Lambda::StackFood.Lambda.Function::FunctionHandler"
     environment_variables = {
       USER_POOL_ID           = ""
       CLIENT_ID              = ""
@@ -178,518 +138,29 @@ lambda_functions = {
 ##########################
 api_gateways = {
   "stackfood-api" = {
-    description          = "StackFood Production API Gateway"
-    stage_name           = "prod"
-    endpoint_type        = "REGIONAL"
-    enable_cors          = true
-    enable_access_logs   = true
-    xray_tracing_enabled = false
-
-    # CORS Configuration simples
-    cors_allow_origins     = ["*"]
-    cors_allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    cors_allow_headers     = ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"]
-    cors_allow_credentials = false
-
-    # Sem throttling para POC
-    cache_cluster_enabled = false
-
-    # API Resources Structure - Reorganizada para evitar conflitos
-    resources = {
-      # Auth resources (para lambdas de autenticação)
-      "auth" = {
-        path_part = "auth"
-      }
-      "auth-cpf" = {
-        path_part = "cpf"
-        parent_id = null # Will be set to auth resource ID
-      }
-      "auth-validate" = {
-        path_part = "validate"
-        parent_id = null # Will be set to auth resource ID
-      }
-
-      # API resources - estrutura reorganizada
-      "api" = {
-        path_part = "api"
-      }
-
-      # Customers - com estrutura própria
-      "api-customers" = {
-        path_part = "customers"
-        parent_id = null # Will be set to api resource ID
-      }
-      "api-customers-cpf" = {
-        path_part = "{cpf}"
-        parent_id = null # Will be set to api-customers resource ID
-      }
-
-      # Orders - com estrutura própria
-      "api-orders" = {
-        path_part = "orders"
-        parent_id = null # Will be set to api resource ID
-      }
-      "api-orders-id" = {
-        path_part = "{orderId}"
-        parent_id = null # Will be set to api-orders resource ID
-      }
-      "api-orders-id-payment" = {
-        path_part = "payment"
-        parent_id = null # Will be set to api-orders-id resource ID
-      }
-      "api-orders-id-status" = {
-        path_part = "change-status"
-        parent_id = null # Will be set to api-orders-id resource ID
-      }
-
-      # Products - com estrutura própria
-      "api-products" = {
-        path_part = "products"
-        parent_id = null # Will be set to api resource ID
-      }
-      "api-products-all" = {
-        path_part = "all"
-        parent_id = null # Will be set to api-products resource ID
-      }
-      "api-products-id" = {
-        path_part = "{productId}"
-        parent_id = null # Will be set to api-products resource ID
-      }
+    description         = "StackFood API Gateway for production environment"
+    custom_domain_name  = "api.stackfood.com.br"
+    base_path           = "v1" # Empty for root path, or specify a path like "v1" for api.domain.com/v1
+    stage_name          = "v1"
+    route_key           = "ANY /{proxy+}"
+    security_group_name = "stackfood-api-gateway-vpc-link-sg"
+    vpc_link_name       = "stackfood-api-gateway-vpc-link"
+    cors_configuration = {
+      allow_credentials = false
+      allow_headers     = ["*"]
+      allow_methods     = ["*"]
+      allow_origins     = ["*"]
+      expose_headers    = ["*"]
+      max_age           = 86400
     }
-
-    # API Methods - Incluindo auth e rotas do Swagger
-    methods = {
-      # Auth endpoints (para lambdas de autenticação)
-      "auth-cpf-post" = {
-        resource_key  = "auth-cpf"
-        http_method   = "POST"
-        authorization = "NONE"
-      }
-      "auth-validate-post" = {
-        resource_key  = "auth-validate"
-        http_method   = "POST"
-        authorization = "NONE"
-      }
-
-      # Customers endpoints
-      "customers-post" = {
-        resource_key  = "api-customers"
-        http_method   = "POST"
-        authorization = "NONE" # Lambda de criação de usuário
-      }
-      "customers-get-cpf" = {
-        resource_key  = "api-customers-cpf"
-        http_method   = "GET"
-        authorization = "NONE" # EKS backend (protegido via JWT na aplicação)
-        request_parameters = {
-          "method.request.path.cpf" = true
-        }
-      }
-
-      # Order endpoints
-      "orders-get" = {
-        resource_key  = "api-orders"
-        http_method   = "GET"
-        authorization = "NONE"
-      }
-      "orders-post" = {
-        resource_key  = "api-orders"
-        http_method   = "POST"
-        authorization = "NONE"
-      }
-      "orders-get-id" = {
-        resource_key  = "api-orders-id"
-        http_method   = "GET"
-        authorization = "NONE"
-        request_parameters = {
-          "method.request.path.orderId" = true
-        }
-      }
-      "orders-payment-put" = {
-        resource_key  = "api-orders-id-payment"
-        http_method   = "PUT"
-        authorization = "NONE"
-        request_parameters = {
-          "method.request.path.orderId" = true
-        }
-      }
-      "orders-status-put" = {
-        resource_key  = "api-orders-id-status"
-        http_method   = "PUT"
-        authorization = "NONE"
-        request_parameters = {
-          "method.request.path.orderId" = true
-        }
-      }
-
-      # Product endpoints
-      "products-all-get" = {
-        resource_key  = "api-products-all"
-        http_method   = "GET"
-        authorization = "NONE"
-      }
-      "products-get-id" = {
-        resource_key  = "api-products-id"
-        http_method   = "GET"
-        authorization = "NONE"
-        request_parameters = {
-          "method.request.path.productId" = true
-        }
-      }
-      "products-delete-id" = {
-        resource_key  = "api-products-id"
-        http_method   = "DELETE"
-        authorization = "NONE"
-        request_parameters = {
-          "method.request.path.productId" = true
-        }
-      }
-      "products-post" = {
-        resource_key  = "api-products"
-        http_method   = "POST"
-        authorization = "NONE"
-      }
-      "products-put" = {
-        resource_key  = "api-products"
-        http_method   = "PUT"
-        authorization = "NONE"
-      }
-    }
-
-    # Integrações com roteamento inteligente: Auth → Lambda, API → EKS/Lambda
-    integrations = {
-      # Auth integrations (Lambda)
-      "auth-cpf-post-integration" = {
-        method_key              = "auth-cpf-post"
-        resource_key            = "auth-cpf"
-        integration_http_method = "POST"
-        type                    = "AWS_PROXY"
-        integration_type        = "lambda"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-      "auth-validate-post-integration" = {
-        method_key              = "auth-validate-post"
-        resource_key            = "auth-validate"
-        integration_http_method = "POST"
-        type                    = "AWS_PROXY"
-        integration_type        = "lambda"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-
-      # Customer creation integration (Lambda)
-      "customers-post-integration" = {
-        method_key              = "customers-post"
-        resource_key            = "api-customers"
-        integration_http_method = "POST"
-        type                    = "AWS_PROXY"
-        integration_type        = "lambda"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-
-      # API integrations (EKS)
-      "customers-get-cpf-integration" = {
-        method_key              = "customers-get-cpf"
-        resource_key            = "api-customers-cpf"
-        integration_http_method = "GET"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/customers/{cpf}"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-        request_parameters = {
-          "integration.request.path.cpf" = "method.request.path.cpf"
-        }
-      }
-
-      # Order integrations (EKS)
-      "orders-get-integration" = {
-        method_key              = "orders-get"
-        resource_key            = "api-orders"
-        integration_http_method = "GET"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/orders"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-      "orders-post-integration" = {
-        method_key              = "orders-post"
-        resource_key            = "api-orders"
-        integration_http_method = "POST"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/orders"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-      "orders-get-id-integration" = {
-        method_key              = "orders-get-id"
-        resource_key            = "api-orders-id"
-        integration_http_method = "GET"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/orders/{orderId}"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-        request_parameters = {
-          "integration.request.path.orderId" = "method.request.path.orderId"
-        }
-      }
-      "orders-payment-put-integration" = {
-        method_key              = "orders-payment-put"
-        resource_key            = "api-orders-id-payment"
-        integration_http_method = "PUT"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/orders/{orderId}/payment"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-        request_parameters = {
-          "integration.request.path.orderId" = "method.request.path.orderId"
-        }
-      }
-      "orders-status-put-integration" = {
-        method_key              = "orders-status-put"
-        resource_key            = "api-orders-id-status"
-        integration_http_method = "PUT"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/orders/{orderId}/change-status"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-        request_parameters = {
-          "integration.request.path.orderId" = "method.request.path.orderId"
-        }
-      }
-
-      # Product integrations (EKS)
-      "products-all-get-integration" = {
-        method_key              = "products-all-get"
-        resource_key            = "api-products-all"
-        integration_http_method = "GET"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/products/all"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-      "products-get-id-integration" = {
-        method_key              = "products-get-id"
-        resource_key            = "api-products-id"
-        integration_http_method = "GET"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/products/{productId}"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-        request_parameters = {
-          "integration.request.path.productId" = "method.request.path.productId"
-        }
-      }
-      "products-delete-id-integration" = {
-        method_key              = "products-delete-id"
-        resource_key            = "api-products-id"
-        integration_http_method = "DELETE"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/products/{productId}"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-        request_parameters = {
-          "integration.request.path.productId" = "method.request.path.productId"
-        }
-      }
-      "products-post-integration" = {
-        method_key              = "products-post"
-        resource_key            = "api-products"
-        integration_http_method = "POST"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/products"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-      "products-put-integration" = {
-        method_key              = "products-put"
-        resource_key            = "api-products"
-        integration_http_method = "PUT"
-        type                    = "HTTP_PROXY"
-        integration_type        = "eks"
-        eks_path                = "/api/products"
-        passthrough_behavior    = "WHEN_NO_MATCH"
-      }
-    }
-
-    # Method Responses - Incluindo auth endpoints
-    method_responses = {
-      # Auth responses
-      "auth-cpf-post-200" = {
-        method_key   = "auth-cpf-post"
-        resource_key = "auth-cpf"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-      "auth-validate-post-200" = {
-        method_key   = "auth-validate-post"
-        resource_key = "auth-validate"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-
-      # API responses
-      "customers-post-200" = {
-        method_key   = "customers-post"
-        resource_key = "api-customers"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-      "customers-get-cpf-200" = {
-        method_key   = "customers-get-cpf"
-        resource_key = "api-customers-cpf"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-      "orders-get-200" = {
-        method_key   = "orders-get"
-        resource_key = "api-orders"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-      "orders-post-200" = {
-        method_key   = "orders-post"
-        resource_key = "api-orders"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-      "orders-get-id-200" = {
-        method_key   = "orders-get-id"
-        resource_key = "api-orders-id"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-      "products-all-get-200" = {
-        method_key   = "products-all-get"
-        resource_key = "api-products-all"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-      "products-get-id-200" = {
-        method_key   = "products-get-id"
-        resource_key = "api-products-id"
-        status_code  = "200"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = true
-        }
-      }
-    }
-
-    # Integration Responses - Incluindo auth endpoints
-    integration_responses = {
-      # Auth responses
-      "auth-cpf-post-200-response" = {
-        method_key          = "auth-cpf-post"
-        method_response_key = "auth-cpf-post-200"
-        resource_key        = "auth-cpf"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-      "auth-validate-post-200-response" = {
-        method_key          = "auth-validate-post"
-        method_response_key = "auth-validate-post-200"
-        resource_key        = "auth-validate"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-
-      # API responses
-      "customers-post-200-response" = {
-        method_key          = "customers-post"
-        method_response_key = "customers-post-200"
-        resource_key        = "api-customers"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-      "customers-get-cpf-200-response" = {
-        method_key          = "customers-get-cpf"
-        method_response_key = "customers-get-cpf-200"
-        resource_key        = "api-customers-cpf"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-      "orders-get-200-response" = {
-        method_key          = "orders-get"
-        method_response_key = "orders-get-200"
-        resource_key        = "api-orders"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-      "orders-post-200-response" = {
-        method_key          = "orders-post"
-        method_response_key = "orders-post-200"
-        resource_key        = "api-orders"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-      "orders-get-id-200-response" = {
-        method_key          = "orders-get-id"
-        method_response_key = "orders-get-id-200"
-        resource_key        = "api-orders-id"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-      "products-all-get-200-response" = {
-        method_key          = "products-all-get"
-        method_response_key = "products-all-get-200"
-        resource_key        = "api-products-all"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-      "products-get-id-200-response" = {
-        method_key          = "products-get-id"
-        method_response_key = "products-get-id-200"
-        resource_key        = "api-products-id"
-        response_parameters = {
-          "method.response.header.Access-Control-Allow-Origin" = "'*'"
-        }
-      }
-    }
-
-    # Sem API Keys para POC
-    api_keys = {}
-
-    # Sem Usage Plans para POC
-    usage_plans = {}
-
-    # Sem Usage Plan Keys para POC
-    usage_plan_keys = {}
-
-    # Lambda Permissions para as funções de auth e user creation
-    # Removidas temporariamente para evitar dependência circular
-    # As permissões serão adicionadas manualmente após deploy das Lambda functions
-    lambda_permissions = {}
   }
 }
-
 ##########################
 # Cognito Configuration #
 ##########################
 cognito_user_pools = {
   "stackfood-users" = {
-    name                                          = "stackfood-prod-users"
+    name                                          = "stackfood-users"
     alias_attributes                              = ["preferred_username"] # CPF será usado via preferred_username
     auto_verified_attributes                      = []                     # Sem verificação automática (apenas CPF)
     attributes_require_verification_before_update = []                     # Nenhum atributo requer verificação antes de atualizar
@@ -723,7 +194,7 @@ cognito_user_pools = {
     }
 
     # Domain for hosted UI (opcional para POC)
-    domain = "stackfood-prod"
+    domain = "stackfood-users-domain"
 
     # Client Applications - Configurado para autenticação sem senha
     clients = {
@@ -741,8 +212,8 @@ cognito_user_pools = {
         allowed_oauth_flows                  = ["implicit"]
         allowed_oauth_flows_user_pool_client = true
         allowed_oauth_scopes                 = ["openid", "profile", "aws.cognito.signin.user.admin"]
-        callback_urls                        = ["http://localhost:3000/callback", "https://stackfood-prod.com/callback"]
-        logout_urls                          = ["http://localhost:3000/logout", "https://stackfood-prod.com/logout"]
+        callback_urls                        = ["http://localhost:3000/callback", "https://stackfood.com.br/callback"]
+        logout_urls                          = ["http://localhost:3000/logout", "https://stackfood.com.br/logout"]
 
         # Autenticação customizada para CPF sem senha
         explicit_auth_flows           = ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]

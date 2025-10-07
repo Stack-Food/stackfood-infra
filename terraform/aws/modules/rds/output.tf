@@ -37,7 +37,7 @@ output "master_user_secret_arn" {
 
 output "master_user_secret_kms_key_id" {
   description = "The KMS key ID used to encrypt the master user secret"
-  value       = aws_db_instance.this.master_user_secret != null ? aws_db_instance.this.master_user_secret[0].kms_key_id : null
+  value       = length(aws_db_instance.this.master_user_secret) > 0 ? aws_db_instance.this.master_user_secret[0].kms_key_id : null
 }
 
 output "db_subnet_group_id" {

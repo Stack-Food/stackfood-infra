@@ -1,3 +1,8 @@
+# Random ID for unique resource naming
+resource "random_id" "bucket_id" {
+  byte_length = 4
+}
+
 # VPC Module
 module "vpc" {
   source = "../modules/vpc/"
@@ -8,6 +13,7 @@ module "vpc" {
   ngw_name         = "${var.vpc_name}-ngw"
   route_table_name = "${var.vpc_name}-rt"
   environment      = var.environment
+  cluster_name     = var.eks_cluster_name
   tags             = var.tags
 
   # VPC Settings
@@ -74,20 +80,26 @@ module "eks" {
   # Configuração dos grupos de nós
   node_groups = {
     api = {
-      desired_size   = 2
+      desired_size   = 1
       max_size       = 3
-      min_size       = 2
-      instance_types = ["c5.xlarge"]
+      min_size       = 1
+      instance_types = ["t3.large"]
       capacity_type  = "ON_DEMAND"
-      disk_size      = 100
+      disk_size      = 40
+      labels = {
+        "role" = "api"
+      }
     }
     worker = {
-      desired_size   = 2
+      desired_size   = 1
       max_size       = 3
-      min_size       = 2
-      instance_types = ["c5.xlarge"]
+      min_size       = 1
+      instance_types = ["t3.large"]
       capacity_type  = "ON_DEMAND"
-      disk_size      = 100
+      disk_size      = 40
+      labels = {
+        "role" = "worker"
+      }
     }
   }
 
@@ -121,9 +133,11 @@ module "rds" {
   tags                 = var.tags
 
   # Network Settings
-  vpc_id                  = module.vpc.vpc_id
-  subnet_ids              = module.vpc.private_subnet_ids
-  allowed_security_groups = [module.eks.cluster_security_group_id]
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  #allowed_security_groups = [module.eks.cluster_security_group_id]
+  publicly_accessible = each.value.publicly_accessible
 
   # Database Settings
   instance_class              = each.value.db_instance_class
@@ -134,7 +148,7 @@ module "rds" {
   db_username                 = each.value.db_username
   db_password                 = lookup(each.value, "db_password", null)                  # Optional password
   manage_master_user_password = lookup(each.value, "manage_master_user_password", false) # Secure password management
-
+  db_name                     = "stackfood"
   # IAM Role Settings
   rds_role_name = var.rds_role_name
 
@@ -174,10 +188,13 @@ module "lambda" {
   environment   = var.environment
   tags          = var.tags
 
+  # Bucket para armazenar artefatos da Lambda
+  bucket_name = "stackfood-lambda-artifacts-${random_id.bucket_id.hex}"
+
   # Code and Runtime - condicionalmente baseado no package_type
   package_type     = each.value.package_type
   runtime          = try(each.value.runtime, "dotnet8")
-  handler          = try(each.value.handler, null)
+  handler          = each.value.handler
   filename         = try(each.value.filename, null)
   source_code_hash = try(each.value.source_code_hash, null)
   image_uri        = each.value.image_uri
@@ -200,7 +217,7 @@ module "api_gateway" {
   for_each = var.api_gateways
   source   = "../modules/api-gateway/"
   # Dependencies - Garantir que Lambda functions sejam criadas primeiro
-  depends_on = [module.lambda, module.eks]
+  depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
 
   # General Settings
   api_name    = each.key
@@ -209,46 +226,22 @@ module "api_gateway" {
   tags        = var.tags
 
   # Simplified variables for single Lambda and EKS cluster
-  aws_region           = var.aws_region
-  lambda_function_name = "stackfood-auth" # Single Lambda function name
-  eks_cluster_name     = var.eks_cluster_name
-  vpc_id               = module.vpc.vpc_id
+  eks_cluster_name    = var.eks_cluster_name
+  vpc_id              = module.vpc.vpc_id
+  private_subnet_ids  = module.vpc.private_subnet_ids
+  public_subnet_ids   = module.vpc.public_subnet_ids
+  acm_certificate_arn = module.acm.certificate_arn
 
-  # Stage Configuration
-  stage_name    = each.value.stage_name
-  endpoint_type = each.value.endpoint_type
-
-  # CORS Configuration
-  enable_cors            = each.value.enable_cors
-  cors_allow_origins     = each.value.cors_allow_origins
-  cors_allow_methods     = each.value.cors_allow_methods
-  cors_allow_headers     = each.value.cors_allow_headers
-  cors_allow_credentials = each.value.cors_allow_credentials
-
-  # Monitoring and Logging
-  enable_access_logs    = each.value.enable_access_logs
-  xray_tracing_enabled  = each.value.xray_tracing_enabled
-  log_retention_in_days = 7
-
-  # Performance
-  throttle_settings     = each.value.throttle_settings
-  cache_cluster_enabled = each.value.cache_cluster_enabled
-  cache_cluster_size    = each.value.cache_cluster_size
-
-  # API Configuration
-  resources             = each.value.resources
-  methods               = each.value.methods
-  integrations          = each.value.integrations
-  method_responses      = each.value.method_responses
-  integration_responses = each.value.integration_responses
-
-  # API Keys and Usage Plans
-  api_keys        = each.value.api_keys
-  usage_plans     = each.value.usage_plans
-  usage_plan_keys = each.value.usage_plan_keys
-
-  # Lambda Permissions
-  lambda_permissions = each.value.lambda_permissions
+  # New configurable variables
+  custom_domain_name   = each.value.custom_domain_name
+  base_path            = each.value.base_path
+  stage_name           = each.value.stage_name
+  route_key            = each.value.route_key
+  security_group_name  = each.value.security_group_name
+  vpc_link_name        = each.value.vpc_link_name
+  cors_configuration   = each.value.cors_configuration
+  lambda_invoke_arn    = module.lambda["stackfood-auth"].function_invoke_arn
+  lambda_function_name = module.lambda["stackfood-auth"].function_name
 }
 
 # Cognito Module

@@ -1,4 +1,4 @@
-# Security Group for EKS Cluster
+# Security Group for EKS Cluster Control Plane
 resource "aws_security_group" "cluster" {
   name_prefix = "${var.cluster_name}-cluster-sg-"
   description = "Security group for EKS cluster control plane"
@@ -14,19 +14,29 @@ resource "aws_security_group" "cluster" {
   }
 
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
+    description = "from anywhere"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Allow communication with node groups (using VPC CIDR to avoid cyclic dependency)
   ingress {
-    description = "HTTPS"
+    description = "HTTPS from node groups"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  # Allow communication within VPC CIDR
+  ingress {
+    description = "All traffic from VPC CIDR"
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
   tags = merge(

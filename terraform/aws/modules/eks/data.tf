@@ -44,3 +44,15 @@ data "aws_eks_addon_version" "ebs_csi_driver" {
   kubernetes_version = aws_eks_cluster.main.version
   most_recent        = true
 }
+
+data "aws_eks_addon_version" "metrics_server" {
+  addon_name         = "metrics-server"
+  kubernetes_version = aws_eks_cluster.main.version
+  most_recent        = true
+}
+
+data "aws_eks_addon_version" "prometheus_node_exporter" {
+  addon_name         = "prometheus-node-exporter"
+  kubernetes_version = aws_eks_cluster.main.version
+  most_recent        = true
+}
