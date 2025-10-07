@@ -63,7 +63,7 @@ output "argocd_oidc_config" {
     user_pool_arn  = aws_cognito_user_pool.argocd[0].arn
     client_id      = aws_cognito_user_pool_client.argocd[0].id
     client_secret  = aws_cognito_user_pool_client.argocd[0].client_secret
-    issuer_url     = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.argocd[0].id}"
+    issuer_url     = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.argocd[0].id}"
     domain         = aws_cognito_user_pool_domain.argocd[0].domain
     admin_group    = aws_cognito_user_group.argocd_admin[0].name
     readonly_group = aws_cognito_user_group.argocd_readonly[0].name
