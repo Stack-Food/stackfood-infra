@@ -146,8 +146,8 @@ module "rds" {
   storage_encrypted           = lookup(each.value, "storage_encrypted", false)
   storage_type                = "gp2"
   db_username                 = each.value.db_username
-  db_password                 = lookup(each.value, "db_password", null)                  # Optional password
-  manage_master_user_password = lookup(each.value, "manage_master_user_password", false) # Secure password management
+  db_password                 = lookup(each.value, "db_password", null) # Optional password
+  manage_master_user_password = false                                   # Secure password management
   db_name                     = "stackfood"
   # IAM Role Settings
   rds_role_name = var.rds_role_name
@@ -242,6 +242,7 @@ module "api_gateway" {
   cors_configuration   = each.value.cors_configuration
   lambda_invoke_arn    = module.lambda["stackfood-auth"].function_invoke_arn
   lambda_function_name = module.lambda["stackfood-auth"].function_name
+  cloudflare_zone_id   = var.cloudflare_zone_id
 }
 
 # Cognito Module
