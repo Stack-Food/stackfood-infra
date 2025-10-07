@@ -22,30 +22,30 @@ vpc_name        = "stackfood-vpc"
 vpc_cidr_blocks = ["10.0.0.0/16"]
 
 private_subnets = {
-  "1" = {
+  "a1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.1.0/24"
   },
-  "2" = {
+  "b2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.2.0/24"
   },
-  "3" = {
+  "c3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.3.0/24"
   }
 }
 
 public_subnets = {
-  "1" = {
+  "a1" = {
     availability_zone = "us-east-1a"
     cidr_block        = "10.0.101.0/24"
   },
-  "2" = {
+  "b2" = {
     availability_zone = "us-east-1b"
     cidr_block        = "10.0.102.0/24"
   },
-  "3" = {
+  "c3" = {
     availability_zone = "us-east-1c"
     cidr_block        = "10.0.103.0/24"
   }
@@ -272,3 +272,35 @@ cognito_user_pools = {
     ]
   }
 }
+
+######################
+# ArgoCD Users Configuration #
+######################
+
+# Usuários da equipe StackFood para ArgoCD
+argocd_team_users = {
+  "leonardo.duarte" = {
+    name  = "Leonardo Duarte"
+    email = "leo.duarte.dev@gmail.com"
+  }
+  "luiz.felipe" = {
+    name  = "Luiz Felipe Maia"
+    email = "luiz.felipeam@hotmail.com"
+  }
+  "leonardo.lemos" = {
+    name  = "Leonardo Luiz Lemos"
+    email = "leoo_lemos@outlook.com"
+  }
+  "rodrigo.silva" = {
+    name  = "Rodrigo Rodriguez Figueiredo de Oliveira Silva"
+    email = "rodrigorfig1@gmail.com"
+  }
+  "vinicius.targa" = {
+    name  = "Vinicius Targa Gonçalves"
+    email = "viniciustarga@gmail.com"
+  }
+}
+
+# Senhas para usuários ArgoCD
+argocd_admin_password = "Fiap@2025"
+argocd_team_password  = "StackFood@2025"

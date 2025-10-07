@@ -33,7 +33,7 @@ spec:
         prometheus.io/port: "5039"
     spec:
       nodeSelector:
-        node-role.kubernetes.io/api: "true"
+        role: "api"
       imagePullSecrets:
         - name: ghcr-secret
       containers:

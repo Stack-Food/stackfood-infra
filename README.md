@@ -1,375 +1,357 @@
-# StackFood - Infraestrutura
+# StackFood - Infraestrutura Completa
+
+> 🍽️ **Plataforma de gestão para food service com arquitetura moderna em nuvem**
+
+[![AWS](https://img.shields.io/badge/AWS-Cloud-orange)](https://aws.amazon.com/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Container%20Orchestration-blue)](https://kubernetes.io/)
+[![Terraform](https://img.shields.io/badge/Terraform-Infrastructure%20as%20Code-purple)](https://terraform.io/)
+[![API Gateway](https://img.shields.io/badge/API%20Gateway-Serverless-green)](https://aws.amazon.com/api-gateway/)
 
 ## 📑 Índice
 
-- Sobre o Projeto
-- Arquitetura de Infraestrutura
-- Estrutura de Diretórios
-- Manifestos Kubernetes
-  - Namespaces
-  - Aplicações
-  - Banco de Dados
-- Metodologia GitOps
-- Terraform AWS
-  - Configuração e Implantação
-  - IAM Roles
-- Guia de Uso
-  - Pré-requisitos
-  - Configuração do Ambiente de Desenvolvimento
-  - Iniciando o Ambiente de Testes
-  - Realizando Requisições
-  - Monitoramento e Logs
-  - Limpeza do Ambiente
-- Solução de Problemas
-- Referências
+- [🚀 Sobre o Projeto](#-sobre-o-projeto)
+- [🏗️ Arquitetura da Solução](#%EF%B8%8F-arquitetura-da-solução)
+- [📂 Estrutura do Projeto](#-estrutura-do-projeto)
+- [🧩 Módulos Terraform](#-módulos-terraform)
+- [☁️ Infraestrutura AWS (Terraform)](#%EF%B8%8F-infraestrutura-aws-terraform)
+- [🐳 Kubernetes & GitOps](#-kubernetes--gitops)
+- [🚀 Guia de Implantação](#-guia-de-implantação)
+- [💻 Desenvolvimento Local](#-desenvolvimento-local)
+- [🔧 Solução de Problemas](#-solução-de-problemas)
+- [📚 Referências](#-referências)
 
 ## 🚀 Sobre o Projeto
 
-StackFood é uma plataforma de gestão para food service que permite o gerenciamento de pedidos, clientes e pagamentos. Esta documentação descreve a infraestrutura Kubernetes utilizada para hospedar e executar os componentes da aplicação em ambientes de desenvolvimento e produção.
+**StackFood** é uma plataforma completa de gestão para food service que permite o gerenciamento integrado de:
 
-A infraestrutura foi projetada seguindo princípios de arquitetura moderna de aplicações, como microserviços, conteinerização e GitOps, visando escalabilidade, confiabilidade e facilidade de manutenção.
+- 👥 **Clientes e Autenticação** (via Lambda + Cognito)
+- 🍕 **Catálogo de Produtos** (via API principal)
+- 📦 **Pedidos e Pagamentos** (via API principal)
+- ⚡ **Processamento Assíncrono** (via Workers)
 
-## 🏗 Arquitetura de Infraestrutura
+### 🎯 Características Principais
 
-A infraestrutura do StackFood consiste nos seguintes componentes principais:
+- **Arquitetura Híbrida**: Combina serverless (Lambda) com containers (EKS)
+- **API Gateway como Proxy**: Roteamento inteligente entre Lambda e EKS
+- **GitOps**: Infraestrutura como código com Terraform + Kubernetes
+- **Multi-ambiente**: Desenvolvimento e produção completamente isolados
+- **Segurança**: ACM + Cloudflare + VPC Link para comunicação segura
 
-- **API (stackfood-api)**: Serviço principal que expõe as funcionalidades da aplicação via endpoints RESTful
-- **Banco de Dados PostgreSQL (stackfood-db)**: Armazenamento persistente de dados
-- **Worker (stackfood-worker)**: Componente para processamento assíncrono de tarefas em background
+## 🏗️ Arquitetura da Solução
 
-A infraestrutura é implementada usando Kubernetes, permitindo:
+### 🌐 Fluxo de Tráfego Completo
 
-- Implantação consistente entre ambientes (desenvolvimento e produção)
-- Escalabilidade horizontal automática (HPA)
-- Gerenciamento eficiente de configuração e segredos
-- Resiliência e auto-recuperação
+```mermaid
+graph TB
+  Client[👤 Cliente] --> CF[☁️ Cloudflare Proxy]
+  CF --> APIGW[🚪 API Gateway<br/>api.stackfood.com.br]
+  APIGW --> Lambda[⚡ Lambda Functions<br/>/auth, /customer]
+  APIGW --> VPCLink[🔗 VPC Link]
+  VPCLink --> NLB[⚖️ Network Load Balancer]
+  NLB --> NGINX[🌐 NGINX Ingress]
+  NGINX --> API[🐳 StackFood API<br/>EKS Pods]
+  Lambda --> Cognito[🔐 AWS Cognito]
+  API --> RDS[🗄️ PostgreSQL RDS]
+  API --> Worker[⚙️ Worker Pods]
+```
 
-## 📂 Estrutura de Diretórios
+### 📋 Componentes da Arquitetura
 
-A estrutura de diretórios deste repositório segue uma abordagem organizada por aplicação e ambiente:
+| Componente         | Tecnologia              | Função                                   |
+| ------------------ | ----------------------- | ---------------------------------------- |
+| **Frontend Proxy** | Cloudflare              | CDN, DDoS Protection, Edge SSL           |
+| **API Gateway**    | AWS API Gateway         | Roteamento, Rate Limiting, Monitoramento |
+| **Autenticação**   | AWS Lambda + Cognito    | Gestão de usuários e tokens              |
+| **API Principal**  | EKS + .NET              | Business logic, CRUD operations          |
+| **Banco de Dados** | Amazon RDS (PostgreSQL) | Persistência de dados                    |
+| **Processamento**  | Kubernetes Jobs         | Tarefas assíncronas                      |
+| **Networking**     | VPC + VPC Link          | Comunicação segura                       |
+| **Certificados**   | ACM + Cloudflare        | SSL/TLS end-to-end                       |
+
+### 🔄 Roteamento de Requisições
+
+| Endpoint         | Destino    | Descrição             |
+| ---------------- | ---------- | --------------------- |
+| `GET /auth/*`    | 🔐 Lambda  | Autenticação e tokens |
+| `POST /customer` | 🔐 Lambda  | Criação de clientes   |
+| `GET /swagger`   | 🐳 EKS API | Documentação da API   |
+| `/*`             | 🐳 EKS API | Todas as outras rotas |
+
+## 📂 Estrutura do Projeto
 
 ```
 stackfood-infra/
-├── apps/                       # Aplicações e seus manifestos
-│   ├── api/                    # API principal do StackFood
-│   │   ├── base/               # Configurações base (compartilhadas)
-│   │   ├── dev/                # Configurações específicas para desenvolvimento
-│   │   └── prod/               # Configurações específicas para produção
-│   ├── db/                     # Banco de dados PostgreSQL
-│   │   ├── base/
-│   │   ├── dev/
-│   │   │   └── sql/            # Scripts SQL para inicialização do banco
-│   │   └── prod/
-│   ├── namespaces/             # Definição de namespaces
-│   ├── shared/                 # Recursos compartilhados
-│   │   └── secrets/            # Secrets comuns
-│   └── webhook/                # Worker para processamento assíncrono
-│       ├── base/
-│       ├── dev/
-│       └── prod/
-├── scripts/                    # Scripts de automação e utilitários
-│   ├── port-forward.sh         # Script para configurar port-forward
-│   ├── test-local.sh           # Script para testar ambiente local
-│   └── test-local-new.sh       # Versão otimizada do script de teste
-└── terraform/                  # Infraestrutura como código (IaC) para AWS
-    └── aws/                    # Recursos AWS usando Terraform
-        ├── env/                # Configurações específicas de ambiente
-        │   ├── dev.tfvars      # Variáveis para ambiente de desenvolvimento
-        │   └── prod.tfvars     # Variáveis para ambiente de produção
-        ├── main/               # Configuração principal do Terraform
-        └── modules/            # Módulos Terraform reutilizáveis
-            ├── eks/            # Módulo para Amazon EKS
-            ├── lambda/         # Módulo para AWS Lambda
-            ├── rds/            # Módulo para Amazon RDS
-            └── vpc/            # Módulo para Amazon VPC
+├── terraform/              # 🏗️ Infraestrutura como Código
+│   └── aws/
+│       ├── env/               # 📋 Configurações por ambiente
+│       │   └── prod.tfvars    # 🔧 Variáveis de produção
+│       ├── main/              # 🎯 Configuração principal
+│       │   ├── main.tf        # 🏗️ Módulos e recursos
+│       │   ├── variables.tf   # 📝 Definição de variáveis
+│       │   └── providers.tf   # ⚙️ Providers (AWS, Cloudflare)
+│       └── modules/           # 🧩 Módulos reutilizáveis
+│           ├── vpc/           # 🌐 Rede virtual
+│           ├── eks/           # ☸️ Cluster Kubernetes
+│           ├── rds/           # 🗄️ Banco de dados
+│           ├── lambda/        # ⚡ Funções serverless
+│           ├── api-gateway/   # 🚪 Gateway de API
+│           ├── acm/           # 🔒 Certificados SSL
+│           └── cognito/       # 🔐 Autenticação
+├── apps/                   # 🐳 Aplicações Kubernetes
+│   ├── api/                   # 🎯 API principal
+│   │   ├── base/              # 📋 Configuração base
+│   │   └── prod/              # 🏭 Configuração de produção
+│   ├── worker/                # ⚙️ Processamento assíncrono
+│   └── namespaces/            # 📦 Namespaces
+├── .github/workflows/      # 🔄 CI/CD Pipelines
+└── scripts/                # 🛠️ Scripts de automação
 ```
 
-## 📝 Manifestos Kubernetes
+## 🧩 Módulos Terraform
 
-### Namespaces
+A infraestrutura é organizada em módulos reutilizáveis, cada um com responsabilidade específica:
 
-Os namespaces são utilizados para isolamento lógico entre ambientes:
+### 📚 Índice de Módulos
+
+| Módulo             | Descrição                                  | Documentação                                                                |
+| ------------------ | ------------------------------------------ | --------------------------------------------------------------------------- |
+| **🌐 VPC**         | Rede virtual com subnets públicas/privadas | [📖 VPC README](terraform/aws/modules/vpc/README.md)                        |
+| **☸️ EKS**         | Cluster Kubernetes gerenciado              | [📖 EKS README](terraform/aws/modules/eks/README.md)                        |
+| **🗄️ RDS**         | Banco PostgreSQL com alta disponibilidade  | [📖 RDS README](terraform/aws/modules/rds/README.md)                        |
+| **🔐 Cognito**     | Autenticação com User Pools duplos         | [📖 Cognito README](terraform/aws/modules/cognito/README.md)                |
+| **🚪 API Gateway** | Gateway com roteamento híbrido             | [📖 API Gateway README](terraform/aws/modules/api-gateway/README.md)        |
+| **⚡ Lambda**      | Funções serverless para auth               | [📖 Lambda README](terraform/aws/modules/lambda/README.md)                  |
+| **🔒 ACM**         | Certificados SSL/TLS gerenciados           | [📖 ACM README](terraform/aws/modules/acm/README.md)                        |
+| **🌍 DNS**         | Gerenciamento DNS via Cloudflare           | [📖 DNS README](terraform/aws/modules/dns/README.md)                        |
+| **🚀 ArgoCD**      | GitOps com OIDC integration                | [📖 ArgoCD README](terraform/aws/modules/kubernetes/argocd/README.md)       |
+| **🌐 NGINX**       | Ingress Controller para EKS                | [📖 NGINX README](terraform/aws/modules/kubernetes/nginx-ingress/README.md) |
+
+### 🏗️ Arquitetura de Módulos
+
+```
+Terraform Modules
+├── 🌐 VPC Module
+│   ├── Public Subnets (3 AZs)
+│   ├── Private Subnets (3 AZs)
+│   ├── Internet Gateway
+│   └── NAT Gateways
+├── ☸️ EKS Module
+│   ├── Control Plane (Managed)
+│   ├── Worker Nodes (Auto-scaling)
+│   └── Add-ons (CNI, CoreDNS)
+├── 🔐 Authentication Stack
+│   ├── Cognito (App + ArgoCD Pools)
+│   ├── Lambda (Auth Functions)
+│   └── API Gateway (Routing)
+├── 🗄️ Data Layer
+│   ├── RDS PostgreSQL
+│   └── EBS Volumes
+├── 🌍 Networking
+│   ├── DNS (Cloudflare)
+│   ├── ACM (SSL Certificates)
+│   └── Load Balancers
+└── 🐳 Kubernetes Services
+    ├── ArgoCD (GitOps)
+    └── NGINX Ingress
+```
+
+### 🎯 Características dos Módulos
+
+- **🔧 Configuráveis**: Variáveis para diferentes ambientes
+- **🔄 Reutilizáveis**: Design modular para múltiplos projetos
+- **📊 Observáveis**: Outputs estruturados para integração
+- **🛡️ Seguros**: Políticas de segurança por padrão
+- **📈 Escaláveis**: Suporte a auto-scaling e alta disponibilidade
+- **💰 Otimizados**: Configurações de custo para AWS Academy
+
+### 🚀 Uso dos Módulos
+
+```hcl
+# Exemplo de uso integrado
+module "vpc" {
+  source = "../modules/vpc/"
+  # ... configurações
+}
+
+module "eks" {
+  source = "../modules/eks/"
+  vpc_id = module.vpc.vpc_id
+  # ... configurações
+}
+
+module "cognito" {
+  source = "../modules/cognito/"
+  # Cria 2 User Pools automaticamente
+  # ... configurações
+}
+```
+
+## ☁️ Infraestrutura AWS (Terraform)
+
+### 🎯 Recursos Provisionados
+
+- **VPC** com subnets públicas/privadas em múltiplas AZs
+- **Security Groups** com regras específicas por serviço
+- **VPC Link** para comunicação API Gateway ↔ EKS
+- **EKS Cluster** (v1.33) com node groups auto-scaling
+- **RDS PostgreSQL** (16.3) com backup e monitoring
+- **Application Load Balancer** integrado ao EKS
+- **Auto Scaling Groups** para alta disponibilidade
+- **API Gateway** (Regional) com custom domain
+- **Lambda Functions** para autenticação
+- **AWS Cognito** para gestão de usuários
+- **ACM Certificates** para SSL/TLS
+- **Cloudflare DNS** integration
+- **IAM Roles** com permissões mínimas
+- **EBS Volumes** para persistência dos pods
+- **NGINX Ingress Controller** no EKS
+
+### 💰 **Otimização de Custos**
+
+- ✅ **EKS Nodes**: t3.large com auto-scaling
+- ✅ **RDS**: db.t3.micro com 20GB storage
+- ✅ **Lambda**: Pay-per-use para autenticação
+- ✅ **API Gateway**: Regional (mais barato que Edge)
+
+## 🐳 Kubernetes & GitOps
+
+### 📦 **Aplicações**
+
+#### 🎯 **StackFood API**
 
 ```yaml
-# apps/namespaces/dev-namespace.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: stackfood-dev
+# Deployment principal com:
+replicas: 2
+resources:
+  requests: { cpu: 100m, memory: 256Mi }
+  limits: { cpu: 500m, memory: 512Mi }
+ports: [5039, 7189] # HTTP + HTTPS
+probes: livenessProbe + readinessProbe
 ```
+
+#### ⚙️ **Worker**
 
 ```yaml
-# apps/namespaces/prod-namespace.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: stackfood-prod
+# Processamento assíncrono
+replicas: 1
+resources: { cpu: 100m, memory: 256Mi }
 ```
 
-### Aplicações
-
-As aplicações são organizadas usando Kustomize para gerenciar as configurações entre ambientes.
-
-#### API (stackfood-api)
-
-A API é implementada como um deployment Kubernetes:
-
-**Base Configuration (apps/api/base/deployment.yaml)**:
+### 🔧 **Configuração com Kustomize**
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: stackfood-api
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: stackfood-api
-  template:
-    spec:
-      containers:
-        - name: api
-          image: ghcr.io/stack-food/stackfood-api:develop
-          ports:
-            - containerPort: 5039
-              name: http
-            - containerPort: 7189
-              name: https
+# apps/api/base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
 ```
 
-**Ambiente de Desenvolvimento (apps/api/dev/configmap.yaml)**:
+### 🌐 **Ingress & Load Balancing**
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: stackfood-api-config
-  namespace: stackfood-dev
-data:
-  ASPNETCORE_ENVIRONMENT: "Development"
-  ASPNETCORE_URLS: "http://+:5039;https://+:7189"
-  ConnectionStrings__DefaultConnection: "Host=stackfood-db.stackfood-dev.svc.cluster.local;Port=5432;Database=stackfood;Username=postgres;Password=password"
+# NGINX Ingress configurado para:
+annotations:
+  nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
 ```
 
-A API também inclui:
+## 🚀 Guia de Implantação
 
-- **HPA (Horizontal Pod Autoscaler)** para escalabilidade automática
-- **Service** para exposição interna
-- **Probes** para health checks
-
-### Banco de Dados
-
-O banco de dados PostgreSQL é implementado como um StatefulSet para garantir persistência:
-
-```yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: stackfood-db
-spec:
-  serviceName: stackfood-db
-  replicas: 1
-  template:
-    spec:
-      containers:
-        - name: postgres
-          image: postgres:15.3-alpine
-          volumeMounts:
-            - name: postgres-data
-              mountPath: /var/lib/postgresql/data
-            - name: init-scripts
-              mountPath: /docker-entrypoint-initdb.d
-```
-
-O banco também inclui:
-
-- **Scripts de inicialização** para criar tabelas e estruturas
-- **Persistent Volume Claims** para armazenamento durável
-- **ConfigMaps** para configuração
-
-## 🔄 Metodologia GitOps
-
-Este projeto segue a metodologia GitOps para gerenciamento de infraestrutura, com os seguintes princípios:
-
-1. **Código Declarativo**: Toda a infraestrutura é definida como código (IaC) em manifestos YAML.
-
-2. **Versionamento no Git**: Todo o código de infraestrutura é versionado, permitindo rastreabilidade e auditoria.
-
-3. **Segregação de Ambientes**: Desenvolvimento e produção são separados em diretórios distintos.
-
-4. **Kustomize para Camadas de Configuração**: Usamos Kustomize para gerenciar as diferenças entre ambientes.
-
-## ☁️ Terraform AWS
-
-A infraestrutura na AWS é provisionada usando Terraform, que permite definir e gerenciar recursos como código.
-
-### Configuração e Implantação
-
-Para implantar a infraestrutura na AWS:
-
-1. Configure as credenciais AWS (utilizando o AWS CLI ou variáveis de ambiente)
-2. Navegue até o diretório `terraform/aws`
-3. Inicialize o Terraform:
-   ```bash
-   terraform init
-   ```
-4. Aplique a configuração para o ambiente desejado:
-   ```bash
-   # Para ambiente de desenvolvimento
-   terraform apply -var-file=env/dev.tfvars
-   
-   # Para ambiente de produção
-   terraform apply -var-file=env/prod.tfvars
-   ```
-
-### IAM Roles
-
-Este projeto utiliza IAM roles existentes na AWS em vez de criar novos roles, seguindo as práticas recomendadas de segurança e permissões mínimas necessárias:
-
-1. **Lambda Functions**: Utilizam o role existente `LabRole` para permissões de execução
-2. **EKS Cluster**: Utiliza o role existente `LabEksClusterRole` para o plano de controle
-3. **EKS Nodes**: Utilizam o role existente `LabEksNodeRole` para os nós workers
-
-Essa abordagem simplifica a gestão de permissões e garante conformidade com políticas de segurança organizacionais.
-
-## 💻 Guia de Uso
-
-### Pré-requisitos
-
-Para utilizar esta infraestrutura, você precisa ter instalado:
-
-- **Kubernetes**: De preferencia o minikube
-- **kubectl**: CLI para comunicar com a API do K8S
-- **Docker**: Para utlizar o container runtime no cluster K8S
-- **git**: Para clonar o repositório
-- **bash**: Para executar os scripts de automação
-- **Terraform**: Para provisionar recursos na AWS (versão 1.0+)
-- **AWS CLI**: Para autenticação e interação com a AWS
-
-### Configuração do Ambiente de Desenvolvimento
-
-1. **Clone o repositório**:
+### 🔧 **Pré-requisitos**
 
 ```bash
-git clone https://github.com/stack-food/stackfood-infra.git
+terraform >= 1.0.0
+aws-cli >= 2.0
+kubectl >= 1.25
+git >= 2.30
+```
+
+### ☁️ **1. Provisionar Infraestrutura AWS**
+
+```bash
+git clone https://github.com/Stack-Food/stackfood-infra.git
 cd stackfood-infra
+aws configure
+cd terraform/aws/main
+terraform init
+terraform plan -var-file="../env/prod.tfvars"
+terraform apply -var-file="../env/prod.tfvars"
 ```
 
-2.  **Certifique-se que os scripts têm permissão de execução**:
+### 📋 **2. Configurar Variáveis**
+
+Edite `terraform/aws/env/prod.tfvars`:
+
+```hcl
+domain_name = "stackfood.com.br"
+cloudflare_zone_id = "sua-zone-id"
+eks_cluster_name = "stackfood-eks"
+kubernetes_version = "1.33"
+```
+
+### ☸️ **3. Implantar Aplicações**
 
 ```bash
-chmod +x scripts/*.sh
+aws eks update-kubeconfig --region us-east-1 --name stackfood-eks
+kubectl apply -k apps/api/prod/
+kubectl get pods -n stackfood
+kubectl get ingress -n stackfood
 ```
 
-### Iniciando o Ambiente de Testes
+## 🔧 Solução de Problemas
 
-Para iniciar o ambiente completo, execute o script e adicione o parameto a frente para executar o ambiente desejado
+### ❌ **Problemas Comuns**
 
-**Ambientes disponíveis:**
-
-- `dev`: Configura ambiente de desenvolvimento
-- `prod`: Configura ambiente de produção
-
-#### Exemplos
+#### 🔐 **Erro de Autenticação AWS**
 
 ```bash
-# Iniciar ambiente de desenvolvimento
-./test-local.sh dev
-
-# Iniciar ambiente de produção
-./test-local.sh prod
+aws configure
+export AWS_ACCESS_KEY_ID="sua-key"
+export AWS_SECRET_ACCESS_KEY="sua-secret"
+aws sts get-caller-identity
 ```
 
-Este script realiza as seguintes operações:
-
-- Verifica se o Minikube está em execução
-- Cria o namespace de desenvolvimento
-- Aplica os manifestos do banco de dados e da API
-- Configura port-forward para acesso aos serviços
-- Verifica a conectividade com a API
-
-### Realizando Requisições
-
-Após a inicialização, você pode acessar:
-
-- **Swagger UI**: [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
-- **API HTTPS**: [https://localhost:8443](https://localhost:8443)
-
-Exemplo de requisição para criar um cliente:
+#### 🌐 **API Gateway não acessa EKS**
 
 ```bash
-curl -X 'POST' \
-  'http://localhost:8080/api/customers' \
-  -H 'accept: */*' \
-  -H 'Content-Type: application/json' \
-  -d '{
-"name": "Cliente PAGO",
-"email": "teste@gmail.com",
-"cpf": "42226461647"
-}'
+aws apigateway get-vpc-links
+aws ec2 describe-security-groups --group-names "*api-gateway*"
+kubectl get svc -n ingress-nginx
 ```
 
-### Monitoramento e Logs
-
-Para verificar logs da aplicação:
+#### 📦 **Pods não sobem**
 
 ```bash
-# Logs da API
-kubectl logs -l app=stackfood-api -n stackfood-dev --tail=50
-
-# Logs do banco de dados
-kubectl logs -l app=stackfood-db -n stackfood-dev --tail=50
+kubectl describe pod <pod-name> -n stackfood
+kubectl get secrets -n stackfood
+kubectl get configmaps -n stackfood
 ```
 
-### Limpeza do Ambiente
-
-Quando terminar os testes, execute:
+#### 🗄️ **Banco de dados não conecta**
 
 ```bash
-# Remover namespace e recursos associados
-kubectl delete namespace stackfood-dev
-
-# Encerrar processos de port-forward
-pkill -f "kubectl port-forward"
+aws rds describe-db-instances --db-instance-identifier stackfood-postgres
+aws ec2 describe-security-groups --filters "Name=group-name,Values=*rds*"
+kubectl run pg-test --image=postgres:16 -it --rm -- psql -h <rds-endpoint> -U stackfood
 ```
-
-## ⚠️ Solução de Problemas
-
-### Problema: Erro de conexão com o banco de dados
-
-Se encontrar erros de autenticação no banco de dados:
-
-```
-password authentication failed for user "postgres"
-```
-
-Verifique:
-
-1. Se a senha no Secret corresponde à usada na string de conexão
-2. Se o Secret foi aplicado corretamente no namespace
-3. Execute `kubectl describe pod -l app=stackfood-db -n stackfood-dev` para verificar eventos
-
-### Problema: Tabelas não são criadas no banco de dados
-
-Se as tabelas não forem criadas automaticamente:
-
-```
-relation "customer" does not exist
-```
-
-Verifique:
-
-1. Se o ConfigMap `stackfood-db-init-scripts` foi criado corretamente
-2. Se o script SQL está sendo montado no path correto
-3. Certifique-se que está usando `disableNameSuffixHash: true` no configMapGenerator
-4. Tente recriar o StatefulSet e o PVC para forçar uma reinicialização limpa
 
 ## 📚 Referências
 
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
-- [Kustomize Documentation](https://kustomize.io/)
-- [GitOps Principles](https://www.gitops.tech/)
-- [Postgres on Kubernetes](https://kubernetes.io/docs/tasks/run-application/run-single-instance-stateful-application/)
+- [🏗️ Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [☸️ Kubernetes Documentation](https://kubernetes.io/docs/)
+- [🚪 AWS API Gateway](https://docs.aws.amazon.com/apigateway/)
+- [⚡ AWS Lambda](https://docs.aws.amazon.com/lambda/)
+- [🔐 AWS Cognito](https://docs.aws.amazon.com/cognito/)
+- [📋 Kustomize](https://kustomize.io/)
+- [🌐 NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
+- [☁️ Cloudflare](https://developers.cloudflare.com/)
+- [🔄 GitOps Principles](https://www.gitops.tech/)
+- [☸️ Kubernetes Best Practices](https://kubernetes.io/docs/concepts/configuration/overview/)
+- [🔒 AWS Security Best Practices](https://aws.amazon.com/architecture/security-identity-compliance/)
 
 ---

@@ -1,4 +1,4 @@
-namespace: stackfood-prod
+namespace: stackfood
 resources:
   - ../base
   - configmap.yaml

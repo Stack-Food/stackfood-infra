@@ -3,6 +3,3 @@ kind: Ingress
 metadata:
   name: stackfood-api
   annotations:
-    # Configuração mínima para produção
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/proxy-body-size: "20m"

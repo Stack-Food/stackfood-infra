@@ -142,4 +142,3 @@ resource "aws_api_gateway_base_path_mapping" "this" {
     aws_api_gateway_stage.dev
   ]
 }
-

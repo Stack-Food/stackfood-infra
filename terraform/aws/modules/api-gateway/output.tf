@@ -69,11 +69,6 @@ output "vpc_link_arn" {
   value       = aws_api_gateway_vpc_link.eks.arn
 }
 
-output "security_group_id" {
-  description = "The ID of the VPC Link security group"
-  value       = aws_security_group.vpc_link.id
-}
-
 # NLB debugging
 output "nlb_dns_name" {
   description = "The DNS name of the NGINX Ingress NLB"

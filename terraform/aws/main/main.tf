@@ -146,8 +146,8 @@ module "rds" {
   storage_encrypted           = lookup(each.value, "storage_encrypted", false)
   storage_type                = "gp2"
   db_username                 = each.value.db_username
-  db_password                 = lookup(each.value, "db_password", null)                  # Optional password
-  manage_master_user_password = lookup(each.value, "manage_master_user_password", false) # Secure password management
+  db_password                 = lookup(each.value, "db_password", null) # Optional password
+  manage_master_user_password = false                                   # Secure password management
   db_name                     = "stackfood"
   # IAM Role Settings
   rds_role_name = var.rds_role_name
@@ -252,4 +252,78 @@ module "cognito" {
   environment    = var.environment
 
   guest_user_password = "Convidado123!"
+
+  # Configurações básicas
+  create_app_user_pool = true # Criar User Pool da aplicação
+
+  # Configurações do User Pool ArgoCD
+  stackfood_admin_password = var.argocd_admin_password
+  argocd_team_users        = var.argocd_team_users
+  argocd_team_password     = var.argocd_team_password
+
+  # Configurações ArgoCD OIDC
+  argocd_callback_urls = [
+    "https://argo.${var.domain_name}/auth/callback"
+  ]
+  argocd_logout_urls = [
+    "https://argo.${var.domain_name}"
+  ]
+}
+
+# Módulo ArgoCD com autenticação Cognito
+module "argocd" {
+  source = "../modules/kubernetes/argocd/"
+
+  # Configurações básicas
+  domain_name      = var.domain_name
+  argocd_subdomain = "argo"
+  environment      = var.environment
+  chart_version    = "4.0.0"
+
+  # Configurações Cognito - USANDO O USER POOL ARGOCD DO MÓDULO UNIFICADO
+  cognito_user_pool_id  = module.cognito.argocd_user_pool_id
+  cognito_client_id     = module.cognito.argocd_client_id
+  cognito_client_secret = module.cognito.argocd_client_secret
+  cognito_region        = data.aws_region.current.region
+
+  # Configurações de grupos
+  admin_group_name    = "argocd-admin"
+  readonly_group_name = "argocd-readonly"
+
+  # Certificado SSL (opcional)
+  certificate_arn = module.acm.certificate_arn
+
+  # Tags
+  tags = var.tags
+
+  depends_on = [
+    module.cognito,
+    module.dns,
+    module.eks
+  ]
+}
+
+
+
+module "dns" {
+  source = "../modules/dns/"
+
+  # Configurações básicas
+  cloudflare_zone_id = var.cloudflare_zone_id
+  domain_name        = var.domain_name
+  environment        = var.environment
+  eks_cluster_name   = var.eks_cluster_name
+
+  # Configurações ArgoCD
+  create_argocd_record = true
+  argocd_subdomain     = "argo"
+
+  # DNS Settings
+  proxied = true
+  ttl     = 300
+
+  # Tags
+  tags = var.tags
+
+  depends_on = [module.eks, module.nginx-ingress]
 }

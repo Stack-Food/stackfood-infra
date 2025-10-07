@@ -24,15 +24,6 @@ data "aws_lbs" "nginx_nlbs" {
   }
 }
 
-# Data source adicional para buscar por nome do serviço
-data "aws_lbs" "nginx_nlbs_alt" {
-  count = var.eks_cluster_name != null ? 1 : 0
-
-  tags = {
-    "service.k8s.aws/stack" = "ingress-nginx/ingress-nginx-controller"
-  }
-}
-
 data "aws_lb_listener" "selected443" {
   count = length(data.aws_lb.eks_nlb) > 0 ? 1 : 0
 

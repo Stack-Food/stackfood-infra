@@ -1,44 +1,3 @@
-resource "aws_security_group" "vpc_link" {
-  name   = var.security_group_name
-  vpc_id = var.vpc_id
-
-  egress {
-    description = "All outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Allow HTTPS traffic to NLB
-  ingress {
-    description = "HTTPS from API Gateway"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Allow HTTP traffic to NLB
-  ingress {
-    description = "HTTP from API Gateway"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(
-    {
-      Name        = var.security_group_name
-      Environment = var.environment
-      Purpose     = "API Gateway VPC Link to NGINX Ingress NLB"
-    },
-    var.tags
-  )
-}
-
-
 resource "null_resource" "wait_for_nlb" {
   triggers = {
     nlb_arn = data.aws_lb.eks_nlb[0].arn
@@ -46,7 +5,7 @@ resource "null_resource" "wait_for_nlb" {
 
   provisioner "local-exec" {
     command = <<EOT
-      for i in {1..20}; do
+      for i in $(seq 1 60); do
         state=$(aws elbv2 describe-load-balancers --load-balancer-arns ${data.aws_lb.eks_nlb[0].arn} --region ${data.aws_region.current.region} --query 'LoadBalancers[0].State.Code' --output text)
         if [ "$state" = "active" ]; then
           exit 0

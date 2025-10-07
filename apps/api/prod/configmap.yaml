@@ -2,8 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: stackfood-api-config
-  namespace: stackfood-prod
+  namespace: stackfood
 data:
   ASPNETCORE_ENVIRONMENT: "Development"
   ASPNETCORE_URLS: "http://+:5039;https://+:7189"
-  ConnectionStrings__DefaultConnection: "Host=stackfood-prod-db.cyusgy6nqtbj.us-east-1.rds.amazonaws.com;Port=5432;Database=stackfood;Username=stackfood;Password=postgres"
+  ConnectionStrings__DefaultConnection: "Host=stackfood-db.cyusgy6nqtbj.us-east-1.rds.amazonaws.com;Port=5432;Database=stackfood;Username=stackfood;Password=postgres"

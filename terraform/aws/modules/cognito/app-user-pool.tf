@@ -1,9 +1,11 @@
 ###########################
-# Cognito User Pool       #
+# Application User Pool   #
 ###########################
 
-resource "aws_cognito_user_pool" "this" {
-  name = var.user_pool_name
+resource "aws_cognito_user_pool" "app" {
+  count = var.create_app_user_pool ? 1 : 0
+
+  name = "${var.user_pool_name}-app"
   # Configuração para usar CPF como username (sem conflito)
   # Removemos username_attributes para evitar conflito com alias_attributes
   alias_attributes = ["preferred_username"]
@@ -45,8 +47,10 @@ resource "aws_cognito_user_pool" "this" {
   }
 
   tags = {
-    Name        = var.user_pool_name
+    Name        = "${var.user_pool_name}-app"
     Environment = var.environment
+    Service     = "Application"
+    Purpose     = "API Gateway Authentication"
   }
 }
 
@@ -54,9 +58,11 @@ resource "aws_cognito_user_pool" "this" {
 # Cognito User Pool Client #
 ###########################
 
-resource "aws_cognito_user_pool_client" "this" {
+resource "aws_cognito_user_pool_client" "app" {
+  count = var.create_app_user_pool ? 1 : 0
+
   name         = "${var.user_pool_name}-client"
-  user_pool_id = aws_cognito_user_pool.this.id
+  user_pool_id = aws_cognito_user_pool.app[0].id
 
   # Não gerar secret para simplificar a integração
   generate_secret = false
@@ -74,7 +80,7 @@ resource "aws_cognito_user_pool_client" "this" {
 
   # Fluxos de autenticação permitidos
   explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",     # Para autenticação padrão
+    "ALLOW_USER_PASSWORD_AUTH", # Para autenticação padrão
     "ALLOW_CUSTOM_AUTH",        # Para autenticação customizada com CPF
     "ALLOW_REFRESH_TOKEN_AUTH"  # Para renovar tokens
   ]
@@ -93,7 +99,9 @@ resource "aws_cognito_user_pool_client" "this" {
 ###########################
 
 resource "aws_cognito_user" "guest" {
-  user_pool_id = aws_cognito_user_pool.this.id
+  count = var.create_app_user_pool ? 1 : 0
+
+  user_pool_id = aws_cognito_user_pool.app[0].id
   username     = "convidado"
   password     = var.guest_user_password
 
@@ -110,4 +118,3 @@ resource "aws_cognito_user" "guest" {
     email_verified = true
   }
 }
-
