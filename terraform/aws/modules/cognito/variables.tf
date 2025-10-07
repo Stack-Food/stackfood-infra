@@ -13,3 +13,28 @@ variable "guest_user_password" {
   type        = string
   sensitive   = true
 }
+
+variable "argocd_user_pool_name" {
+  description = "Nome do User Pool para ArgoCD"
+  type        = string
+  default     = "argocd-user-pool"
+}
+
+variable "stackfood_admin_password" {
+  description = "Senha para o usuário administrador stackfood"
+  type        = string
+  sensitive   = true
+  default     = "Fiap@2025"
+}
+
+variable "argocd_callback_urls" {
+  description = "List of callback URLs for ArgoCD OIDC"
+  type        = list(string)
+  default     = []
+}
+
+variable "argocd_logout_urls" {
+  description = "List of logout URLs for ArgoCD OIDC"
+  type        = list(string)
+  default     = []
+}

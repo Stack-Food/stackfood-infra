@@ -1,17 +1,41 @@
 global:
-  domain: https://argo.stackfood.com.br
+  domain: https://${argocd_subdomain}.${domain_name}
+
+configs:
+  params:
+    "server.insecure": true
+  cm:
+    create: true
+    # OIDC Configuration for AWS Cognito
+    oidc.config: |
+      name: Cognito
+      issuer: https://cognito-idp.${cognito_region}.amazonaws.com/${cognito_user_pool_id}
+      clientId: ${cognito_client_id}
+      clientSecret: ${cognito_client_secret}
+      redirectUri: https://${argocd_subdomain}.${domain_name}/api/dex/callback
+      requestedScopes: ["email", "openid", "phone"]
+      requestedIDTokenClaims: {"groups": {"essential": true}}
+  rbac:
+    create: true
+    policy.default: ""
+    policy.csv: |
+      g, ${admin_group_name}, role:admin
+      g, ${readonly_group_name}, role:readonly
+    scopes: "[groups]"
+
 repoServer:
   resources:
     requests:
       cpu: 100m
       memory: 128Mi
+
 server:
   resources:
     requests:
       cpu: 100m
       memory: 128Mi
   config:
-    url: "https://argo.stackfood.com.br"
+    url: "https://${argocd_subdomain}.${domain_name}"
   extraArgs:
     - --insecure
   ingress:
@@ -25,4 +49,4 @@ server:
       nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
       nlb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-south-1:434605749312:certificate/50eeb484-0d88-4617-bdf6-1d339f2f3b48"
     hosts:
-      - argo.stackfood.com.br
+      - ${argocd_subdomain}.${domain_name}
