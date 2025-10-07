@@ -18,7 +18,7 @@ output "argocd_cognito_info" {
     domain        = module.cognito.argocd_domain
     issuer_url    = module.cognito.argocd_issuer_url
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "argocd_access_info" {
@@ -30,13 +30,13 @@ output "argocd_access_info" {
     cognito_login_url      = module.cognito.argocd_issuer_url
     admin_password_command = module.argocd.admin_password_command
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "team_users_info" {
   description = "Informações dos usuários da equipe criados"
   value       = module.cognito.argocd_team_users_created
-  sensitive   = false
+  sensitive   = true
 }
 
 output "dns_records_created" {
