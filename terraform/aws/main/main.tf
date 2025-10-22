@@ -281,10 +281,12 @@ module "argocd" {
   chart_version    = "4.0.0"
 
   # Configurações Cognito - USANDO O USER POOL ARGOCD DO MÓDULO UNIFICADO
-  cognito_user_pool_id  = module.cognito.argocd_user_pool_id
-  cognito_client_id     = module.cognito.argocd_client_id
-  cognito_client_secret = module.cognito.argocd_client_secret
-  cognito_region        = data.aws_region.current.region
+  cognito_user_pool_id      = module.cognito.argocd_user_pool_id
+  cognito_client_id         = module.cognito.argocd_client_id
+  cognito_client_issuer_url = module.cognito.argocd_issuer_url
+  cognito_client_secret     = module.cognito.argocd_client_secret
+  cognito_region            = data.aws_region.current.region
+  user_pool_name            = module.cognito.user_pool_name
 
   # Configurações de grupos
   admin_group_name    = "argocd-admin"

@@ -21,12 +21,12 @@ server:
   config:
     url: "https://${argocd_subdomain}.${domain_name}"
     oidc.config: |
-      name: admin
-      issuer: https://cognito-idp.${cognito_region}.amazonaws.com/${cognito_user_pool_id}
+      name: Cognito SSO
+      issuer: https://{cognito_client_issuer_url}
       clientId: ${cognito_client_id}
       clientSecret: ${cognito_client_secret}
-      redirectUri: https://${argocd_subdomain}.${domain_name}/api/dex/callback
-      requestedScopes: ["email", "openid", "phone"]
+      redirectUri: https://${argocd_subdomain}.${domain_name}/auth/callback
+      requestedScopes: ["email", "openid", "phone", "groups"]
       requestedIDTokenClaims: {"groups": {"essential": true}}
   extraArgs:
     - --insecure

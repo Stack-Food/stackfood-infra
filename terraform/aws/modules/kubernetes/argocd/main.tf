@@ -8,15 +8,17 @@ resource "helm_release" "argocd" {
 
   values = [
     templatefile("${path.module}/argocd.yaml", {
-      domain_name           = var.domain_name
-      argocd_subdomain      = var.argocd_subdomain
-      cognito_user_pool_id  = var.cognito_user_pool_id
-      cognito_client_id     = var.cognito_client_id
-      cognito_client_secret = var.cognito_client_secret
-      cognito_region        = var.cognito_region
-      certificate_arn       = var.certificate_arn
-      admin_group_name      = var.admin_group_name
-      readonly_group_name   = var.readonly_group_name
+      domain_name               = var.domain_name
+      argocd_subdomain          = var.argocd_subdomain
+      cognito_user_pool_id      = var.cognito_user_pool_id
+      cognito_client_id         = var.cognito_client_id
+      cognito_client_secret     = var.cognito_client_secret
+      cognito_region            = var.cognito_region
+      cognito_client_issuer_url = var.cognito_client_issuer_url
+      certificate_arn           = var.certificate_arn
+      admin_group_name          = var.admin_group_name
+      readonly_group_name       = var.readonly_group_name
+      user_pool_name            = var.user_pool_name
     })
   ]
 }

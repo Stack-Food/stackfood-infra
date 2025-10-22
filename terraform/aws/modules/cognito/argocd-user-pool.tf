@@ -6,13 +6,14 @@
 resource "aws_cognito_user_pool" "argocd" {
   name = "${var.user_pool_name}-argocd"
 
-  # Sign-in options: username only (sem alias_attributes)
-  
+  mfa_configuration = "OFF"
+
   # Política de senha padrão do Cognito (sem especificar para usar default)
-  
+
   # Configurações de verificação e recuperação
   auto_verified_attributes = ["email"]
-  
+
+  alias_attributes = ["email", "username_attributes"]
   # Account recovery settings - email only
   account_recovery_setting {
     recovery_mechanism {
@@ -152,21 +153,13 @@ resource "aws_cognito_user_pool_client" "argocd" {
   }
 
   # OAuth flows for OIDC
-  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_flows                  = ["code", "implicit"]
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_scopes                 = ["email", "openid", "phone"]
 
   # Callback URLs for ArgoCD
   callback_urls = var.argocd_callback_urls
   logout_urls   = var.argocd_logout_urls
-
-  # Auth flows
-  explicit_auth_flows = [
-    "ALLOW_USER_SRP_AUTH",
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH",
-    "ALLOW_ADMIN_USER_PASSWORD_AUTH"
-  ]
 
   # Prevent user existence errors
   prevent_user_existence_errors = "ENABLED"
@@ -175,6 +168,6 @@ resource "aws_cognito_user_pool_client" "argocd" {
   supported_identity_providers = ["COGNITO"]
 
   # Attributes
-  read_attributes  = ["email", "email_verified", "name", "phone_number"]
-  write_attributes = ["email", "name", "phone_number"]
+  # read_attributes  = ["email", "email_verified", "name"]
+  # write_attributes = ["email", "name", "name"]
 }

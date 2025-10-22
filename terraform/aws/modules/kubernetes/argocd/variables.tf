@@ -72,3 +72,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "cognito_client_issuer_url" {
+  description = "Cognito User Pool Issuer URL"
+  type        = string
+}
+
+variable "user_pool_name" {
+  description = "Base name for the Cognito User Pools"
+  type        = string
+}
