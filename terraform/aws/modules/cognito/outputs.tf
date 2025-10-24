@@ -1,86 +1,56 @@
 
 ###########################
-# Application User Pool Outputs #
+# Main User Pool Outputs  #
 ###########################
 
-output "app_user_pool_id" {
-  description = "ID do Cognito User Pool da aplicação"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool.app[0].id : null
-}
-
-output "app_user_pool_arn" {
-  description = "ARN do Cognito User Pool da aplicação"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool.app[0].arn : null
-}
-
-output "app_user_pool_client_id" {
-  description = "ID do client da aplicação"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool_client.app[0].id : null
-}
-
-output "app_user_pool_endpoint" {
-  description = "Endpoint do Cognito User Pool da aplicação"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool.app[0].endpoint : null
-}
-
-# Configuração pronta para API Gateway Authorizer
-output "api_gateway_authorizer_config" {
-  description = "Configuração para authorizer do API Gateway"
-  value = var.create_app_user_pool ? {
-    type          = "COGNITO_USER_POOLS"
-    user_pool_arn = aws_cognito_user_pool.app[0].arn
-    user_pool_id  = aws_cognito_user_pool.app[0].id
-    client_id     = aws_cognito_user_pool_client.app[0].id
-  } : null
-}
-
-# Backwards compatibility outputs (deprecated)
 output "user_pool_id" {
-  description = "ID do Cognito User Pool da aplicação (deprecated - use app_user_pool_id)"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool.app[0].id : null
+  description = "ID do Cognito User Pool unificado"
+  value       = aws_cognito_user_pool.main.id
 }
 
 output "user_pool_arn" {
-  description = "ARN do Cognito User Pool da aplicação (deprecated - use app_user_pool_arn)"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool.app[0].arn : null
+  description = "ARN do Cognito User Pool unificado"
+  value       = aws_cognito_user_pool.main.arn
 }
 
-output "user_pool_client_id" {
-  description = "ID do client da aplicação (deprecated - use app_user_pool_client_id)"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool_client.app[0].id : null
+output "user_pool_name" {
+  description = "Nome do Cognito User Pool unificado"
+  value       = aws_cognito_user_pool.main.name
 }
 
 output "user_pool_endpoint" {
-  description = "Endpoint do Cognito User Pool da aplicação (deprecated - use app_user_pool_endpoint)"
-  value       = var.create_app_user_pool ? aws_cognito_user_pool.app[0].endpoint : null
+  description = "Endpoint do Cognito User Pool unificado"
+  value       = aws_cognito_user_pool.main.endpoint
 }
 
-# ArgoCD OIDC Configuration (Dedicated User Pool)
-output "argocd_oidc_config" {
-  description = "Configuração OIDC para ArgoCD (User Pool dedicado)"
+output "user_pool_domain" {
+  description = "Domínio do User Pool"
+  value       = aws_cognito_user_pool_domain.main.domain
+}
+
+###########################
+# Application Client Outputs #
+###########################
+
+output "app_client_id" {
+  description = "ID do client da aplicação principal"
+  value       = aws_cognito_user_pool_client.app.id
+}
+
+# Configuração para API Gateway Authorizer
+output "api_gateway_authorizer_config" {
+  description = "Configuração para authorizer do API Gateway"
   value = {
-    user_pool_id  = aws_cognito_user_pool.argocd.id
-    user_pool_arn = aws_cognito_user_pool.argocd.arn
-    client_id     = aws_cognito_user_pool_client.argocd.id
-    client_secret = aws_cognito_user_pool_client.argocd.client_secret
-    issuer_url    = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.argocd.id}"
-    domain        = aws_cognito_user_pool_domain.argocd.domain
-    admin_group   = aws_cognito_user_group.argocd_admin.name
-    endpoint      = aws_cognito_user_pool.argocd.endpoint
+    type          = "COGNITO_USER_POOLS"
+    user_pool_arn = aws_cognito_user_pool.main.arn
+    user_pool_id  = aws_cognito_user_pool.main.id
+    client_id     = aws_cognito_user_pool_client.app.id
   }
-  sensitive = true
 }
 
-# ArgoCD User Pool specific outputs
-output "argocd_user_pool_id" {
-  description = "ID do Cognito User Pool dedicado para ArgoCD"
-  value       = aws_cognito_user_pool.argocd.id
-}
-
-output "argocd_user_pool_arn" {
-  description = "ARN do Cognito User Pool dedicado para ArgoCD"
-  value       = aws_cognito_user_pool.argocd.arn
-}
+###########################
+# ArgoCD Client Outputs   #
+###########################
 
 output "argocd_client_id" {
   description = "ID do client ArgoCD"
@@ -93,54 +63,132 @@ output "argocd_client_secret" {
   sensitive   = true
 }
 
-output "argocd_domain" {
-  description = "Domínio do User Pool ArgoCD"
-  value       = aws_cognito_user_pool_domain.argocd.domain
-}
-
 output "argocd_issuer_url" {
   description = "URL do issuer OIDC para ArgoCD"
-  value       = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.argocd.id}"
+  value       = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
 }
 
-output "argocd_team_users_created" {
-  description = "Lista dos usuários da equipe criados no ArgoCD"
-  value = length(var.argocd_team_users) > 0 ? {
-    users = [
-      for username, user in var.argocd_team_users : {
-        username = username
-        name     = user.name
-        email    = user.email
-      }
-    ]
-    password   = var.argocd_team_password
-    access_url = "https://argo.stackfood.com.br"
-    group      = "argocd-admin"
-    note       = "Emails de convite foram enviados para todos os usuários"
-  } : null
+# ArgoCD OIDC Configuration
+output "argocd_oidc_config" {
+  description = "Configuração OIDC completa para ArgoCD"
+  value = {
+    user_pool_id  = aws_cognito_user_pool.main.id
+    user_pool_arn = aws_cognito_user_pool.main.arn
+    client_id     = aws_cognito_user_pool_client.argocd.id
+    client_secret = aws_cognito_user_pool_client.argocd.client_secret
+    issuer_url    = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
+    domain        = aws_cognito_user_pool_domain.main.domain
+    endpoint      = aws_cognito_user_pool.main.endpoint
+  }
   sensitive = true
 }
 
-output "user_pools_summary" {
-  description = "Resumo dos User Pools criados"
+###########################
+# Grafana Client Outputs  #
+###########################
+
+output "grafana_client_id" {
+  description = "ID do client Grafana"
+  value       = aws_cognito_user_pool_client.grafana.id
+}
+
+output "grafana_client_secret" {
+  description = "Secret do client Grafana"
+  value       = aws_cognito_user_pool_client.grafana.client_secret
+  sensitive   = true
+}
+
+output "grafana_issuer_url" {
+  description = "URL do issuer OIDC para Grafana"
+  value       = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
+}
+
+###########################
+# Groups Outputs          #
+###########################
+
+output "groups" {
+  description = "Informações sobre os grupos criados"
   value = {
-    app_user_pool = var.create_app_user_pool ? {
-      name    = "${var.user_pool_name}-app"
-      id      = aws_cognito_user_pool.app[0].id
-      purpose = "Autenticação da aplicação principal"
-      users   = ["convidado (guest)"]
-    } : null
-    argocd_user_pool = {
-      name        = "${var.user_pool_name}-argocd"
-      id          = aws_cognito_user_pool.argocd.id
-      purpose     = "Autenticação exclusiva do ArgoCD"
-      admin_users = concat(["stackfood (admin)"], keys(var.argocd_team_users))
-      total_users = 1 + length(var.argocd_team_users)
+    app_users = {
+      name = aws_cognito_user_group.app_users.name
+      id   = aws_cognito_user_group.app_users.id
+    }
+    app_admins = {
+      name = aws_cognito_user_group.app_admins.name
+      id   = aws_cognito_user_group.app_admins.id
+    }
+    argocd = {
+      name = aws_cognito_user_group.argocd.name
+      id   = aws_cognito_user_group.argocd.id
+    }
+    grafana = {
+      name = aws_cognito_user_group.grafana.name
+      id   = aws_cognito_user_group.grafana.id
+    }
+    system_admins = {
+      name = aws_cognito_user_group.system_admins.name
+      id   = aws_cognito_user_group.system_admins.id
     }
   }
 }
 
-output "stackfood_user_created" {
-  description = "Confirmation that stackfood user was created"
-  value       = "User 'stackfood' created with admin privileges in ArgoCD User Pool"
+###########################
+# Users Summary           #
+###########################
+
+output "users_summary" {
+  description = "Resumo dos usuários criados"
+  value = {
+    user_pool = {
+      name    = aws_cognito_user_pool.main.name
+      id      = aws_cognito_user_pool.main.id
+      purpose = "Autenticação unificada para aplicação e ferramentas de gerenciamento"
+    }
+    users_created = {
+      guest_user = var.create_guest_user ? {
+        username = "convidado"
+        email    = "convidado@stackfood.com.br"
+        groups   = ["app-users"]
+      } : null
+      admin_user = {
+        username = "stackfood"
+        email    = "admin@stackfood.com.br"
+        groups   = ["system-admins", "argocd", "grafana"]
+      }
+      team_users = {
+        for username, user in var.team_users : username => {
+          name   = user.name
+          email  = user.email
+          groups = user.groups
+        }
+      }
+    }
+    total_users = 1 + (var.create_guest_user ? 1 : 0) + length(var.team_users)
+  }
+}
+
+###########################
+# Backward Compatibility  #
+###########################
+
+# Mantendo outputs para compatibilidade com configuração atual
+output "argocd_user_pool_id" {
+  description = "ID do User Pool (compatibilidade)"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "argocd_user_pool_name" {
+  description = "Nome do User Pool (compatibilidade)"
+  value       = aws_cognito_user_pool.main.name
+}
+
+output "argocd_user_pool_arn" {
+  description = "ARN do User Pool (compatibilidade)"
+  value       = aws_cognito_user_pool.main.arn
+}
+
+output "argocd_domain" {
+  description = "Domínio do User Pool (compatibilidade)"
+  value       = aws_cognito_user_pool_domain.main.domain
 }
