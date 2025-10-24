@@ -2,10 +2,10 @@
 output "application_cognito_info" {
   description = "Informações do User Pool da aplicação"
   value = {
-    user_pool_id  = module.cognito.app_user_pool_id
-    user_pool_arn = module.cognito.app_user_pool_arn
-    client_id     = module.cognito.app_user_pool_client_id
-    endpoint      = module.cognito.app_user_pool_endpoint
+    user_pool_id  = module.cognito.user_pool_id
+    user_pool_arn = module.cognito.user_pool_arn
+    client_id     = module.cognito.app_client_id
+    endpoint      = module.cognito.user_pool_endpoint
   }
 }
 
@@ -36,7 +36,7 @@ output "argocd_access_info" {
 
 output "team_users_info" {
   description = "Informações dos usuários da equipe criados"
-  value       = module.cognito.argocd_team_users_created
+  value       = module.cognito.users_summary
   sensitive   = true
 }
 
@@ -63,13 +63,13 @@ output "argocd_applications_info" {
 output "cognito_unified_summary" {
   description = "Resumo do módulo Cognito unificado"
   value = {
-    module_structure = "Single module with two User Pools"
-    user_pools       = module.cognito.user_pools_summary
+    module_structure = "Single module with unified User Pool"
+    user_pools       = module.cognito.users_summary
+    groups           = module.cognito.groups
     files = {
-      app_user_pool    = "app-user-pool.tf"
-      argocd_user_pool = "argocd-user-pool.tf"
-      main_file        = "main.tf (orchestration)"
-      outputs_file     = "outputs.tf (unified outputs)"
+      main_file    = "main.tf (User Pool and Groups)"
+      clients_file = "clients.tf (OAuth clients)"
+      outputs_file = "outputs.tf (unified outputs)"
     }
   }
 }
