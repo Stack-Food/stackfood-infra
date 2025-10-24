@@ -251,7 +251,6 @@ resources:
 ```
 
 ### 🌐 **Ingress & Load Balancing**
-
 ```yaml
 # NGINX Ingress configurado para:
 annotations:
