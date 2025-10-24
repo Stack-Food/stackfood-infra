@@ -382,11 +382,13 @@ variable "nginx_ingress_version" {
 # ArgoCD Configuration #
 ######################
 
-variable "argocd_team_users" {
-  description = "Map de usuários da equipe para o ArgoCD"
+variable "team_users" {
+  description = "Map de usuários da equipe com seus grupos de acesso"
   type = map(object({
-    name  = string
-    email = string
+    name      = string
+    email     = string
+    user_type = optional(string, "team_member")
+    groups    = list(string) # Possíveis valores: ["argocd", "grafana", "app-admins", "system-admins"]
   }))
   default = {}
 }
