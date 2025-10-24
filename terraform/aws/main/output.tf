@@ -48,17 +48,6 @@ output "dns_records_created" {
   }
 }
 
-output "argocd_applications_info" {
-  description = "Informações das aplicações ArgoCD criadas"
-  value = {
-    project_name      = module.argocd_applications.project_name
-    applications      = module.argocd_applications.applications
-    source_repository = module.argocd_applications.source_repository
-    target_revision   = module.argocd_applications.target_revision
-    sync_policy       = module.argocd_applications.sync_policy
-  }
-}
-
 # Output mostrando a estrutura unificada
 output "cognito_unified_summary" {
   description = "Resumo do módulo Cognito unificado"
