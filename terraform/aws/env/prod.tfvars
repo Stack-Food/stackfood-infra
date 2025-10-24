@@ -278,29 +278,39 @@ cognito_user_pools = {
 ######################
 
 # Usuários da equipe StackFood para ArgoCD
-argocd_team_users = {
+team_users = {
   "leonardo.duarte" = {
-    name  = "Leonardo Duarte"
-    email = "leo.duarte.dev@gmail.com"
+    name      = "Leonardo Duarte"
+    email     = "leo.duarte.dev@gmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
   }
   "luiz.felipe" = {
-    name  = "Luiz Felipe Maia"
-    email = "luiz.felipeam@hotmail.com"
+    name      = "Luiz Felipe Maia"
+    email     = "luiz.felipeam@hotmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana", "system-admins"]
   }
   "leonardo.lemos" = {
-    name  = "Leonardo Luiz Lemos"
-    email = "leoo_lemos@outlook.com"
+    name      = "Leonardo Luiz Lemos"
+    email     = "leoo_lemos@outlook.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
   }
   "rodrigo.silva" = {
-    name  = "Rodrigo Rodriguez Figueiredo de Oliveira Silva"
-    email = "rodrigorfig1@gmail.com"
+    name      = "Rodrigo Rodriguez Figueiredo de Oliveira Silva"
+    email     = "rodrigorfig1@gmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
   }
   "vinicius.targa" = {
-    name  = "Vinicius Targa Gonçalves"
-    email = "viniciustarga@gmail.com"
+    name      = "Vinicius Targa Gonçalves"
+    email     = "viniciustarga@gmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
   }
 }
 
-# Senhas para usuários ArgoCD
+# Senhas para usuários
 argocd_admin_password = "Fiap@2025"
 argocd_team_password  = "StackFood@2025"
