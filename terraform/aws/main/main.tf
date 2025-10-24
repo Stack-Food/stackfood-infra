@@ -251,15 +251,16 @@ module "cognito" {
   user_pool_name = "stackfood"
   environment    = var.environment
 
+  # Configurações do usuário convidado
+  create_guest_user   = true
   guest_user_password = "Convidado123!"
 
-  # Configurações básicas
-  create_app_user_pool = true # Criar User Pool da aplicação
-
-  # Configurações do User Pool ArgoCD
+  # Configurações do administrador
   stackfood_admin_password = var.argocd_admin_password
-  argocd_team_users        = var.argocd_team_users
-  argocd_team_password     = var.argocd_team_password
+
+  # Configurações dos usuários da equipe
+  team_users          = var.team_users
+  team_users_password = var.argocd_team_password
 
   # Configurações ArgoCD OIDC
   argocd_callback_urls = [
@@ -267,6 +268,14 @@ module "cognito" {
   ]
   argocd_logout_urls = [
     "https://argo.${var.domain_name}"
+  ]
+
+  # Configurações Grafana OIDC (futuro)
+  grafana_callback_urls = [
+    "https://grafana.${var.domain_name}/login/generic_oauth"
+  ]
+  grafana_logout_urls = [
+    "https://grafana.${var.domain_name}"
   ]
 }
 
@@ -278,7 +287,7 @@ module "argocd" {
   domain_name      = var.domain_name
   argocd_subdomain = "argo"
   environment      = var.environment
-  chart_version    = "4.0.0"
+  chart_version    = "4.5.2"
 
   # Configurações Cognito - USANDO O USER POOL ARGOCD DO MÓDULO UNIFICADO
   cognito_user_pool_id      = module.cognito.argocd_user_pool_id
@@ -286,7 +295,7 @@ module "argocd" {
   cognito_client_issuer_url = module.cognito.argocd_issuer_url
   cognito_client_secret     = module.cognito.argocd_client_secret
   cognito_region            = data.aws_region.current.region
-  user_pool_name            = module.cognito.user_pool_name
+  user_pool_name            = module.cognito.argocd_user_pool_name
 
   # Configurações de grupos
   admin_group_name    = "argocd-admin"
@@ -303,33 +312,6 @@ module "argocd" {
     module.dns,
     module.eks
   ]
-}
-
-# ArgoCD Applications
-module "argocd_applications" {
-  source = "../modules/kubernetes/argocd-applications"
-
-  # ArgoCD Configuration
-  namespace    = "argocd"
-  project_name = "stackfood"
-
-  # Repository Configuration
-  source_repo_url = "https://github.com/Stack-Food/stackfood-api.git"
-  target_revision = "master"
-
-  # Namespace Configuration - Simplificado para um namespace único
-  api_namespace    = "stackfood"
-  worker_namespace = "stackfood"
-
-  # Sync Policy (Conservative for production)
-  enable_auto_sync = false # Manual sync for production
-  enable_self_heal = true
-  enable_prune     = true
-
-  # Development environment opcional
-  enable_develop_environment = false # Desabilitado por padrão
-
-  depends_on = [module.argocd]
 }
 
 module "dns" {
