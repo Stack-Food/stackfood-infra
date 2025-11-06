@@ -1,0 +1,258 @@
+# SonarQube Helm Chart Values
+# Official SonarQube Helm Chart: https://SonarSource.github.io/helm-chart-sonarqube
+
+# Deployment configuration
+deploymentType: "StatefulSet"
+replicaCount: 1
+revisionHistoryLimit: 10
+
+# Image configuration
+image:
+  repository: sonarqube
+  pullPolicy: IfNotPresent
+
+# Security Context
+securityContext:
+  fsGroup: 0
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 0
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop: ["ALL"]
+
+# Elasticsearch configuration
+elasticsearch:
+  configureNode: false
+  bootstrapChecks: true
+
+# Service configuration
+service:
+  type: ClusterIP
+  externalPort: 9000
+  internalPort: 9000
+  labels:
+    app: sonarqube
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "*, X-CustomResponseHeader"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nlb.ingress.kubernetes.io/scheme: internet-facing
+    nlb.ingress.kubernetes.io/target-type: instance
+    nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
+  hosts:
+    - name: ${sonarqube_subdomain}.${domain_name}
+      path: /
+      pathType: Prefix
+  tls:
+    - secretName: sonarqube-tls
+      hosts:
+        - ${sonarqube_subdomain}.${domain_name}
+
+# Resource configuration
+resources:
+  limits:
+    cpu: ${sonarqube_resources.limits.cpu}
+    memory: ${sonarqube_resources.limits.memory}
+    ephemeral-storage: 512000M
+  requests:
+    cpu: ${sonarqube_resources.requests.cpu}
+    memory: ${sonarqube_resources.requests.memory}
+    ephemeral-storage: 1536M
+
+# Persistence configuration
+persistence:
+  enabled: true
+  annotations: {}
+  storageClass: ${storage_class}
+  accessMode: ReadWriteOnce
+  size: ${storage_size}
+  uid: 1000
+  guid: 0
+
+# Monitoring passcode for health checks
+monitoringPasscode: ${monitoring_passcode}
+
+# Environment variables for OIDC configuration
+env:
+  - name: SONAR_WEB_CONTEXT
+    value: "/"
+  - name: SONAR_WEB_JAVAOPTS
+    value: "-Xmx4G -XX:MaxDirectMemorySize=2G -XX:+HeapDumpOnOutOfMemoryError"
+  - name: SONAR_CE_JAVAOPTS
+    value: "-Xmx4G -XX:MaxDirectMemorySize=512M -XX:+HeapDumpOnOutOfMemoryError"
+  # OIDC Configuration
+  - name: SONAR_AUTH_OIDC_ENABLED
+    value: "true"
+  - name: SONAR_AUTH_OIDC_PROVIDERURL
+    value: "${cognito_client_issuer_url}"
+  - name: SONAR_AUTH_OIDC_CLIENTID_SECURED
+    valueFrom:
+      secretKeyRef:
+        name: sonarqube-oidc-config
+        key: client-id
+  - name: SONAR_AUTH_OIDC_CLIENTSECRET_SECURED
+    valueFrom:
+      secretKeyRef:
+        name: sonarqube-oidc-config
+        key: client-secret
+  - name: SONAR_AUTH_OIDC_ISSUERURI
+    value: "${cognito_client_issuer_url}"
+  - name: SONAR_AUTH_OIDC_BUTTONTEXT
+    value: "Login with StackFood SSO"
+  - name: SONAR_AUTH_OIDC_GROUPSSYNC
+    value: "true"
+  - name: SONAR_AUTH_OIDC_GROUPSSYNC_CLAIMNAME
+    value: "cognito:groups"
+  - name: SONAR_CORE_SERVERBASEURL
+    value: "https://${sonarqube_subdomain}.${domain_name}"
+
+# Pod annotations
+annotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/api/monitoring/metrics"
+  prometheus.io/port: "9000"
+
+# Node selection and affinity
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
+# Probes configuration
+readinessProbe:
+  exec:
+    command:
+      - sh
+      - -c
+      - |
+        #!/bin/bash
+        # A Sonarqube container is considered ready if the status is UP, DB_MIGRATION_NEEDED or DB_MIGRATION_RUNNING
+        if wget --no-proxy -qO- http://localhost:9000/api/system/status | grep -q -e '"status":"UP"' -e '"status":"DB_MIGRATION_NEEDED"' -e '"status":"DB_MIGRATION_RUNNING"'; then
+          exit 0
+        fi
+        exit 1
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 6
+  timeoutSeconds: 1
+
+livenessProbe:
+  exec:
+    command:
+      - sh
+      - -c
+      - |
+        wget --no-proxy --quiet -O /dev/null --timeout=1 --header="X-Sonar-Passcode: ${monitoring_passcode}" "http://localhost:9000/api/system/liveness"
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 6
+  timeoutSeconds: 1
+
+startupProbe:
+  exec:
+    command:
+      - sh
+      - -c
+      - |
+        #!/bin/bash
+        if wget --no-proxy -qO- http://localhost:9000/api/system/status | grep -q -e '"status":"UP"' -e '"status":"DB_MIGRATION_NEEDED"' -e '"status":"DB_MIGRATION_RUNNING"'; then
+          exit 0
+        fi
+        exit 1
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 24
+  timeoutSeconds: 1
+
+# PostgreSQL dependency configuration
+postgresql:
+  enabled: ${postgresql_enabled}
+  image:
+    repository: "bitnamilegacy/postgresql"
+    tag: 11.14.0
+  readinessProbe:
+    enabled: false
+  customReadinessProbe:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - -e
+        - |
+          exec pg_isready -U sonarUser -d "dbname=sonarDB" -h 127.0.0.1 -p 5432
+          [ -f /opt/bitnami/postgresql/tmp/.initialized ] || [ -f /bitnami/postgresql/.initialized ]
+    failureThreshold: 6
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+  postgresqlUsername: "sonarUser"
+  postgresqlPassword: "sonarPass"
+  postgresqlDatabase: "sonarDB"
+  service:
+    port: 5432
+  resources:
+    limits:
+      cpu: ${postgresql_resources.limits.cpu}
+      memory: ${postgresql_resources.limits.memory}
+    requests:
+      cpu: ${postgresql_resources.requests.cpu}
+      memory: ${postgresql_resources.requests.memory}
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: ${postgresql_storage_size}
+    storageClass: ${storage_class}
+  securityContext:
+    enabled: true
+    fsGroup: 1001
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: ["ALL"]
+  volumePermissions:
+    enabled: false
+  shmVolume:
+    chmod:
+      enabled: false
+  serviceAccount:
+    enabled: false
+
+# Plugin installation
+plugins:
+  install: []
+
+# Additional init containers
+initContainers:
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 0
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: ["ALL"]
+    readOnlyRootFilesystem: true
+  resources: {}
+
+# Extra containers and volumes
+extraContainers: []
+extraVolumes: []
+extraVolumeMounts: []
