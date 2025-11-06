@@ -314,3 +314,35 @@ team_users = {
 # Senhas para usuários
 argocd_admin_password = "Fiap@2025"
 argocd_team_password  = "StackFood@2025"
+
+
+
+################
+# Grafana Configuration #
+################
+
+# Configurações específicas do Grafana
+grafana_subdomain     = "grafana"
+grafana_storage_size  = "10Gi"
+grafana_storage_class = "gp2"
+
+# Configurações de recursos do Grafana
+grafana_resources = {
+  requests = {
+    cpu    = "100m"
+    memory = "128Mi"
+  }
+  limits = {
+    cpu    = "500m"
+    memory = "512Mi"
+  }
+}
+
+# URL do Prometheus (ajuste conforme sua instalação)
+prometheus_url = "http://prometheus-server.monitoring.svc.cluster.local"
+
+# Habilitar datasource automático do Prometheus
+enable_prometheus_datasource = true
+
+# Namespace para instalação
+monitoring_namespace = "monitoring"

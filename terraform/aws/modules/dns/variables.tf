@@ -38,6 +38,19 @@ variable "argocd_subdomain" {
   default     = "argo"
 }
 
+# Grafana specific variables
+variable "create_grafana_record" {
+  description = "Whether to create Grafana DNS record"
+  type        = bool
+  default     = true
+}
+
+variable "grafana_subdomain" {
+  description = "Subdomain for Grafana"
+  type        = string
+  default     = "grafana"
+}
+
 variable "proxied" {
   description = "Whether to proxy through Cloudflare"
   type        = bool

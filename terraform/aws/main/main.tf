@@ -327,6 +327,10 @@ module "dns" {
   create_argocd_record = true
   argocd_subdomain     = "argo"
 
+  # Configurações Grafana
+  create_grafana_record = true
+  grafana_subdomain     = "grafana"
+
   # DNS Settings
   proxied = true
   ttl     = 300
@@ -335,4 +339,62 @@ module "dns" {
   tags = var.tags
 
   depends_on = [module.eks, module.nginx-ingress]
+}
+
+# Módulo Grafana com autenticação Cognito
+module "grafana" {
+  source = "../modules/kubernetes/grafana/"
+
+  # Configurações básicas
+  namespace         = "monitoring"
+  domain_name       = var.domain_name
+  grafana_subdomain = "grafana"
+  environment       = var.environment
+  chart_version     = "8.5.2"
+
+  # Configurações Cognito - USANDO O MESMO USER POOL DO ARGOCD
+  cognito_user_pool_id      = module.cognito.user_pool_id
+  cognito_client_id         = module.cognito.grafana_client_id
+  cognito_client_secret     = module.cognito.grafana_client_secret
+  cognito_region            = data.aws_region.current.region
+  cognito_client_issuer_url = module.cognito.grafana_issuer_url
+  user_pool_name            = module.cognito.user_pool_name
+
+  # Configurações de grupos do Cognito
+  admin_group_name        = "grafana"
+  readonly_group_name     = "grafana-readonly"
+  system_admin_group_name = "system-admins"
+
+  # Certificado SSL
+  certificate_arn = module.acm.certificate_arn
+
+  # Configurações do Prometheus
+  prometheus_url               = "http://prometheus-server.monitoring.svc.cluster.local"
+  enable_prometheus_datasource = true
+
+  # Configurações de armazenamento
+  storage_size  = "10Gi"
+  storage_class = "gp2"
+
+  # Configurações de recursos
+  grafana_resources = {
+    requests = {
+      cpu    = "100m"
+      memory = "128Mi"
+    }
+    limits = {
+      cpu    = "500m"
+      memory = "512Mi"
+    }
+  }
+
+  # Tags
+  tags = var.tags
+
+  depends_on = [
+    module.cognito,
+    module.dns,
+    module.eks,
+    module.nginx-ingress
+  ]
 }
