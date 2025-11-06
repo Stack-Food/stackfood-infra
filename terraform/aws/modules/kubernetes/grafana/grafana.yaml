@@ -1,0 +1,288 @@
+# Grafana Helm Chart Values
+# Official Grafana Helm Chart: https://grafana.github.io/helm-charts
+
+# Global settings
+global:
+  domain: ${grafana_subdomain}.${domain_name}
+
+# Admin user configuration
+adminUser: admin
+adminPassword: admin
+
+# Resource configuration
+resources:
+  requests:
+    cpu: ${grafana_resources.requests.cpu}
+    memory: ${grafana_resources.requests.memory}
+  limits:
+    cpu: ${grafana_resources.limits.cpu}
+    memory: ${grafana_resources.limits.memory}
+
+# Persistence configuration
+persistence:
+  type: pvc
+  enabled: true
+  size: ${storage_size}
+  storageClassName: ${storage_class}
+  accessModes:
+    - ReadWriteOnce
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+# Ingress configuration
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "*, X-CustomResponseHeader"
+    nlb.ingress.kubernetes.io/scheme: internet-facing
+    nlb.ingress.kubernetes.io/target-type: instance
+    nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
+  hosts:
+    - ${grafana_subdomain}.${domain_name}
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - ${grafana_subdomain}.${domain_name}
+
+# Grafana configuration
+grafana.ini:
+  server:
+    domain: ${grafana_subdomain}.${domain_name}
+    root_url: https://${grafana_subdomain}.${domain_name}
+    serve_from_sub_path: false
+
+  # Security settings
+  security:
+    admin_user: admin
+    admin_password: admin
+    allow_embedding: false
+    cookie_secure: true
+    cookie_samesite: strict
+
+  # Authentication settings
+  auth:
+    disable_login_form: false
+    disable_signout_menu: false
+    oauth_auto_login: true
+
+  # Generic OAuth settings for Cognito
+  auth.generic_oauth:
+    enabled: true
+    name: StackFood SSO
+    client_id: ${cognito_client_id}
+    client_secret: ${cognito_client_secret}
+    scopes: openid email profile
+    auth_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/authorize
+    token_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/token
+    api_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/userInfo
+    team_ids:
+    allowed_organizations:
+    allow_sign_up: true
+    auto_login: false
+    role_attribute_path: contains(groups[*], '${system_admin_group_name}') && 'Admin' || contains(groups[*], '${admin_group_name}') && 'Admin' || 'Viewer'
+    role_attribute_strict: false
+    allow_assign_grafana_admin: true
+    skip_org_role_sync: false
+
+  # User settings
+  users:
+    allow_sign_up: false
+    auto_assign_org: true
+    auto_assign_org_id: 1
+    auto_assign_org_role: Viewer
+    viewers_can_edit: false
+    editors_can_admin: false
+
+  # Analytics
+  analytics:
+    reporting_enabled: false
+    check_for_updates: false
+
+  # Snapshots
+  snapshots:
+    external_enabled: false
+
+  # Logging
+  log:
+    mode: console
+    level: info
+
+# Enable metrics for monitoring
+metrics:
+  enabled: true
+  service:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3000"
+      prometheus.io/path: "/metrics"
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  labels:
+    app: grafana
+  interval: 30s
+  path: /metrics
+
+# Default dashboards for Kubernetes monitoring
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: "kubernetes"
+        orgId: 1
+        folder: "Kubernetes"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/kubernetes
+      - name: "node-exporter"
+        orgId: 1
+        folder: "Node Exporter"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/node-exporter
+
+# Pre-configured dashboards
+dashboards:
+  kubernetes:
+    # Kubernetes cluster monitoring dashboard
+    k8s-cluster-overview:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+    # Kubernetes pods monitoring
+    k8s-pods:
+      gnetId: 6417
+      revision: 1
+      datasource: Prometheus
+    # Kubernetes nodes
+    k8s-nodes:
+      gnetId: 8588
+      revision: 1
+      datasource: Prometheus
+    # Kubernetes deployments
+    k8s-deployments:
+      gnetId: 8588
+      revision: 1
+      datasource: Prometheus
+  node-exporter:
+    # Node Exporter Full dashboard
+    node-exporter-full:
+      gnetId: 1860
+      revision: 37
+      datasource: Prometheus
+    # Node Exporter for Prometheus
+    node-exporter-server-metrics:
+      gnetId: 405
+      revision: 8
+      datasource: Prometheus
+
+# RBAC configuration
+rbac:
+  create: true
+  pspEnabled: false
+
+# Service Account
+serviceAccount:
+  create: true
+  name: grafana
+  annotations: {}
+
+# Pod Security Context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 472
+  fsGroup: 472
+
+# Container Security Context
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 472
+
+# Environment variables
+env:
+  GF_EXPLORE_ENABLED: true
+  GF_PANELS_DISABLE_SANITIZE_HTML: true
+  GF_LOG_FILTERS: rendering:debug
+  GF_DATE_FORMATS_INTERVAL_SECOND: HH:mm:ss
+  GF_DATE_FORMATS_INTERVAL_MINUTE: HH:mm
+  GF_DATE_FORMATS_INTERVAL_HOUR: MM/DD HH:mm
+  GF_DATE_FORMATS_INTERVAL_DAY: MM/DD
+  GF_DATE_FORMATS_INTERVAL_MONTH: YYYY-MM
+  GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
+
+# Init containers
+initChownData:
+  enabled: true
+  image:
+    repository: busybox
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+# Sidecar for dynamic dashboard loading
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    searchNamespace: ALL
+    provider:
+      allowUiUpdates: false
+  datasources:
+    enabled: true
+    label: grafana_datasource
+    labelValue: "1"
+    searchNamespace: ALL
+
+# Plugin installation
+plugins:
+  - grafana-piechart-panel
+  - grafana-worldmap-panel
+  - grafana-clock-panel
+  - grafana-simple-json-datasource
+
+# Notifiers for alerting (can be configured later)
+notifiers: {}
+
+# Image pull secrets (if needed for private registries)
+imagePullSecrets: []
+
+# Tolerations and node affinity (if needed)
+tolerations: []
+affinity: {}
+nodeSelector: {}
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "3000"
+  prometheus.io/path: "/metrics"
+
+# Additional labels
+podLabels:
+  app: grafana
+  component: grafana
+  part-of: monitoring
