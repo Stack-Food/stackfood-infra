@@ -43,8 +43,10 @@ output "team_users_info" {
 output "dns_records_created" {
   description = "Registros DNS criados"
   value = {
-    argocd_dns = "argo.${var.domain_name}"
-    argocd_url = "https://argo.${var.domain_name}"
+    argocd_dns  = "argo.${var.domain_name}"
+    argocd_url  = "https://argo.${var.domain_name}"
+    grafana_dns = "grafana.${var.domain_name}"
+    grafana_url = "https://grafana.${var.domain_name}"
   }
 }
 
@@ -67,4 +69,52 @@ output "cognito_unified_summary" {
 output "api_gateway_config" {
   description = "Configuração para API Gateway Authorizer"
   value       = module.cognito.api_gateway_authorizer_config
+}
+
+# Outputs do Grafana
+output "grafana_cognito_info" {
+  description = "Informações do Cognito para Grafana"
+  value = {
+    user_pool_id  = module.cognito.user_pool_id
+    client_id     = module.cognito.grafana_client_id
+    client_secret = module.cognito.grafana_client_secret
+    issuer_url    = module.cognito.grafana_issuer_url
+  }
+  sensitive = true
+}
+
+output "grafana_access_info" {
+  description = "Informações de acesso ao Grafana"
+  value = {
+    url                = module.grafana.url
+    namespace          = module.grafana.namespace
+    admin_user         = module.grafana.admin_user
+    admin_password     = "admin"  # Senha padrão inicial
+    cognito_login_url  = module.cognito.grafana_issuer_url
+  }
+  sensitive = true
+}
+
+output "monitoring_setup" {
+  description = "Configuração de monitoramento implementada"
+  value = {
+    grafana = {
+      url             = module.grafana.url
+      namespace       = module.grafana.namespace
+      datasources     = module.grafana.datasources_config
+      dashboards      = ["Kubernetes Cluster", "Node Exporter Full"]
+      authentication  = "Cognito OAuth2"
+    }
+    prometheus_integration = {
+      enabled     = true
+      url         = "http://prometheus-server.monitoring.svc.cluster.local"
+      node_exporter = "Enabled via EKS add-on"
+      metrics_server = "Enabled via EKS add-on"
+    }
+    access_control = {
+      admin_groups    = ["system-admins", "grafana"]
+      readonly_groups = ["grafana-readonly"]
+      shared_cognito  = "Same User Pool as ArgoCD"
+    }
+  }
 }
