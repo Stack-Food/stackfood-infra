@@ -51,6 +51,19 @@ variable "grafana_subdomain" {
   default     = "grafana"
 }
 
+# SonarQube specific variables
+variable "create_sonarqube_record" {
+  description = "Whether to create SonarQube DNS record"
+  type        = bool
+  default     = true
+}
+
+variable "sonarqube_subdomain" {
+  description = "Subdomain for SonarQube"
+  type        = string
+  default     = "sonar"
+}
+
 variable "proxied" {
   description = "Whether to proxy through Cloudflare"
   type        = bool
