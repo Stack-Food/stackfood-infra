@@ -127,9 +127,11 @@ metrics:
       prometheus.io/port: "3000"
       prometheus.io/path: "/metrics"
 
-# ServiceMonitor for Prometheus
+# ServiceMonitor for Prometheus Operator
+# IMPORTANTE: Desabilitado por padrão pois requer Prometheus Operator CRDs instalados
+# Para habilitar: instale o Prometheus Operator primeiro e altere enabled para true
 serviceMonitor:
-  enabled: true
+  enabled: false # ⚠️ Requer prometheus-operator CRDs (monitoring.coreos.com/v1)
   labels:
     app: grafana
   interval: 30s

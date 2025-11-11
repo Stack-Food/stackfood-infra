@@ -153,7 +153,22 @@ Configure as seguintes URLs no cliente OAuth do Cognito:
 
 ### Service Monitor
 
-Cria automaticamente um ServiceMonitor para que o Prometheus colete métricas do próprio Grafana.
+⚠️ **IMPORTANTE**: O ServiceMonitor está **desabilitado por padrão** (`serviceMonitor.enabled: false` no `grafana.yaml`).
+
+**Por quê?**
+
+- ServiceMonitor é um CRD (Custom Resource Definition) fornecido pelo **Prometheus Operator**
+- Requer que o Prometheus Operator esteja instalado no cluster
+- Sem o Operator, a instalação falha com erro: `no matches for kind "ServiceMonitor" in version "monitoring.coreos.com/v1"`
+
+**Para habilitar o ServiceMonitor:**
+
+1. Instale o Prometheus Operator primeiro:
+   ```bash
+   helm install prometheus-operator prometheus-community/kube-prometheus-stack -n monitoring
+   ```
+2. Altere `serviceMonitor.enabled: true` no arquivo `grafana.yaml`
+3. Execute `terraform apply`
 
 ## Volumes Persistentes
 
