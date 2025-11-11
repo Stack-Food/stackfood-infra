@@ -2,9 +2,19 @@ resource "helm_release" "grafana" {
   name             = "grafana"
   repository       = "https://grafana.github.io/helm-charts"
   chart            = "grafana"
-  namespace        = var.namespace
-  create_namespace = true
+  namespace        = kubernetes_namespace.grafana.metadata[0].name
+  create_namespace = false
   version          = var.chart_version
+
+  # Adicionar timeouts para ações de CI/CD
+  timeout         = 600
+  wait            = true
+  wait_for_jobs   = true
+  cleanup_on_fail = true
+
+  # Forçar update se necessário
+  force_update  = false
+  recreate_pods = false
 
   values = [
     templatefile("${path.module}/grafana.yaml", {
@@ -74,11 +84,10 @@ resource "kubernetes_namespace" "grafana" {
   metadata {
     name = var.namespace
     labels = {
-      name                           = var.namespace
-      "app.kubernetes.io/name"       = "grafana"
-      "app.kubernetes.io/instance"   = "grafana"
-      "app.kubernetes.io/part-of"    = "monitoring"
-      "app.kubernetes.io/managed-by" = "terraform"
+      name                         = var.namespace
+      "app.kubernetes.io/name"     = "grafana"
+      "app.kubernetes.io/instance" = "grafana"
+      "app.kubernetes.io/part-of"  = "monitoring"
     }
   }
 }
