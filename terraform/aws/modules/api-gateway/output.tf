@@ -61,12 +61,17 @@ output "custom_domain_base_path_mapping_id" {
 # VPC Link (caso esteja integrando com NLB no EKS)
 output "vpc_link_id" {
   description = "The ID of the VPC Link"
-  value       = aws_api_gateway_vpc_link.eks.id
+  value       = var.eks_cluster_name != null ? aws_api_gateway_vpc_link.eks.id : null
 }
 
 output "vpc_link_arn" {
   description = "The ARN of the VPC Link"
-  value       = aws_api_gateway_vpc_link.eks.arn
+  value       = var.eks_cluster_name != null ? aws_api_gateway_vpc_link.eks.arn : null
+}
+
+output "vpc_link_status" {
+  description = "The status of the VPC Link (should be AVAILABLE)"
+  value       = var.eks_cluster_name != null ? aws_api_gateway_vpc_link.eks.status : null
 }
 
 # NLB debugging
@@ -83,4 +88,20 @@ output "nlb_arn" {
 output "nlb_zone_id" {
   description = "The zone ID of the NGINX Ingress NLB"
   value       = length(data.aws_lb.eks_nlb) > 0 ? data.aws_lb.eks_nlb[0].zone_id : null
+}
+
+# Integration debugging
+output "integration_uri" {
+  description = "The integration URI used for EKS proxy"
+  value       = local.integration_uri
+}
+
+output "integration_protocol" {
+  description = "The protocol used for EKS integration (http or https)"
+  value       = local.integration_protocol
+}
+
+output "integration_port" {
+  description = "The port used for EKS integration"
+  value       = local.integration_port
 }

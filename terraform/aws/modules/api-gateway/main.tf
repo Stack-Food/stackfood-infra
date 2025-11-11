@@ -78,6 +78,115 @@ resource "aws_lambda_permission" "auth_api_gateway_invoke" {
   }
 }
 
+# ==========================================
+# EKS Integration Resources
+# ==========================================
+
+# Resource para capturar todos os outros paths (proxy para EKS)
+resource "aws_api_gateway_resource" "eks_proxy" {
+  count       = var.eks_cluster_name != null ? 1 : 0
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
+  path_part   = "{proxy+}"
+}
+
+# Método ANY para o proxy (aceita todos os métodos HTTP)
+resource "aws_api_gateway_method" "eks_proxy_any" {
+  count         = var.eks_cluster_name != null ? 1 : 0
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  resource_id   = aws_api_gateway_resource.eks_proxy[0].id
+  http_method   = "ANY"
+  authorization = "NONE"
+
+  request_parameters = {
+    "method.request.path.proxy" = true
+  }
+}
+
+# Integração HTTP_PROXY com EKS através do VPC Link
+resource "aws_api_gateway_integration" "eks_proxy" {
+  count                   = var.eks_cluster_name != null ? 1 : 0
+  rest_api_id             = aws_api_gateway_rest_api.this.id
+  resource_id             = aws_api_gateway_resource.eks_proxy[0].id
+  http_method             = aws_api_gateway_method.eks_proxy_any[0].http_method
+  type                    = "HTTP_PROXY"
+  integration_http_method = "ANY"
+
+  # URI do NLB criado pelo NGINX Ingress
+  uri = "${local.integration_uri}:${local.integration_port}/{proxy}"
+
+  connection_type = "VPC_LINK"
+  connection_id   = aws_api_gateway_vpc_link.eks.id
+
+  request_parameters = {
+    "integration.request.path.proxy"  = "method.request.path.proxy"
+    "integration.request.header.Host" = "'${var.custom_domain_name}'"
+  }
+
+  # Timeout de 29 segundos (máximo permitido)
+  timeout_milliseconds = 29000
+}
+
+# Método OPTIONS para CORS no proxy
+resource "aws_api_gateway_method" "eks_proxy_options" {
+  count         = var.eks_cluster_name != null ? 1 : 0
+  rest_api_id   = aws_api_gateway_rest_api.this.id
+  resource_id   = aws_api_gateway_resource.eks_proxy[0].id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Integração MOCK para OPTIONS (resposta CORS)
+resource "aws_api_gateway_integration" "eks_proxy_options" {
+  count       = var.eks_cluster_name != null ? 1 : 0
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.eks_proxy[0].id
+  http_method = aws_api_gateway_method.eks_proxy_options[0].http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# Response para OPTIONS
+resource "aws_api_gateway_method_response" "eks_proxy_options" {
+  count       = var.eks_cluster_name != null ? 1 : 0
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.eks_proxy[0].id
+  http_method = aws_api_gateway_method.eks_proxy_options[0].http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+# Integration Response para OPTIONS
+resource "aws_api_gateway_integration_response" "eks_proxy_options" {
+  count       = var.eks_cluster_name != null ? 1 : 0
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  resource_id = aws_api_gateway_resource.eks_proxy[0].id
+  http_method = aws_api_gateway_method.eks_proxy_options[0].http_method
+  status_code = aws_api_gateway_method_response.eks_proxy_options[0].status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,PATCH,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.eks_proxy_options
+  ]
+}
+
 # Deploy da API
 resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.this.id
@@ -91,7 +200,11 @@ resource "aws_api_gateway_deployment" "this" {
       aws_api_gateway_integration.auth_lambda,
       aws_api_gateway_integration.customer_lambda,
       aws_lambda_permission.auth_api_gateway_invoke,
-      aws_lambda_permission.customer_api_gateway_invoke
+      aws_lambda_permission.customer_api_gateway_invoke,
+      # EKS integration resources
+      var.eks_cluster_name != null ? aws_api_gateway_resource.eks_proxy[0].id : "",
+      var.eks_cluster_name != null ? aws_api_gateway_method.eks_proxy_any[0].id : "",
+      var.eks_cluster_name != null ? aws_api_gateway_integration.eks_proxy[0].id : "",
     ]))
   }
 
@@ -101,7 +214,10 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.auth_lambda,
     aws_api_gateway_integration.customer_lambda,
     aws_lambda_permission.auth_api_gateway_invoke,
-    aws_lambda_permission.customer_api_gateway_invoke
+    aws_lambda_permission.customer_api_gateway_invoke,
+    # EKS integration dependencies
+    aws_api_gateway_integration.eks_proxy,
+    aws_api_gateway_integration.eks_proxy_options
   ]
 
   lifecycle {
