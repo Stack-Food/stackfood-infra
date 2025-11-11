@@ -139,3 +139,9 @@ variable "enable_prometheus_datasource" {
   type        = bool
   default     = true
 }
+
+variable "enable_service_monitor" {
+  description = "Enable ServiceMonitor for Prometheus Operator (requires prometheus-operator CRDs installed)"
+  type        = bool
+  default     = false
+}

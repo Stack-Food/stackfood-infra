@@ -1,15 +1,51 @@
 # IMPORTANTE: Ordem de criação dos recursos
-# 1. helm_release.grafana cria o namespace primeiro (create_namespace = true)
-# 2. data.kubernetes_namespace.grafana aguarda o Helm criar o namespace
-# 3. kubernetes_secret.grafana_oauth é criado APÓS o namespace existir
-# 4. Na próxima execução do Helm (upgrade), o Secret já existirá e será usado
+# 1. kubernetes_namespace cria o namespace PRIMEIRO
+# 2. kubernetes_secret.grafana_oauth é criado no namespace
+# 3. helm_release.grafana instala o chart (create_namespace = false, pois já existe)
+
+# Create namespace first
+resource "kubernetes_namespace" "grafana" {
+  metadata {
+    name = var.namespace
+    labels = {
+      name                           = var.namespace
+      "app.kubernetes.io/managed-by" = "terraform"
+      "app.kubernetes.io/part-of"    = "monitoring"
+    }
+  }
+}
+
+# Create Kubernetes Secret for OAuth client secret (after namespace exists)
+resource "kubernetes_secret" "grafana_oauth" {
+  metadata {
+    name      = "grafana-oauth-secret"
+    namespace = var.namespace
+  }
+
+  data = {
+    "GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET" = var.cognito_client_secret
+  }
+
+  type = "Opaque"
+
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels,
+    ]
+  }
+
+  depends_on = [
+    kubernetes_namespace.grafana
+  ]
+}
 
 resource "helm_release" "grafana" {
   name             = "grafana"
   repository       = "https://grafana.github.io/helm-charts"
   chart            = "grafana"
   namespace        = var.namespace
-  create_namespace = true
+  create_namespace = false # Namespace já foi criado acima
   version          = var.chart_version
 
   # Adicionar timeouts para ações de CI/CD
@@ -78,81 +114,21 @@ resource "helm_release" "grafana" {
       }
     }) : ""
   ]
+
+  depends_on = [
+    kubernetes_namespace.grafana,
+    kubernetes_secret.grafana_oauth
+  ]
 }
 
-# Data source para o namespace (criado pelo Helm)
+# Data source para o namespace (já criado)
 data "kubernetes_namespace" "grafana" {
   metadata {
     name = var.namespace
   }
 
   depends_on = [
-    helm_release.grafana
-  ]
-}
-
-# Create Kubernetes Secret for OAuth client secret (after namespace exists)
-resource "kubernetes_secret" "grafana_oauth" {
-  metadata {
-    name      = "grafana-oauth-secret"
-    namespace = var.namespace
-  }
-
-  data = {
-    "GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET" = var.cognito_client_secret
-  }
-
-  type = "Opaque"
-
-  lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels,
-    ]
-  }
-
-  depends_on = [
-    data.kubernetes_namespace.grafana
-  ]
-}
-
-# Create ServiceMonitor for Prometheus to scrape Grafana metrics
-resource "kubectl_manifest" "grafana_service_monitor" {
-  count = var.enable_prometheus_datasource ? 1 : 0
-
-  yaml_body = yamlencode({
-    apiVersion = "monitoring.coreos.com/v1"
-    kind       = "ServiceMonitor"
-    metadata = {
-      name      = "grafana"
-      namespace = var.namespace
-      labels = {
-        app                            = "grafana"
-        "app.kubernetes.io/name"       = "grafana"
-        "app.kubernetes.io/instance"   = "grafana"
-        "app.kubernetes.io/part-of"    = "monitoring"
-        "app.kubernetes.io/managed-by" = "terraform"
-      }
-    }
-    spec = {
-      selector = {
-        matchLabels = {
-          "app.kubernetes.io/name"     = "grafana"
-          "app.kubernetes.io/instance" = "grafana"
-        }
-      }
-      endpoints = [
-        {
-          port     = "http-web"
-          interval = "30s"
-          path     = "/metrics"
-        }
-      ]
-    }
-  })
-
-  depends_on = [
-    helm_release.grafana
+    kubernetes_namespace.grafana
   ]
 }
 

@@ -10,6 +10,26 @@ Este módulo instala e configura o Grafana no cluster EKS usando o Helm chart of
 - **Persistência**: Armazenamento persistente para dados do Grafana
 - **Ingress**: Configurado com NGINX Ingress Controller e certificado SSL
 - **RBAC**: Controle de acesso baseado em grupos do Cognito
+- **Segurança**: OAuth client_secret armazenado em Kubernetes Secret (não hardcoded)
+
+## ⚠️ Importante: Ordem de Criação dos Recursos
+
+Este módulo cria os recursos na seguinte ordem para evitar problemas de dependência:
+
+1. **Namespace** (`kubernetes_namespace.grafana`) - Criado primeiro
+2. **Secret OAuth** (`kubernetes_secret.grafana_oauth`) - Criado após namespace
+3. **Helm Release** (`helm_release.grafana`) - Instalado após namespace e secret existirem
+
+```terraform
+# Ordem implementada no módulo:
+kubernetes_namespace → kubernetes_secret → helm_release
+```
+
+Isso garante que:
+
+- ✅ O namespace existe antes de criar qualquer recurso nele
+- ✅ O Secret OAuth está disponível quando o Grafana inicia
+- ✅ OAuth com Cognito funciona na primeira instalação
 
 ## Uso
 
@@ -43,6 +63,7 @@ module "grafana" {
   # Configurações do Prometheus
   prometheus_url                = "http://prometheus-server.monitoring.svc.cluster.local"
   enable_prometheus_datasource  = true
+  enable_service_monitor        = false  # ⚠️ Requer Prometheus Operator CRDs
 
   # Configurações de recursos
   storage_size  = "10Gi"
