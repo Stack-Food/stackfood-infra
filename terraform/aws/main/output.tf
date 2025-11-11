@@ -86,11 +86,11 @@ output "grafana_cognito_info" {
 output "grafana_access_info" {
   description = "Informações de acesso ao Grafana"
   value = {
-    url                = module.grafana.url
-    namespace          = module.grafana.namespace
-    admin_user         = module.grafana.admin_user
-    admin_password     = "admin"  # Senha padrão inicial
-    cognito_login_url  = module.cognito.grafana_issuer_url
+    url               = module.grafana.url
+    namespace         = module.grafana.namespace
+    admin_user        = module.grafana.admin_user
+    admin_password    = "admin" # Senha padrão inicial
+    cognito_login_url = module.cognito.grafana_issuer_url
   }
   sensitive = true
 }
@@ -99,16 +99,16 @@ output "monitoring_setup" {
   description = "Configuração de monitoramento implementada"
   value = {
     grafana = {
-      url             = module.grafana.url
-      namespace       = module.grafana.namespace
-      datasources     = module.grafana.datasources_config
-      dashboards      = ["Kubernetes Cluster", "Node Exporter Full"]
-      authentication  = "Cognito OAuth2"
+      url            = module.grafana.url
+      namespace      = module.grafana.namespace
+      datasources    = module.grafana.datasources_config
+      dashboards     = ["Kubernetes Cluster", "Node Exporter Full"]
+      authentication = "Cognito OAuth2"
     }
     prometheus_integration = {
-      enabled     = true
-      url         = "http://prometheus-server.monitoring.svc.cluster.local"
-      node_exporter = "Enabled via EKS add-on"
+      enabled        = true
+      url            = "http://prometheus-server.monitoring.svc.cluster.local"
+      node_exporter  = "Enabled via EKS add-on"
       metrics_server = "Enabled via EKS add-on"
     }
     access_control = {
