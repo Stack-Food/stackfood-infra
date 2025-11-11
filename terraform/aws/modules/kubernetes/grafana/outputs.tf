@@ -18,6 +18,11 @@ output "admin_user" {
   value       = "admin"
 }
 
+output "admin_password_secret" {
+  description = "Command to retrieve the auto-generated admin password"
+  value       = "kubectl get secret --namespace ${var.namespace} grafana -o jsonpath=\"{.data.admin-password}\" | base64 --decode"
+}
+
 output "helm_release_name" {
   description = "Helm release name for Grafana"
   value       = helm_release.grafana.name

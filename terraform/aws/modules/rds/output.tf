@@ -59,3 +59,18 @@ output "db_security_group_id" {
   description = "The security group ID of the RDS instance"
   value       = aws_security_group.this.id
 }
+
+output "db_engine_version_actual" {
+  description = "The actual running engine version of the database"
+  value       = aws_db_instance.this.engine_version_actual
+}
+
+output "db_engine_version_requested" {
+  description = "The engine version that was requested/used"
+  value       = var.engine_version != null ? var.engine_version : data.aws_rds_engine_version.this.version
+}
+
+output "db_parameter_group_family" {
+  description = "The parameter group family used"
+  value       = data.aws_rds_engine_version.family.parameter_group_family
+}
