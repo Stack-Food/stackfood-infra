@@ -19,6 +19,9 @@ resources:
     cpu: ${grafana_resources.limits.cpu}
     memory: ${grafana_resources.limits.memory}
 
+# Environment variables from secrets
+envFromSecret: grafana-oauth-secret
+
 # Persistence configuration
 persistence:
   type: pvc
@@ -78,7 +81,7 @@ grafana.ini:
     enabled: true
     name: StackFood SSO
     client_id: ${cognito_client_id}
-    client_secret: ${cognito_client_secret}
+    # client_secret moved to envFromSecret for security
     scopes: openid email profile
     auth_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/authorize
     token_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/token

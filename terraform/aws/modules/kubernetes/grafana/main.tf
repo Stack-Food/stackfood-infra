@@ -1,3 +1,24 @@
+# Create Kubernetes Secret for OAuth client secret
+resource "kubernetes_secret" "grafana_oauth" {
+  metadata {
+    name      = "grafana-oauth-secret"
+    namespace = var.namespace
+  }
+
+  data = {
+    "GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET" = var.cognito_client_secret
+  }
+
+  type = "Opaque"
+
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels,
+    ]
+  }
+}
+
 resource "helm_release" "grafana" {
   name             = "grafana"
   repository       = "https://grafana.github.io/helm-charts"
@@ -71,6 +92,10 @@ resource "helm_release" "grafana" {
         }
       }
     }) : ""
+  ]
+
+  depends_on = [
+    kubernetes_secret.grafana_oauth
   ]
 }
 
