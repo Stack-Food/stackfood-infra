@@ -1,23 +1,8 @@
-# Create Kubernetes Secret for OAuth client secret
-resource "kubernetes_secret" "grafana_oauth" {
-  metadata {
-    name      = "grafana-oauth-secret"
-    namespace = var.namespace
-  }
-
-  data = {
-    "GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET" = var.cognito_client_secret
-  }
-
-  type = "Opaque"
-
-  lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels,
-    ]
-  }
-}
+# IMPORTANTE: Ordem de criação dos recursos
+# 1. helm_release.grafana cria o namespace primeiro (create_namespace = true)
+# 2. data.kubernetes_namespace.grafana aguarda o Helm criar o namespace
+# 3. kubernetes_secret.grafana_oauth é criado APÓS o namespace existir
+# 4. Na próxima execução do Helm (upgrade), o Secret já existirá e será usado
 
 resource "helm_release" "grafana" {
   name             = "grafana"
@@ -93,10 +78,6 @@ resource "helm_release" "grafana" {
       }
     }) : ""
   ]
-
-  depends_on = [
-    kubernetes_secret.grafana_oauth
-  ]
 }
 
 # Data source para o namespace (criado pelo Helm)
@@ -107,6 +88,31 @@ data "kubernetes_namespace" "grafana" {
 
   depends_on = [
     helm_release.grafana
+  ]
+}
+
+# Create Kubernetes Secret for OAuth client secret (after namespace exists)
+resource "kubernetes_secret" "grafana_oauth" {
+  metadata {
+    name      = "grafana-oauth-secret"
+    namespace = var.namespace
+  }
+
+  data = {
+    "GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET" = var.cognito_client_secret
+  }
+
+  type = "Opaque"
+
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels,
+    ]
+  }
+
+  depends_on = [
+    data.kubernetes_namespace.grafana
   ]
 }
 
