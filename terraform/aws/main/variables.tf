@@ -406,3 +406,67 @@ variable "argocd_team_password" {
   sensitive   = true
   default     = "StackFood@2025"
 }
+
+######################
+# Grafana Configuration #
+######################
+
+variable "grafana_subdomain" {
+  description = "Subdomain for Grafana"
+  type        = string
+  default     = "grafana"
+}
+
+variable "grafana_storage_size" {
+  description = "Size of the persistent volume for Grafana"
+  type        = string
+  default     = "10Gi"
+}
+
+variable "grafana_storage_class" {
+  description = "Storage class for Grafana persistent volume"
+  type        = string
+  default     = "gp2"
+}
+
+variable "grafana_resources" {
+  description = "Resource requests and limits for Grafana"
+  type = object({
+    requests = object({
+      cpu    = string
+      memory = string
+    })
+    limits = object({
+      cpu    = string
+      memory = string
+    })
+  })
+  default = {
+    requests = {
+      cpu    = "100m"
+      memory = "128Mi"
+    }
+    limits = {
+      cpu    = "500m"
+      memory = "512Mi"
+    }
+  }
+}
+
+variable "prometheus_url" {
+  description = "URL of Prometheus server for Grafana datasource"
+  type        = string
+  default     = "http://prometheus-server.monitoring.svc.cluster.local"
+}
+
+variable "enable_prometheus_datasource" {
+  description = "Enable automatic Prometheus datasource configuration in Grafana"
+  type        = bool
+  default     = true
+}
+
+variable "monitoring_namespace" {
+  description = "Kubernetes namespace for monitoring tools (Grafana, Prometheus, etc.)"
+  type        = string
+  default     = "monitoring"
+}

@@ -2,8 +2,8 @@ resource "helm_release" "grafana" {
   name             = "grafana"
   repository       = "https://grafana.github.io/helm-charts"
   chart            = "grafana"
-  namespace        = kubernetes_namespace.grafana.metadata[0].name
-  create_namespace = false
+  namespace        = var.namespace
+  create_namespace = true
   version          = var.chart_version
 
   # Adicionar timeouts para ações de CI/CD
@@ -72,24 +72,17 @@ resource "helm_release" "grafana" {
       }
     }) : ""
   ]
-
-  # Ensure namespace exists before installing
-  depends_on = [
-    kubernetes_namespace.grafana
-  ]
 }
 
-# Create namespace explicitly for better control
-resource "kubernetes_namespace" "grafana" {
+# Data source para o namespace (criado pelo Helm)
+data "kubernetes_namespace" "grafana" {
   metadata {
     name = var.namespace
-    labels = {
-      name                         = var.namespace
-      "app.kubernetes.io/name"     = "grafana"
-      "app.kubernetes.io/instance" = "grafana"
-      "app.kubernetes.io/part-of"  = "monitoring"
-    }
   }
+
+  depends_on = [
+    helm_release.grafana
+  ]
 }
 
 # Create ServiceMonitor for Prometheus to scrape Grafana metrics
@@ -149,6 +142,6 @@ resource "kubernetes_config_map" "grafana_dashboards" {
   }
 
   depends_on = [
-    kubernetes_namespace.grafana
+    helm_release.grafana
   ]
 }
