@@ -80,7 +80,6 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   )
 
   depends_on = [
-    aws_eks_node_group.main,
     aws_eks_cluster.main
   ]
 }
