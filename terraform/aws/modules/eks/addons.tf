@@ -63,6 +63,7 @@ resource "aws_eks_addon" "vpc_cni" {
 }
 
 # EBS CSI Driver - Required for PersistentVolumes
+# Note: For AWS Academy, the LabRole on nodes provides necessary EBS permissions
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "aws-ebs-csi-driver"
@@ -80,7 +81,8 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   )
 
   depends_on = [
-    aws_eks_cluster.main
+    aws_eks_cluster.main,
+    aws_eks_node_group.main
   ]
 }
 
