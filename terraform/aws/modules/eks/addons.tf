@@ -64,27 +64,27 @@ resource "aws_eks_addon" "vpc_cni" {
 
 # EBS CSI Driver - Required for PersistentVolumes
 # Note: For AWS Academy, the LabRole on nodes provides necessary EBS permissions
-resource "aws_eks_addon" "ebs_csi_driver" {
-  cluster_name                = aws_eks_cluster.main.name
-  addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = data.aws_eks_addon_version.ebs_csi_driver.version
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-  preserve                    = true
+# resource "aws_eks_addon" "ebs_csi_driver" {
+#   cluster_name                = aws_eks_cluster.main.name
+#   addon_name                  = "aws-ebs-csi-driver"
+#   addon_version               = data.aws_eks_addon_version.ebs_csi_driver.version
+#   resolve_conflicts_on_create = "OVERWRITE"
+#   resolve_conflicts_on_update = "OVERWRITE"
+#   preserve                    = true
 
-  tags = merge(
-    {
-      Name        = "${var.cluster_name}-ebs-csi-driver"
-      Environment = var.environment
-    },
-    var.tags
-  )
+#   tags = merge(
+#     {
+#       Name        = "${var.cluster_name}-ebs-csi-driver"
+#       Environment = var.environment
+#     },
+#     var.tags
+#   )
 
-  depends_on = [
-    aws_eks_cluster.main,
-    aws_eks_node_group.main
-  ]
-}
+#   depends_on = [
+#     aws_eks_cluster.main,
+#     aws_eks_node_group.main
+#   ]
+# }
 
 resource "aws_eks_addon" "metrics_server" {
   cluster_name                = aws_eks_cluster.main.name
