@@ -23,13 +23,10 @@ resources:
 envFromSecret: grafana-oauth-secret
 
 # Persistence configuration
+# Using emptyDir instead of PVC to avoid EBS dependency
 persistence:
-  type: pvc
+  type: emptyDir
   enabled: true
-  size: ${storage_size}
-  storageClassName: ${storage_class}
-  accessModes:
-    - ReadWriteOnce
 
 # Service configuration
 service:
