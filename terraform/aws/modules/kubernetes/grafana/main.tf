@@ -148,6 +148,12 @@ resource "kubernetes_config_map" "grafana_dashboards" {
     "node-exporter-full.json"            = file("${path.module}/dashboards/node-exporter.json")
   }
 
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations,
+    ]
+  }
+
   depends_on = [
     helm_release.grafana
   ]
