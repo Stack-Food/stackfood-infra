@@ -1,5 +1,24 @@
 # Grafana Helm Chart Values
 # Official Grafana Helm Chart: https://grafana.github.io/helm-charts
+# Official Documentation: https://grafana.com/docs/grafana/latest/setup-grafana/installation/helm/
+
+# ⚠️ IMPORTANTE - CONFIGURAÇÃO SEM STORAGE PERSISTENTE
+# Esta configuração foi ajustada para funcionar SEM Persistent Volumes devido à
+# ausência do EBS CSI Driver addon no cluster EKS.
+# 
+# IMPLICAÇÕES:
+# - Os dados do Grafana (dashboards customizados, configurações de usuário) serão
+#   PERDIDOS quando o pod for reiniciado ou recriado
+# - Dashboards provisionados via ConfigMaps e sidecar serão mantidos
+# - Datasources configurados via Helm values serão mantidos
+# - Configurações de autenticação OAuth permanecerão ativas
+# - Usuários e suas permissões gerenciadas pelo Cognito não serão afetados
+#
+# SOLUÇÃO PERMANENTE:
+# Quando o EBS CSI Driver for habilitado, altere:
+#   persistence.enabled: true
+#   persistence.storageClassName: gp2 (ou gp3)
+#   persistence.size: 10Gi
 
 # Global settings
 global:
@@ -26,10 +45,13 @@ resources:
 envFromSecret: grafana-oauth-secret
 
 # Persistence configuration
-# Using emptyDir instead of PVC to avoid EBS dependency
+# IMPORTANTE: Desabilitado para evitar dependência do EBS CSI Driver
+# Os dados do Grafana serão perdidos ao reiniciar o pod, mas as configurações
+# via Kubernetes (ConfigMaps, Secrets) serão mantidas
 persistence:
-  type: emptyDir
-  enabled: true
+  enabled: false
+  # type: emptyDir não é suportado diretamente pelo chart
+  # Para usar storage temporário, desabilite persistence completamente
 
 # Service configuration
 service:
@@ -212,6 +234,7 @@ securityContext:
   fsGroup: 472
 
 # Container Security Context
+# Ajustado para funcionar sem volume persistente
 containerSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:
@@ -220,6 +243,7 @@ containerSecurityContext:
   readOnlyRootFilesystem: false
   runAsNonRoot: true
   runAsUser: 472
+  runAsGroup: 472
 
 # Environment variables
 env:
@@ -232,21 +256,23 @@ env:
   GF_DATE_FORMATS_INTERVAL_DAY: MM/DD
   GF_DATE_FORMATS_INTERVAL_MONTH: YYYY-MM
   GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
+  # Configurações para funcionar sem storage persistente
+  GF_PATHS_DATA: /var/lib/grafana
+  GF_PATHS_LOGS: /var/log/grafana
+  GF_PATHS_PLUGINS: /var/lib/grafana/plugins
+  GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+
+# Volumes adicionais usando emptyDir para storage temporário
+# Estes volumes são recriados quando o pod reinicia
+extraEmptyDirMounts:
+  - name: grafana-storage
+    mountPath: /var/lib/grafana
 
 # Init containers
+# IMPORTANTE: Desabilitado quando persistence está desabilitada
+# initChownData serve para ajustar permissões de volumes persistentes
 initChownData:
-  enabled: true
-  image:
-    repository: busybox
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      cpu: 10m
-      memory: 16Mi
-    limits:
-      cpu: 100m
-      memory: 64Mi
+  enabled: false
 
 # Sidecar for dynamic dashboard loading
 sidecar:

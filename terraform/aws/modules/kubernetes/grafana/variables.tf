@@ -90,14 +90,17 @@ variable "user_pool_name" {
 }
 
 # Storage Configuration
+# ⚠️ NOTA: Estas variáveis são mantidas para compatibilidade com prod.tfvars
+# mas NÃO são usadas porque persistence está desabilitada no grafana.yaml
+# Quando o EBS CSI Driver for habilitado, essas variáveis voltarão a ser usadas
 variable "storage_size" {
-  description = "Size of the persistent volume for Grafana"
+  description = "Size of the persistent volume for Grafana (OBSOLETO - persistence desabilitada)"
   type        = string
   default     = "10Gi"
 }
 
 variable "storage_class" {
-  description = "Storage class for Grafana persistent volume"
+  description = "Storage class for Grafana persistent volume (OBSOLETO - persistence desabilitada)"
   type        = string
   default     = "gp2"
 }

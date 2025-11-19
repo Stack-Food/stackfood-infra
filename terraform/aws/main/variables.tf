@@ -417,14 +417,17 @@ variable "grafana_subdomain" {
   default     = "grafana"
 }
 
+# ⚠️ NOTA: Variáveis de storage obsoletas (persistence desabilitada no módulo Grafana)
+# Mantidas apenas para compatibilidade com prod.tfvars
+# Quando o EBS CSI Driver for habilitado, essas variáveis voltarão a ser usadas
 variable "grafana_storage_size" {
-  description = "Size of the persistent volume for Grafana"
+  description = "Size of the persistent volume for Grafana (OBSOLETO - persistence desabilitada)"
   type        = string
   default     = "10Gi"
 }
 
 variable "grafana_storage_class" {
-  description = "Storage class for Grafana persistent volume"
+  description = "Storage class for Grafana persistent volume (OBSOLETO - persistence desabilitada)"
   type        = string
   default     = "gp2"
 }

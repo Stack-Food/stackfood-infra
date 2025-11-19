@@ -372,7 +372,9 @@ module "grafana" {
   prometheus_url               = "http://prometheus-server.monitoring.svc.cluster.local"
   enable_prometheus_datasource = true
 
-  # Configurações de armazenamento
+  # ⚠️ Configurações de armazenamento (NÃO USADAS - persistence desabilitada)
+  # Mantidas para compatibilidade, mas não têm efeito enquanto persistence: false
+  # Quando EBS CSI Driver for habilitado, essas configurações voltarão a ser usadas
   storage_size  = "10Gi"
   storage_class = "gp2"
 

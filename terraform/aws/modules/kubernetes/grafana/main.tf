@@ -72,10 +72,9 @@ resource "helm_release" "grafana" {
       readonly_group_name       = var.readonly_group_name
       system_admin_group_name   = var.system_admin_group_name
       user_pool_name            = var.user_pool_name
-      storage_size              = var.storage_size
-      storage_class             = var.storage_class
-      prometheus_url            = var.prometheus_url
-      grafana_resources         = var.grafana_resources
+      # storage_size e storage_class REMOVIDOS - não usados (persistence desabilitada)
+      prometheus_url    = var.prometheus_url
+      grafana_resources = var.grafana_resources
     }),
     var.enable_prometheus_datasource ? yamlencode({
       datasources = {
