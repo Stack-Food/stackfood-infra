@@ -159,31 +159,25 @@ serviceMonitor:
   interval: 30s
   path: /metrics
 
-# Default dashboards for Kubernetes monitoring
+# Dashboard provisioning via sidecar (ConfigMaps)
+# Os dashboards serão carregados dinamicamente via ConfigMaps com label grafana_dashboard=1
 dashboardProviders:
   dashboardproviders.yaml:
     apiVersion: 1
     providers:
-      - name: "kubernetes"
+      - name: "default"
         orgId: 1
-        folder: "Kubernetes"
+        folder: ""
         type: file
         disableDeletion: false
         editable: true
         options:
-          path: /var/lib/grafana/dashboards/kubernetes
-      - name: "node-exporter"
-        orgId: 1
-        folder: "Node Exporter"
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/node-exporter
+          path: /tmp/dashboards
 
-# Pre-configured dashboards
+# Dashboards embutidos no Helm chart
+# Estes serão baixados do Grafana.com durante a instalação do chart
 dashboards:
-  kubernetes:
+  default:
     # Kubernetes cluster monitoring dashboard
     k8s-cluster-overview:
       gnetId: 7249
@@ -199,21 +193,10 @@ dashboards:
       gnetId: 8588
       revision: 1
       datasource: Prometheus
-    # Kubernetes deployments
-    k8s-deployments:
-      gnetId: 8588
-      revision: 1
-      datasource: Prometheus
-  node-exporter:
     # Node Exporter Full dashboard
     node-exporter-full:
       gnetId: 1860
       revision: 37
-      datasource: Prometheus
-    # Node Exporter for Prometheus
-    node-exporter-server-metrics:
-      gnetId: 405
-      revision: 8
       datasource: Prometheus
 
 # RBAC configuration
