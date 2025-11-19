@@ -5,7 +5,7 @@
 # ⚠️ IMPORTANTE - CONFIGURAÇÃO SEM STORAGE PERSISTENTE
 # Esta configuração foi ajustada para funcionar SEM Persistent Volumes devido à
 # ausência do EBS CSI Driver addon no cluster EKS.
-# 
+#
 # IMPLICAÇÕES:
 # - Os dados do Grafana (dashboards customizados, configurações de usuário) serão
 #   PERDIDOS quando o pod for reiniciado ou recriado
