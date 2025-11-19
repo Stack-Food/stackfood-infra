@@ -256,17 +256,10 @@ env:
   GF_DATE_FORMATS_INTERVAL_DAY: MM/DD
   GF_DATE_FORMATS_INTERVAL_MONTH: YYYY-MM
   GF_DATE_FORMATS_INTERVAL_YEAR: YYYY
-  # Configurações para funcionar sem storage persistente
-  GF_PATHS_DATA: /var/lib/grafana
-  GF_PATHS_LOGS: /var/log/grafana
-  GF_PATHS_PLUGINS: /var/lib/grafana/plugins
-  GF_PATHS_PROVISIONING: /etc/grafana/provisioning
 
-# Volumes adicionais usando emptyDir para storage temporário
-# Estes volumes são recriados quando o pod reinicia
-extraEmptyDirMounts:
-  - name: grafana-storage
-    mountPath: /var/lib/grafana
+# NOTA: Não é necessário adicionar extraEmptyDirMounts para /var/lib/grafana
+# Quando persistence: false, o chart automaticamente cria um volume emptyDir
+# para os diretórios necessários do Grafana
 
 # Init containers
 # IMPORTANTE: Desabilitado quando persistence está desabilitada
