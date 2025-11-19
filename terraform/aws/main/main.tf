@@ -270,12 +270,20 @@ module "cognito" {
     "https://argo.${var.domain_name}"
   ]
 
-  # Configurações Grafana OIDC (futuro)
+  # Configurações Grafana OIDC
   grafana_callback_urls = [
     "https://grafana.${var.domain_name}/login/generic_oauth"
   ]
   grafana_logout_urls = [
     "https://grafana.${var.domain_name}"
+  ]
+
+  # Configurações SonarQube OIDC
+  sonarqube_callback_urls = [
+    "https://sonar.${var.domain_name}/oauth2/callback/oidc"
+  ]
+  sonarqube_logout_urls = [
+    "https://sonar.${var.domain_name}"
   ]
 }
 
@@ -330,6 +338,10 @@ module "dns" {
   # Configurações Grafana
   create_grafana_record = true
   grafana_subdomain     = "grafana"
+
+  # Configurações SonarQube
+  create_sonarqube_record = true
+  sonarqube_subdomain     = "sonar"
 
   # DNS Settings
   proxied = true
@@ -392,6 +404,73 @@ module "grafana" {
 
   # Tags
   tags = var.tags
+
+  depends_on = [
+    module.cognito,
+    module.dns,
+    module.eks,
+    module.nginx-ingress
+  ]
+}
+
+# Módulo SonarQube com autenticação Cognito
+module "sonarqube" {
+  source = "../modules/kubernetes/sonarqube/"
+
+  # Configurações básicas
+  namespace           = "sonarqube"
+  domain_name         = var.domain_name
+  sonarqube_subdomain = "sonar"
+  environment         = var.environment
+  chart_version       = "10.7.0+3598"
+
+  # Configurações Cognito - USANDO O MESMO USER POOL
+  cognito_user_pool_id      = module.cognito.user_pool_id
+  cognito_client_id         = module.cognito.sonarqube_client_id
+  cognito_client_secret     = module.cognito.sonarqube_client_secret
+  cognito_region            = data.aws_region.current.region
+  cognito_client_issuer_url = module.cognito.sonarqube_issuer_url
+  user_pool_name            = module.cognito.user_pool_name
+
+  # Configurações de grupos do Cognito
+  admin_group_name = "sonarqube"
+  user_group_name  = "sonarqube"
+
+  # Certificado SSL
+  certificate_arn = module.acm.certificate_arn
+
+  # Configurações de armazenamento
+  storage_size  = "20Gi"
+  storage_class = "gp2"
+
+  # Configurações de recursos
+  sonarqube_resources = {
+    requests = {
+      cpu    = "500m"
+      memory = "2Gi"
+    }
+    limits = {
+      cpu    = "2"
+      memory = "8Gi"
+    }
+  }
+
+  # PostgreSQL configurações
+  postgresql_enabled      = true
+  postgresql_storage_size = "30Gi"
+  postgresql_resources = {
+    requests = {
+      cpu    = "200m"
+      memory = "512Mi"
+    }
+    limits = {
+      cpu    = "1"
+      memory = "2Gi"
+    }
+  }
+
+  # Monitoring
+  monitoring_passcode = "stackfood-sonar-monitoring"
 
   depends_on = [
     module.cognito,

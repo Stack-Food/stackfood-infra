@@ -35,3 +35,20 @@ resource "cloudflare_record" "grafana" {
     create_before_destroy = true
   }
 }
+
+# DNS Record para SonarQube
+resource "cloudflare_record" "sonarqube" {
+  count = var.create_sonarqube_record ? 1 : 0
+
+  zone_id         = var.cloudflare_zone_id
+  name            = var.sonarqube_subdomain
+  type            = "CNAME"
+  content         = data.aws_lb.eks_nlb[0].dns_name
+  proxied         = var.proxied
+  ttl             = var.proxied ? 1 : var.ttl
+  allow_overwrite = true
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
