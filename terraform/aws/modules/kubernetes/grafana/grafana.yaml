@@ -72,10 +72,6 @@ ingress:
     nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
   hosts:
     - ${grafana_subdomain}.${domain_name}
-  tls:
-    - secretName: grafana-tls
-      hosts:
-        - ${grafana_subdomain}.${domain_name}
 
 # Grafana configuration
 grafana.ini:
