@@ -92,39 +92,39 @@ resource "kubernetes_config_map" "sonarqube_config" {
 
 # Create ServiceMonitor for Prometheus scraping (if monitoring is available)
 # Note: This requires the Prometheus Operator to be installed
-resource "kubernetes_manifest" "sonarqube_service_monitor" {
-  manifest = {
-    apiVersion = "monitoring.coreos.com/v1"
-    kind       = "ServiceMonitor"
-    metadata = {
-      name      = "sonarqube"
-      namespace = var.namespace
-      labels = {
-        app                            = "sonarqube"
-        "app.kubernetes.io/name"       = "sonarqube"
-        "app.kubernetes.io/instance"   = "sonarqube"
-        "app.kubernetes.io/part-of"    = "ci-cd"
-        "app.kubernetes.io/managed-by" = "terraform"
-      }
-    }
-    spec = {
-      selector = {
-        matchLabels = {
-          app = "sonarqube"
-        }
-      }
-      endpoints = [
-        {
-          port     = "http"
-          path     = "/api/monitoring/metrics"
-          interval = "30s"
-          params = {
-            format = ["prometheus"]
-          }
-        }
-      ]
-    }
-  }
+# resource "kubernetes_manifest" "sonarqube_service_monitor" {
+#   manifest = {
+#     apiVersion = "monitoring.coreos.com/v1"
+#     kind       = "ServiceMonitor"
+#     metadata = {
+#       name      = "sonarqube"
+#       namespace = var.namespace
+#       labels = {
+#         app                            = "sonarqube"
+#         "app.kubernetes.io/name"       = "sonarqube"
+#         "app.kubernetes.io/instance"   = "sonarqube"
+#         "app.kubernetes.io/part-of"    = "ci-cd"
+#         "app.kubernetes.io/managed-by" = "terraform"
+#       }
+#     }
+#     spec = {
+#       selector = {
+#         matchLabels = {
+#           app = "sonarqube"
+#         }
+#       }
+#       endpoints = [
+#         {
+#           port     = "http"
+#           path     = "/api/monitoring/metrics"
+#           interval = "30s"
+#           params = {
+#             format = ["prometheus"]
+#           }
+#         }
+#       ]
+#     }
+#   }
 
-  depends_on = [helm_release.sonarqube]
-}
+#   depends_on = [helm_release.sonarqube]
+# }
