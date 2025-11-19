@@ -101,9 +101,9 @@ grafana.ini:
     client_id: ${cognito_client_id}
     # client_secret moved to envFromSecret for security
     scopes: openid email profile
-    auth_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/authorize
-    token_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/token
-    api_url: https://stackfood-${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/userInfo
+    auth_url: https://${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/authorize
+    token_url: https://${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/token
+    api_url: https://${user_pool_name}.auth.${cognito_region}.amazoncognito.com/oauth2/userInfo
     team_ids:
     allowed_organizations:
     allow_sign_up: true
