@@ -130,30 +130,3 @@ data "kubernetes_namespace" "grafana" {
     kubernetes_namespace.grafana
   ]
 }
-
-# Create additional ConfigMap with Kubernetes dashboards
-resource "kubernetes_config_map" "grafana_dashboards" {
-  metadata {
-    name      = "grafana-dashboards-kubernetes"
-    namespace = var.namespace
-    labels = {
-      grafana_dashboard = "1"
-      app               = "grafana"
-    }
-  }
-
-  data = {
-    "kubernetes-cluster-monitoring.json" = file("${path.module}/dashboards/kubernetes-cluster.json")
-    "node-exporter-full.json"            = file("${path.module}/dashboards/node-exporter.json")
-  }
-
-  lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-    ]
-  }
-
-  depends_on = [
-    helm_release.grafana
-  ]
-}
