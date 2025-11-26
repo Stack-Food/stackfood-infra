@@ -61,7 +61,7 @@ public_subnets = {
 # EKS Configuration #
 ######################
 eks_cluster_name           = "stackfood-eks"
-kubernetes_version         = "1.33"
+kubernetes_version         = "1.34"
 eks_endpoint_public_access = true
 eks_authentication_mode    = "API_AND_CONFIG_MAP"
 
