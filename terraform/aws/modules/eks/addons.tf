@@ -62,8 +62,10 @@ resource "aws_eks_addon" "vpc_cni" {
   ]
 }
 
-# EBS CSI Driver - Required for PersistentVolumes
-# Note: For AWS Academy, we need to configure the service account to use LabRole
+# EBS CSI Driver - DISABLED for AWS Academy
+# AWS Academy does not support OIDC Identity Providers required for IRSA
+# Error: No OpenIDConnect provider found in your account
+# Workaround: Using emptyDir volumes instead of persistent EBS volumes
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "aws-ebs-csi-driver"
@@ -71,9 +73,7 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
   preserve                    = true
-
-  # Configure service account to use LabRole
-  service_account_role_arn = data.aws_iam_role.eks_node_role.arn
+  service_account_role_arn    = data.aws_iam_role.eks_node_role.arn
 
   tags = merge(
     {

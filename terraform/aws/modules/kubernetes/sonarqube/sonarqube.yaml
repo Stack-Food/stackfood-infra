@@ -72,8 +72,9 @@ resources:
     ephemeral-storage: 1536M
 
 # Persistence configuration
+# DISABLED: Using emptyDir due to EBS CSI Driver unavailability in AWS Academy
 persistence:
-  enabled: true
+  enabled: false
   annotations: {}
   storageClass: ${storage_class}
   accessMode: ReadWriteOnce
@@ -209,8 +210,9 @@ postgresql:
     requests:
       cpu: ${postgresql_resources.requests.cpu}
       memory: ${postgresql_resources.requests.memory}
+  # DISABLED: Using emptyDir due to EBS CSI Driver unavailability in AWS Academy
   persistence:
-    enabled: true
+    enabled: false
     accessMode: ReadWriteOnce
     size: ${postgresql_storage_size}
     storageClass: ${storage_class}
