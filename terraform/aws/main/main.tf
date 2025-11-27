@@ -470,7 +470,7 @@ module "sonarqube" {
   }
 
   # RDS PostgreSQL Configuration
-  rds_endpoint = module.rds["sonarqube-db"].db_instance_endpoint
+  rds_endpoint = module.rds["sonarqube-db"].db_instance_address
   rds_database = "sonarqube"
   rds_username = "sonarqube"
   rds_password = "SonarQube2024!"
