@@ -110,12 +110,6 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   ]
 }
 
-data "aws_eks_addon_version" "ebs_csi_driver" {
-  addon_name         = "aws-ebs-csi-driver"
-  kubernetes_version = aws_eks_cluster.main.version
-  most_recent        = true
-}
-
 resource "aws_eks_addon" "metrics_server" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "metrics-server"
