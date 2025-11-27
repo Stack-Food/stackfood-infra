@@ -103,6 +103,30 @@ rds_instances = {
     deletion_protection          = false
     backup_retention_period      = 7
   }
+  "sonarqube-db" = {
+    # SonarQube Database - PostgreSQL with UTF-8
+    # Ref: https://docs.sonarsource.com/sonarqube-server/server-installation/installing-the-database
+    # Note: SonarQube will automatically create tables and schema on first connection
+    allocated_storage            = 20               # 20GB sufficient for SonarQube
+    storage_encrypted            = false            # Simplified for AWS Academy
+    db_instance_class            = "db.t3.micro"    # Minimum for SonarQube
+    db_username                  = "sonarqube"      # Database master username
+    db_password                  = "SonarQube2024!" # Strong password
+    db_name                      = "sonarqube"      # Initial database name (created by RDS)
+    manage_master_user_password  = false
+    engine                       = "postgres" # SonarQube supports PostgreSQL 12+
+    engine_version               = "16.10"    # PostgreSQL 16 LTS
+    major_engine_version         = "16"
+    identifier                   = "sonarqube-postgres"
+    publicly_accessible          = false # Internal access only (from EKS)
+    multi_az                     = false
+    performance_insights_enabled = false
+    port                         = 5432
+    backup_window                = "02:00-03:00"
+    maintenance_window           = "Sun:03:00-Sun:04:00"
+    deletion_protection          = false
+    backup_retention_period      = 7
+  }
 }
 ######################
 # IAM Configuration #

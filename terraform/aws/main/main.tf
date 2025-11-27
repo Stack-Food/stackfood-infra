@@ -148,7 +148,7 @@ module "rds" {
   db_username                 = each.value.db_username
   db_password                 = lookup(each.value, "db_password", null) # Optional password
   manage_master_user_password = false                                   # Secure password management
-  db_name                     = "stackfood"
+  db_name                     = lookup(each.value, "db_name", "stackfood")
   # IAM Role Settings
   rds_role_name = var.rds_role_name
 
@@ -455,8 +455,8 @@ module "sonarqube" {
     }
   }
 
-  # PostgreSQL configurações
-  postgresql_enabled      = true
+  # PostgreSQL configurações - DISABLED (usando RDS externo)
+  postgresql_enabled      = false
   postgresql_storage_size = "30Gi"
   postgresql_resources = {
     requests = {
@@ -469,6 +469,12 @@ module "sonarqube" {
     }
   }
 
+  # RDS PostgreSQL Configuration
+  rds_endpoint = module.rds["sonarqube-db"].db_instance_endpoint
+  rds_database = "sonarqube"
+  rds_username = "sonarqube"
+  rds_password = "SonarQube2024!"
+
   # Monitoring
   monitoring_passcode = "stackfood-sonar-monitoring"
 
@@ -476,6 +482,7 @@ module "sonarqube" {
     module.cognito,
     module.dns,
     module.eks,
-    module.nginx-ingress
+    module.nginx-ingress,
+    module.rds
   ]
 }

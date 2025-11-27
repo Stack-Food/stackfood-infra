@@ -172,6 +172,32 @@ variable "external_database" {
   }
 }
 
+# RDS Configuration for external PostgreSQL
+variable "rds_endpoint" {
+  description = "RDS PostgreSQL endpoint"
+  type        = string
+  default     = ""
+}
+
+variable "rds_database" {
+  description = "RDS database name for SonarQube"
+  type        = string
+  default     = "sonarqube"
+}
+
+variable "rds_username" {
+  description = "RDS database username"
+  type        = string
+  default     = "sonarqube"
+}
+
+variable "rds_password" {
+  description = "RDS database password"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # Monitoring Configuration
 variable "monitoring_passcode" {
   description = "Monitoring passcode for SonarQube health checks"

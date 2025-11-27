@@ -72,7 +72,7 @@ resources:
     ephemeral-storage: 1536M
 
 # Persistence configuration
-# DISABLED: Using emptyDir due to EBS CSI Driver unavailability in AWS Academy
+# Using AWS RDS PostgreSQL - no local persistence needed
 persistence:
   enabled: false
   annotations: {}
@@ -81,6 +81,15 @@ persistence:
   size: ${storage_size}
   uid: 1000
   guid: 0
+
+# External PostgreSQL Database Configuration (AWS RDS)
+# Ref: https://docs.sonarsource.com/sonarqube-server/server-installation/installing-the-database
+jdbcOverwrite:
+  enable: true
+  jdbcUrl: "jdbc:postgresql://${rds_endpoint}:5432/${rds_database}?useUnicode=yes&characterEncoding=utf8"
+  jdbcUsername: "${rds_username}"
+  jdbcSecretName: "sonarqube-postgres-secret"
+  jdbcSecretPasswordKey: "password"
 
 # Monitoring passcode for health checks
 monitoringPasscode: ${monitoring_passcode}
@@ -177,8 +186,9 @@ startupProbe:
   timeoutSeconds: 1
 
 # PostgreSQL dependency configuration
+# DISABLED: Using external AWS RDS PostgreSQL instead of embedded database
 postgresql:
-  enabled: ${postgresql_enabled}
+  enabled: false
   image:
     repository: "bitnamilegacy/postgresql"
     tag: 11.14.0

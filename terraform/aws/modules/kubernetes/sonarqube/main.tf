@@ -27,12 +27,16 @@ resource "helm_release" "sonarqube" {
       postgresql_resources      = var.postgresql_resources
       external_database         = var.external_database
       monitoring_passcode       = var.monitoring_passcode
+      rds_endpoint              = var.rds_endpoint
+      rds_database              = var.rds_database
+      rds_username              = var.rds_username
     })
   ]
 
-  # Ensure namespace exists before installing
+  # Ensure namespace and secrets exist before installing
   depends_on = [
-    kubernetes_namespace.sonarqube
+    kubernetes_namespace.sonarqube,
+    kubernetes_secret.sonarqube_postgres
   ]
 }
 
@@ -60,6 +64,22 @@ resource "kubernetes_secret" "sonarqube_oidc" {
   data = {
     client-id     = var.cognito_client_id
     client-secret = var.cognito_client_secret
+  }
+
+  type = "Opaque"
+
+  depends_on = [kubernetes_namespace.sonarqube]
+}
+
+# Create secret for PostgreSQL RDS credentials
+resource "kubernetes_secret" "sonarqube_postgres" {
+  metadata {
+    name      = "sonarqube-postgres-secret"
+    namespace = var.namespace
+  }
+
+  data = {
+    password = var.rds_password
   }
 
   type = "Opaque"
