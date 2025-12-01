@@ -92,7 +92,7 @@ jdbcOverwrite:
 # Monitoring passcode for health checks
 monitoringPasscode: ${monitoring_passcode}
 
-# Environment variables for OIDC configuration
+# Environment variables
 env:
   - name: SONAR_WEB_CONTEXT
     value: "/"
@@ -100,29 +100,8 @@ env:
     value: "-Xmx4G -XX:MaxDirectMemorySize=2G -XX:+HeapDumpOnOutOfMemoryError"
   - name: SONAR_CE_JAVAOPTS
     value: "-Xmx4G -XX:MaxDirectMemorySize=512M -XX:+HeapDumpOnOutOfMemoryError"
-  # OIDC Configuration
-  - name: SONAR_AUTH_OIDC_ENABLED
-    value: "true"
-  - name: SONAR_AUTH_OIDC_PROVIDERURL
-    value: "${cognito_client_issuer_url}"
-  - name: SONAR_AUTH_OIDC_CLIENTID_SECURED
-    valueFrom:
-      secretKeyRef:
-        name: sonarqube-oidc-config
-        key: client-id
-  - name: SONAR_AUTH_OIDC_CLIENTSECRET_SECURED
-    valueFrom:
-      secretKeyRef:
-        name: sonarqube-oidc-config
-        key: client-secret
-  - name: SONAR_AUTH_OIDC_ISSUERURI
-    value: "${cognito_client_issuer_url}"
-  - name: SONAR_AUTH_OIDC_BUTTONTEXT
-    value: "Login with StackFood SSO"
-  - name: SONAR_AUTH_OIDC_GROUPSSYNC
-    value: "true"
-  - name: SONAR_AUTH_OIDC_GROUPSSYNC_CLAIMNAME
-    value: "cognito:groups"
+  # NOTA: Autenticação SAML deve ser configurada via UI do SonarQube
+  # Consulte README-SAML.md para instruções de configuração
 
 # Pod annotations
 annotations:
