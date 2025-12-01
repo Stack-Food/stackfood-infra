@@ -31,3 +31,24 @@ resource "helm_release" "ingress-nginx" {
     }
   ]
 }
+
+# Wait for NGINX Ingress admission webhook to be ready
+resource "null_resource" "wait_for_ingress_webhook" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Waiting for NGINX Ingress admission webhook to be ready..."
+      for i in {1..60}; do
+        if kubectl get endpoints ingress-nginx-controller-admission -n ${var.ingress_namespace} 2>/dev/null | grep -q ingress-nginx-controller-admission; then
+          echo "NGINX Ingress admission webhook is ready!"
+          exit 0
+        fi
+        echo "Attempt $i/60: Webhook not ready yet, waiting 5 seconds..."
+        sleep 5
+      done
+      echo "WARNING: Webhook may not be ready after 5 minutes, but continuing anyway..."
+      exit 0
+    EOT
+  }
+
+  depends_on = [helm_release.ingress-nginx]
+}

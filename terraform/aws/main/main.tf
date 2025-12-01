@@ -318,7 +318,8 @@ module "argocd" {
   depends_on = [
     module.cognito,
     module.dns,
-    module.eks
+    module.eks,
+    module.nginx-ingress,
   ]
 }
 
@@ -409,7 +410,8 @@ module "grafana" {
     module.cognito,
     module.dns,
     module.eks,
-    module.nginx-ingress
+    module.nginx-ingress,
+    module.nginx-ingress.ingress_ready
   ]
 }
 
@@ -470,6 +472,7 @@ module "sonarqube" {
     module.dns,
     module.eks,
     module.nginx-ingress,
+    module.nginx-ingress.ingress_ready,
     module.rds
   ]
 }
