@@ -9,6 +9,7 @@ revisionHistoryLimit: 10
 # Image configuration
 image:
   repository: sonarqube
+  tag: 25.11.0.114957-community
   pullPolicy: IfNotPresent
 
 # Security Context
@@ -47,10 +48,7 @@ ingress:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/cors-expose-headers: "*, X-CustomResponseHeader"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nlb.ingress.kubernetes.io/scheme: internet-facing
-    nlb.ingress.kubernetes.io/target-type: instance
-    nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
   hosts:
     - name: ${sonarqube_subdomain}.${domain_name}
       path: /
@@ -125,8 +123,6 @@ env:
     value: "true"
   - name: SONAR_AUTH_OIDC_GROUPSSYNC_CLAIMNAME
     value: "cognito:groups"
-  - name: SONAR_CORE_SERVERBASEURL
-    value: "https://${sonarqube_subdomain}.${domain_name}"
 
 # Pod annotations
 annotations:

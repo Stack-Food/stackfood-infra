@@ -424,18 +424,6 @@ module "sonarqube" {
   environment         = var.environment
   chart_version       = "10.7.0+3598"
 
-  # Configurações Cognito - USANDO O MESMO USER POOL
-  cognito_user_pool_id      = module.cognito.user_pool_id
-  cognito_client_id         = module.cognito.sonarqube_client_id
-  cognito_client_secret     = module.cognito.sonarqube_client_secret
-  cognito_region            = data.aws_region.current.region
-  cognito_client_issuer_url = module.cognito.sonarqube_issuer_url
-  user_pool_name            = module.cognito.user_pool_name
-
-  # Configurações de grupos do Cognito
-  admin_group_name = "sonarqube"
-  user_group_name  = "sonarqube"
-
   # Certificado SSL
   certificate_arn = module.acm.certificate_arn
 
@@ -479,7 +467,6 @@ module "sonarqube" {
   monitoring_passcode = "stackfood-sonar-monitoring"
 
   depends_on = [
-    module.cognito,
     module.dns,
     module.eks,
     module.nginx-ingress,

@@ -37,3 +37,12 @@ output "postgresql_enabled" {
   description = "Whether PostgreSQL is enabled as part of SonarQube deployment"
   value       = var.postgresql_enabled
 }
+
+output "initial_credentials" {
+  description = "Credenciais iniciais do SonarQube"
+  value = {
+    username = "admin"
+    password = "admin"
+    note     = "IMPORTANTE: Altere estas credenciais após o primeiro login em ${var.sonarqube_subdomain}.${var.domain_name}"
+  }
+}

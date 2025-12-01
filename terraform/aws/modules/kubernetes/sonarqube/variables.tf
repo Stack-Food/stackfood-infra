@@ -27,52 +27,8 @@ variable "environment" {
   default     = "prod"
 }
 
-# Cognito OIDC Configuration
-variable "cognito_user_pool_id" {
-  description = "Cognito User Pool ID for OIDC"
-  type        = string
-}
-
-variable "cognito_client_id" {
-  description = "Cognito App Client ID"
-  type        = string
-}
-
-variable "cognito_client_secret" {
-  description = "Cognito App Client Secret"
-  type        = string
-  sensitive   = true
-}
-
-variable "cognito_region" {
-  description = "AWS region where Cognito is deployed"
-  type        = string
-}
-
-variable "cognito_client_issuer_url" {
-  description = "Cognito OIDC issuer URL"
-  type        = string
-}
-
 variable "certificate_arn" {
   description = "ACM certificate ARN for HTTPS"
-  type        = string
-}
-
-variable "admin_group_name" {
-  description = "Cognito group name for SonarQube administrators"
-  type        = string
-  default     = "admins"
-}
-
-variable "user_group_name" {
-  description = "Cognito group name for SonarQube users"
-  type        = string
-  default     = "users"
-}
-
-variable "user_pool_name" {
-  description = "Cognito User Pool name"
   type        = string
 }
 
