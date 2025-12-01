@@ -411,7 +411,6 @@ module "grafana" {
     module.dns,
     module.eks,
     module.nginx-ingress,
-    module.nginx-ingress.ingress_ready
   ]
 }
 
@@ -472,7 +471,6 @@ module "sonarqube" {
     module.dns,
     module.eks,
     module.nginx-ingress,
-    module.nginx-ingress.ingress_ready,
     module.rds
   ]
 }
