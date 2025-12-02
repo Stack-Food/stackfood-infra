@@ -473,3 +473,60 @@ variable "monitoring_namespace" {
   type        = string
   default     = "monitoring"
 }
+
+######################################
+# SonarQube GitHub Integration      #
+######################################
+
+variable "github_app_enabled" {
+  description = "Enable GitHub App integration with SonarQube"
+  type        = bool
+  default     = false
+}
+
+variable "github_organization" {
+  description = "GitHub Organization name for SonarQube integration"
+  type        = string
+  default     = ""
+}
+
+variable "github_app_id" {
+  description = "GitHub App ID for SonarQube integration"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_client_id" {
+  description = "GitHub App Client ID"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_client_secret" {
+  description = "GitHub App Client Secret"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_private_key" {
+  description = "GitHub App Private Key (PEM format) - use file() or heredoc"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_webhook_secret" {
+  description = "GitHub Webhook Secret for SonarQube"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_api_url" {
+  description = "GitHub API URL (use https://api.github.com for github.com)"
+  type        = string
+  default     = "https://api.github.com"
+}

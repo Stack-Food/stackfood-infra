@@ -161,3 +161,77 @@ variable "monitoring_passcode" {
   sensitive   = true
   default     = "sonarqube-monitoring-pass"
 }
+
+# GitHub App Integration Configuration
+variable "github_app_enabled" {
+  description = "Enable GitHub App integration with SonarQube"
+  type        = bool
+  default     = false
+}
+
+variable "github_app_id" {
+  description = "GitHub App ID for SonarQube integration"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_client_id" {
+  description = "GitHub App Client ID"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_client_secret" {
+  description = "GitHub App Client Secret"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_private_key" {
+  description = "GitHub App Private Key (PEM format)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_webhook_secret" {
+  description = "GitHub Webhook Secret"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "github_organization" {
+  description = "GitHub Organization name"
+  type        = string
+  default     = ""
+}
+
+variable "github_api_url" {
+  description = "GitHub API URL (use https://api.github.com for github.com)"
+  type        = string
+  default     = "https://api.github.com"
+}
+
+variable "github_integration_key" {
+  description = "Unique key for GitHub integration in SonarQube"
+  type        = string
+  default     = "github"
+}
+
+variable "sonarqube_admin_user" {
+  description = "SonarQube admin username for API configuration"
+  type        = string
+  default     = "admin"
+}
+
+variable "sonarqube_admin_password" {
+  description = "SonarQube admin password for API configuration"
+  type        = string
+  default     = "admin"
+  sensitive   = true
+}
+
