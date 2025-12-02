@@ -37,11 +37,15 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -input=false -no-color -out=tfplan
+          terraform plan -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -var="github_app_id=$SONAR_GITHUB_APP_ID" -var="github_client_id=$SONAR_GITHUB_CLIENT_ID" -var="github_client_secret=$SONAR_GITHUB_CLIENT_SECRET" -var="github_private_key=$SONAR_GITHUB_PRIVATE_KEY" -input=false -no-color -out=tfplan
           terraform show -no-color tfplan
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
+          SONAR_GITHUB_APP_ID: ${{ secrets.SONAR_GITHUB_APP_ID }}
+          SONAR_GITHUB_CLIENT_ID: ${{ secrets.SONAR_GITHUB_CLIENT_ID }}
+          SONAR_GITHUB_CLIENT_SECRET: ${{ secrets.SONAR_GITHUB_CLIENT_SECRET }}
+          SONAR_GITHUB_PRIVATE_KEY: ${{ secrets.SONAR_GITHUB_PRIVATE_KEY }}
 
       - name: Create artifacts directory
         if: always()
@@ -66,10 +70,14 @@ jobs:
       - name: Terraform Apply
         if: steps.plan.outcome == 'success'
         id: apply
-        run: terraform apply -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -auto-approve -input=false -no-color tfplan
+        run: terraform apply -var-file="../env/prod.tfvars" -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -var="github_app_id=$SONAR_GITHUB_APP_ID" -var="github_client_id=$SONAR_GITHUB_CLIENT_ID" -var="github_client_secret=$SONAR_GITHUB_CLIENT_SECRET" -var="github_private_key=$SONAR_GITHUB_PRIVATE_KEY" -auto-approve -input=false -no-color tfplan
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_WORKSPACE: "Production"
+          SONAR_GITHUB_APP_ID: ${{ secrets.SONAR_GITHUB_APP_ID }}
+          SONAR_GITHUB_CLIENT_ID: ${{ secrets.SONAR_GITHUB_CLIENT_ID }}
+          SONAR_GITHUB_CLIENT_SECRET: ${{ secrets.SONAR_GITHUB_CLIENT_SECRET }}
+          SONAR_GITHUB_PRIVATE_KEY: ${{ secrets.SONAR_GITHUB_PRIVATE_KEY }}
 
       - name: Post Plan Failure
         if: steps.plan.outcome == 'failure'
