@@ -481,7 +481,7 @@ variable "monitoring_namespace" {
 variable "github_app_enabled" {
   description = "Enable GitHub App integration with SonarQube"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "github_organization" {
