@@ -166,7 +166,7 @@ variable "monitoring_passcode" {
 variable "github_app_enabled" {
   description = "Enable GitHub App integration with SonarQube"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "github_app_id" {
