@@ -24,7 +24,7 @@ resource "null_resource" "wait_for_sonarqube" {
 
 # Change admin password after SonarQube is ready
 resource "null_resource" "change_admin_password" {
-  count = var.sonarqube_new_admin_password != "" && var.sonarqube_new_admin_password != null ? 1 : 0
+  count = try(var.sonarqube_new_admin_password, "") != "" ? 1 : 0
 
   provisioner "local-exec" {
     command = <<-EOT
@@ -71,7 +71,7 @@ resource "null_resource" "change_admin_password" {
   depends_on = [null_resource.wait_for_sonarqube]
 
   triggers = {
-    password_change = coalesce(var.sonarqube_new_admin_password, "")
+    password_change = try(var.sonarqube_new_admin_password, "")
   }
 }
 
@@ -87,7 +87,7 @@ resource "null_resource" "configure_github_integration" {
       SONARQUBE_URL="https://${var.sonarqube_subdomain}.${var.domain_name}"
       ADMIN_USER="${var.sonarqube_admin_user}"
       # Use new password if it was changed, otherwise use the default password
-      ADMIN_PASS="${coalesce(var.sonarqube_new_admin_password, var.sonarqube_admin_password)}"
+      ADMIN_PASS="${try(var.sonarqube_new_admin_password, "") != "" ? var.sonarqube_new_admin_password : var.sonarqube_admin_password}"
       
       echo "Configuring GitHub integration in SonarQube..."
       
@@ -115,8 +115,8 @@ resource "null_resource" "configure_github_integration" {
         -d \"url=${var.github_api_url}\""
       
       # Add webhook secret only if it's provided
-      if [ "${coalesce(var.github_webhook_secret, "")}" != "" ]; then
-        CURL_CMD="$CURL_CMD -d \"webhookSecret=${coalesce(var.github_webhook_secret, "")}\""
+      if [ "${try(var.github_webhook_secret, "")}" != "" ]; then
+        CURL_CMD="$CURL_CMD -d \"webhookSecret=${try(var.github_webhook_secret, "")}\""
         echo "Webhook secret will be configured"
       else
         echo "Webhook secret not provided - webhook signature verification will be disabled"
@@ -152,6 +152,6 @@ resource "null_resource" "configure_github_integration" {
     github_app_id     = var.github_app_id
     github_client_id  = var.github_client_id
     sonarqube_version = var.chart_version
-    admin_password    = coalesce(var.sonarqube_new_admin_password, "")
+    admin_password    = try(var.sonarqube_new_admin_password, "")
   }
 }
