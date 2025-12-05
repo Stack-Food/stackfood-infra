@@ -117,7 +117,8 @@ jobs:
           done
 
           # Change the admin password
-          RESPONSE=$(curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$OLD_PASSWORD" -X POST "$SONARQUBE_URL/api/users/change_password" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$OLD_PASSWORD" \
+            -X POST "$SONARQUBE_URL/api/users/change_password" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             --data-urlencode "login=$ADMIN_USER" \
             --data-urlencode "previousPassword=$OLD_PASSWORD" \
@@ -125,6 +126,9 @@ jobs:
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "HTTP Code: $HTTP_CODE"
+          echo "Response Body: $BODY"
 
           if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
             echo "Admin password changed successfully!"
