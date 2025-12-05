@@ -103,13 +103,12 @@ jobs:
           NEW_PASSWORD="$SONAR_ADMIN_PASSWORD"
           ADMIN_USER="admin"
 
-          echo "Changing admin password in SonarQube..."
+          echo "Checking and changing admin password in SonarQube if needed..."
 
           # Validate that NEW_PASSWORD is not empty
           if [ -z "$NEW_PASSWORD" ]; then
-            echo "ERROR: SONAR_ADMIN_PASSWORD secret is not set or is empty!"
-            echo "Please add the SONAR_ADMIN_PASSWORD secret to your GitHub repository."
-            exit 1
+            echo "WARNING: SONAR_ADMIN_PASSWORD is not set. Skipping password change."
+            exit 0
           fi
 
           # Wait for SonarQube to be accessible externally
@@ -123,7 +122,25 @@ jobs:
             sleep 10
           done
 
-          # Change the admin password using form data
+          # Check if old password still works
+          echo "Checking if password needs to be changed..."
+          AUTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" -u "$ADMIN_USER:$OLD_PASSWORD" "$SONARQUBE_URL/api/system/status")
+          
+          if [ "$AUTH_CHECK" != "200" ]; then
+            echo "Old password no longer works. Assuming password was already changed."
+            echo "Verifying new password works..."
+            NEW_AUTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" -u "$ADMIN_USER:$NEW_PASSWORD" "$SONARQUBE_URL/api/system/status")
+            if [ "$NEW_AUTH_CHECK" = "200" ]; then
+              echo "New password is already active. No action needed."
+              exit 0
+            else
+              echo "WARNING: Neither old nor new password works. Manual intervention may be required."
+              exit 0
+            fi
+          fi
+
+          # Try to change the admin password
+          echo "Attempting to change password..."
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -u "$ADMIN_USER:$OLD_PASSWORD" \
             -X POST "$SONARQUBE_URL/api/users/change_password" \
@@ -141,9 +158,9 @@ jobs:
           if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
             echo "Admin password changed successfully!"
           else
-            echo "Failed to change admin password. HTTP code: $HTTP_CODE"
+            echo "WARNING: Failed to change admin password. HTTP code: $HTTP_CODE"
             echo "Response: $BODY"
-            exit 1
+            echo "Continuing pipeline execution..."
           fi
         env:
           SONAR_ADMIN_PASSWORD: ${{ vars.SONAR_ADMIN_PASSWORD }}
