@@ -87,7 +87,7 @@ resource "null_resource" "configure_github_integration" {
       SONARQUBE_URL="https://${var.sonarqube_subdomain}.${var.domain_name}"
       ADMIN_USER="${var.sonarqube_admin_user}"
       # Use new password if it was changed, otherwise use the default password
-      ADMIN_PASS="${try(var.sonarqube_new_admin_password, "") != "" ? var.sonarqube_new_admin_password : var.sonarqube_admin_password}"
+      ADMIN_PASS="${var.sonarqube_new_admin_password != null && var.sonarqube_new_admin_password != "" ? var.sonarqube_new_admin_password : var.sonarqube_admin_password}"
       
       echo "Configuring GitHub integration in SonarQube..."
       
@@ -105,27 +105,18 @@ resource "null_resource" "configure_github_integration" {
       # Configure GitHub App settings using the correct API endpoint
       echo "Creating GitHub App configuration..."
       
-      # Build curl command with optional webhook secret
-      CURL_CMD="curl -s -w \"\n%%{http_code}\" -u \"$ADMIN_USER:$ADMIN_PASS\" -X POST \"$SONARQUBE_URL/api/alm_settings/create_github\" \
-        -d \"key=${var.github_integration_key}\" \
-        -d \"appId=${var.github_app_id}\" \
-        -d \"clientId=${var.github_client_id}\" \
-        -d \"clientSecret=${var.github_client_secret}\" \
-        -d \"privateKey=${var.github_private_key}\" \
-        -d \"url=${var.github_api_url}\""
+      # Build curl command dynamically
+      curl -s -w "\n%%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -X POST "$SONARQUBE_URL/api/alm_settings/create_github" \
+        -d "key=${var.github_integration_key}" \
+        -d "appId=${var.github_app_id}" \
+        -d "clientId=${var.github_client_id}" \
+        -d "clientSecret=${var.github_client_secret}" \
+        -d "privateKey=${var.github_private_key}" \
+        -d "url=${var.github_api_url}" \
+        ${var.github_webhook_secret != null && var.github_webhook_secret != "" ? "-d \"webhookSecret=${var.github_webhook_secret}\"" : ""} > /tmp/sonar_response.txt
       
-      # Add webhook secret only if it's provided
-      if [ "${try(var.github_webhook_secret, "")}" != "" ]; then
-        CURL_CMD="$CURL_CMD -d \"webhookSecret=${try(var.github_webhook_secret, "")}\""
-        echo "Webhook secret will be configured"
-      else
-        echo "Webhook secret not provided - webhook signature verification will be disabled"
-      fi
-      
-      RESPONSE=$$(eval $CURL_CMD)
-      
-      HTTP_CODE=$$(echo "$RESPONSE" | tail -n1)
-      BODY=$$(echo "$RESPONSE" | head -n-1)
+      HTTP_CODE=$$(tail -n1 /tmp/sonar_response.txt)
+      BODY=$$(head -n-1 /tmp/sonar_response.txt)
       
       if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
         echo "GitHub integration configured successfully!"
@@ -137,9 +128,12 @@ resource "null_resource" "configure_github_integration" {
         if echo "$BODY" | grep -q "already exists"; then
           echo "GitHub App configuration already exists, continuing..."
         else
+          rm -f /tmp/sonar_response.txt
           exit 1
         fi
       fi
+      
+      rm -f /tmp/sonar_response.txt
     EOT
   }
 
