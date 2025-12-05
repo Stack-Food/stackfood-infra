@@ -105,6 +105,13 @@ jobs:
 
           echo "Changing admin password in SonarQube..."
 
+          # Validate that NEW_PASSWORD is not empty
+          if [ -z "$NEW_PASSWORD" ]; then
+            echo "ERROR: SONAR_ADMIN_PASSWORD secret is not set or is empty!"
+            echo "Please add the SONAR_ADMIN_PASSWORD secret to your GitHub repository."
+            exit 1
+          fi
+
           # Wait for SonarQube to be accessible externally
           for i in {1..30}; do
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$SONARQUBE_URL/api/system/status")
@@ -116,13 +123,14 @@ jobs:
             sleep 10
           done
 
-          # Change the admin password
-          RESPONSE=$(curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$OLD_PASSWORD" \
+          # Change the admin password using form data
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -u "$ADMIN_USER:$OLD_PASSWORD" \
             -X POST "$SONARQUBE_URL/api/users/change_password" \
             -H "Content-Type: application/x-www-form-urlencoded" \
-            --data-urlencode "login=$ADMIN_USER" \
-            --data-urlencode "previousPassword=$OLD_PASSWORD" \
-            --data-urlencode "password=$NEW_PASSWORD")
+            -d "login=$ADMIN_USER" \
+            -d "previousPassword=$OLD_PASSWORD" \
+            -d "password=$NEW_PASSWORD")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | head -n-1)
@@ -138,7 +146,7 @@ jobs:
             exit 1
           fi
         env:
-          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
+          SONAR_ADMIN_PASSWORD: ${{ vars.SONAR_ADMIN_PASSWORD }}
 
       - name: Configure GitHub Integration
         if: steps.apply.outcome == 'success'
@@ -188,7 +196,7 @@ jobs:
 
           rm -f /tmp/sonar_response.txt
         env:
-          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
+          SONAR_ADMIN_PASSWORD: ${{ vars.SONAR_ADMIN_PASSWORD }}
           SONAR_GITHUB_APP_ID: ${{ secrets.SONAR_GITHUB_APP_ID }}
           SONAR_GITHUB_CLIENT_ID: ${{ secrets.SONAR_GITHUB_CLIENT_ID }}
           SONAR_GITHUB_CLIENT_SECRET: ${{ secrets.SONAR_GITHUB_CLIENT_SECRET }}
