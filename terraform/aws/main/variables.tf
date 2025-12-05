@@ -475,6 +475,17 @@ variable "monitoring_namespace" {
 }
 
 ######################################
+# SonarQube Configuration           #
+######################################
+
+variable "sonarqube_new_admin_password" {
+  description = "New admin password for SonarQube (must be at least 12 characters with uppercase, lowercase, digit and special character)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+######################################
 # SonarQube GitHub Integration      #
 ######################################
 
@@ -519,9 +530,9 @@ variable "github_private_key" {
 }
 
 variable "github_webhook_secret" {
-  description = "GitHub Webhook Secret for SonarQube"
+  description = "GitHub Webhook Secret for SonarQube (optional - leave empty to disable webhook signature verification)"
   type        = string
-  default     = ""
+  default     = null
   sensitive   = true
 }
 

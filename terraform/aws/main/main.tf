@@ -478,8 +478,9 @@ module "sonarqube" {
   github_api_url        = var.github_api_url
 
   # Credenciais admin (necessário para configuração via API)
-  sonarqube_admin_user     = "admin"
-  sonarqube_admin_password = "admin"
+  sonarqube_admin_user         = "admin"
+  sonarqube_admin_password     = "admin"
+  sonarqube_new_admin_password = var.sonarqube_new_admin_password
 
   depends_on = [
     module.dns,

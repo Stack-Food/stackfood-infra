@@ -198,9 +198,9 @@ variable "github_private_key" {
 }
 
 variable "github_webhook_secret" {
-  description = "GitHub Webhook Secret"
+  description = "GitHub Webhook Secret (optional - leave empty to disable webhook signature verification)"
   type        = string
-  default     = ""
+  default     = null
   sensitive   = true
 }
 
@@ -229,9 +229,15 @@ variable "sonarqube_admin_user" {
 }
 
 variable "sonarqube_admin_password" {
-  description = "SonarQube admin password for API configuration"
+  description = "SonarQube admin password for API configuration (default: admin)"
   type        = string
   default     = "admin"
+  sensitive   = true
+}
+
+variable "sonarqube_new_admin_password" {
+  description = "New SonarQube admin password (will be set via API after deployment)"
+  type        = string
   sensitive   = true
 }
 
