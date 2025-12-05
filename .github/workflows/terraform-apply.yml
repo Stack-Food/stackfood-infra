@@ -160,21 +160,31 @@ jobs:
           # Configure GitHub App settings using the correct API endpoint
           echo "Creating GitHub App configuration..."
 
-          # Build curl command dynamically
+          # Save private key to a temporary file to preserve formatting
+          printf "%s" "$SONAR_GITHUB_PRIVATE_KEY" > /tmp/private_key.pem
+
+          # Build curl command with private key from file
           if [ -n "$SONAR_GITHUB_WEBHOOK_SECRET" ]; then
-            WEBHOOK_PARAM="-d \"webhookSecret=$SONAR_GITHUB_WEBHOOK_SECRET\""
+            curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -X POST "$SONARQUBE_URL/api/alm_settings/create_github" \
+              -d "key=github" \
+              -d "appId=$SONAR_GITHUB_APP_ID" \
+              -d "clientId=$SONAR_GITHUB_CLIENT_ID" \
+              -d "clientSecret=$SONAR_GITHUB_CLIENT_SECRET" \
+              --data-urlencode "privateKey@/tmp/private_key.pem" \
+              -d "url=https://api.github.com" \
+              -d "webhookSecret=$SONAR_GITHUB_WEBHOOK_SECRET" > /tmp/sonar_response.txt
           else
-            WEBHOOK_PARAM=""
+            curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -X POST "$SONARQUBE_URL/api/alm_settings/create_github" \
+              -d "key=github" \
+              -d "appId=$SONAR_GITHUB_APP_ID" \
+              -d "clientId=$SONAR_GITHUB_CLIENT_ID" \
+              -d "clientSecret=$SONAR_GITHUB_CLIENT_SECRET" \
+              --data-urlencode "privateKey@/tmp/private_key.pem" \
+              -d "url=https://api.github.com" > /tmp/sonar_response.txt
           fi
 
-          curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -X POST "$SONARQUBE_URL/api/alm_settings/create_github" \
-            -d "key=github" \
-            -d "appId=$SONAR_GITHUB_APP_ID" \
-            -d "clientId=$SONAR_GITHUB_CLIENT_ID" \
-            -d "clientSecret=$SONAR_GITHUB_CLIENT_SECRET" \
-            -d "privateKey=$SONAR_GITHUB_PRIVATE_KEY" \
-            -d "url=https://api.github.com" \
-            $WEBHOOK_PARAM > /tmp/sonar_response.txt
+          # Clean up private key file
+          rm -f /tmp/private_key.pem
 
           HTTP_CODE=$(tail -n1 /tmp/sonar_response.txt)
           BODY=$(head -n-1 /tmp/sonar_response.txt)
