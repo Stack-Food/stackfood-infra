@@ -81,21 +81,17 @@ jobs:
           SONAR_GITHUB_CLIENT_SECRET: ${{ secrets.SONAR_GITHUB_CLIENT_SECRET }}
           SONAR_GITHUB_PRIVATE_KEY: ${{ secrets.SONAR_GITHUB_PRIVATE_KEY }}
 
-      - name: Configure kubectl
-        if: steps.apply.outcome == 'success'
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name stackfood-eks-cluster
-
       - name: Wait for SonarQube to be ready
         if: steps.apply.outcome == 'success'
         run: |
           echo "Waiting for SonarQube to be ready..."
           for i in {1..60}; do
-            if kubectl exec -n sonarqube statefulset/sonarqube-sonarqube -- wget -qO- http://localhost:9000/api/system/status 2>/dev/null | grep -q '"status":"UP"'; then
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sonar.stackfood.com.br/api/system/status")
+            if [ "$HTTP_CODE" = "200" ]; then
               echo "SonarQube is ready!"
               break
             fi
-            echo "Attempt $i/60: SonarQube not ready yet, waiting 10 seconds..."
+            echo "Attempt $i/60: SonarQube not ready yet (HTTP: $HTTP_CODE), waiting 10 seconds..."
             sleep 10
           done
 
