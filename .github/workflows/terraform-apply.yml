@@ -99,7 +99,7 @@ jobs:
         if: steps.apply.outcome == 'success'
         run: |
           SONARQUBE_URL="https://sonar.stackfood.com.br"
-          OLD_PASSWORD="admin"
+          OLD_PASSWORD="Hunter@1044#"
           NEW_PASSWORD="$SONAR_ADMIN_PASSWORD"
           ADMIN_USER="admin"
 
