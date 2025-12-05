@@ -27,8 +27,8 @@ resource "null_resource" "change_admin_password" {
   count = try(var.sonarqube_new_admin_password, "") != "" ? 1 : 0
 
   provisioner "local-exec" {
-    command = <<-EOT
-      #!/bin/bash
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
       set -e
       
       SONARQUBE_URL="https://${var.sonarqube_subdomain}.${var.domain_name}"
@@ -39,7 +39,7 @@ resource "null_resource" "change_admin_password" {
       echo "Changing admin password in SonarQube..."
       
       # Wait for SonarQube to be accessible externally
-      for i in {1..30}; do
+      for i in $$(seq 1 30); do
         HTTP_CODE=$$(curl -s -o /dev/null -w "%%{http_code}" "$SONARQUBE_URL/api/system/status")
         if [ "$HTTP_CODE" = "200" ]; then
           echo "SonarQube is accessible!"
@@ -80,8 +80,8 @@ resource "null_resource" "configure_github_integration" {
   count = var.github_app_enabled ? 1 : 0
 
   provisioner "local-exec" {
-    command = <<-EOT
-      #!/bin/bash
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
       set -e
       
       SONARQUBE_URL="https://${var.sonarqube_subdomain}.${var.domain_name}"
@@ -92,7 +92,7 @@ resource "null_resource" "configure_github_integration" {
       echo "Configuring GitHub integration in SonarQube..."
       
       # Wait for SonarQube to be accessible externally
-      for i in {1..30}; do
+      for i in $$(seq 1 30); do
         HTTP_CODE=$$(curl -s -o /dev/null -w "%%{http_code}" "$SONARQUBE_URL/api/system/status")
         if [ "$HTTP_CODE" = "200" ]; then
           echo "SonarQube is accessible!"
