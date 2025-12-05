@@ -81,6 +81,119 @@ jobs:
           SONAR_GITHUB_CLIENT_SECRET: ${{ secrets.SONAR_GITHUB_CLIENT_SECRET }}
           SONAR_GITHUB_PRIVATE_KEY: ${{ secrets.SONAR_GITHUB_PRIVATE_KEY }}
 
+      - name: Configure kubectl
+        if: steps.apply.outcome == 'success'
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name stackfood-eks-cluster
+
+      - name: Wait for SonarQube to be ready
+        if: steps.apply.outcome == 'success'
+        run: |
+          echo "Waiting for SonarQube to be ready..."
+          for i in {1..60}; do
+            if kubectl exec -n sonarqube statefulset/sonarqube-sonarqube -- wget -qO- http://localhost:9000/api/system/status 2>/dev/null | grep -q '"status":"UP"'; then
+              echo "SonarQube is ready!"
+              break
+            fi
+            echo "Attempt $i/60: SonarQube not ready yet, waiting 10 seconds..."
+            sleep 10
+          done
+
+      - name: Change SonarQube Admin Password
+        if: steps.apply.outcome == 'success'
+        run: |
+          SONARQUBE_URL="https://sonar.stackfood.com.br"
+          OLD_PASSWORD="admin"
+          NEW_PASSWORD="$SONAR_ADMIN_PASSWORD"
+          ADMIN_USER="admin"
+
+          echo "Changing admin password in SonarQube..."
+
+          # Wait for SonarQube to be accessible externally
+          for i in {1..30}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$SONARQUBE_URL/api/system/status")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "SonarQube is accessible!"
+              break
+            fi
+            echo "Waiting for SonarQube to be accessible... (attempt $i/30)"
+            sleep 10
+          done
+
+          # Change the admin password
+          RESPONSE=$(curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$OLD_PASSWORD" -X POST "$SONARQUBE_URL/api/users/change_password" \
+            -d "login=$ADMIN_USER" \
+            -d "password=$NEW_PASSWORD" \
+            -d "previousPassword=$OLD_PASSWORD")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
+            echo "Admin password changed successfully!"
+          else
+            echo "Failed to change admin password. HTTP code: $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
+        env:
+          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
+
+      - name: Configure GitHub Integration
+        if: steps.apply.outcome == 'success'
+        run: |
+          SONARQUBE_URL="https://sonar.stackfood.com.br"
+          ADMIN_USER="admin"
+          ADMIN_PASS="$SONAR_ADMIN_PASSWORD"
+
+          echo "Configuring GitHub integration in SonarQube..."
+
+          # Configure GitHub App settings using the correct API endpoint
+          echo "Creating GitHub App configuration..."
+
+          # Build curl command dynamically
+          if [ -n "$SONAR_GITHUB_WEBHOOK_SECRET" ]; then
+            WEBHOOK_PARAM="-d \"webhookSecret=$SONAR_GITHUB_WEBHOOK_SECRET\""
+          else
+            WEBHOOK_PARAM=""
+          fi
+
+          curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$ADMIN_PASS" -X POST "$SONARQUBE_URL/api/alm_settings/create_github" \
+            -d "key=github" \
+            -d "appId=$SONAR_GITHUB_APP_ID" \
+            -d "clientId=$SONAR_GITHUB_CLIENT_ID" \
+            -d "clientSecret=$SONAR_GITHUB_CLIENT_SECRET" \
+            -d "privateKey=$SONAR_GITHUB_PRIVATE_KEY" \
+            -d "url=https://api.github.com" \
+            $WEBHOOK_PARAM > /tmp/sonar_response.txt
+
+          HTTP_CODE=$(tail -n1 /tmp/sonar_response.txt)
+          BODY=$(head -n-1 /tmp/sonar_response.txt)
+
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "204" ]; then
+            echo "GitHub integration configured successfully!"
+            echo "Response: $BODY"
+          else
+            echo "Failed to configure GitHub integration. HTTP code: $HTTP_CODE"
+            echo "Response: $BODY"
+            # Don't fail if the configuration already exists
+            if echo "$BODY" | grep -q "already exists"; then
+              echo "GitHub App configuration already exists, continuing..."
+            else
+              rm -f /tmp/sonar_response.txt
+              exit 1
+            fi
+          fi
+
+          rm -f /tmp/sonar_response.txt
+        env:
+          SONAR_ADMIN_PASSWORD: ${{ secrets.SONAR_ADMIN_PASSWORD }}
+          SONAR_GITHUB_APP_ID: ${{ secrets.SONAR_GITHUB_APP_ID }}
+          SONAR_GITHUB_CLIENT_ID: ${{ secrets.SONAR_GITHUB_CLIENT_ID }}
+          SONAR_GITHUB_CLIENT_SECRET: ${{ secrets.SONAR_GITHUB_CLIENT_SECRET }}
+          SONAR_GITHUB_PRIVATE_KEY: ${{ secrets.SONAR_GITHUB_PRIVATE_KEY }}
+          SONAR_GITHUB_WEBHOOK_SECRET: ${{ secrets.SONAR_GITHUB_WEBHOOK_SECRET }}
+
       - name: Post Plan Failure
         if: steps.plan.outcome == 'failure'
         uses: mshick/add-pr-comment@v2
