@@ -119,8 +119,8 @@ jobs:
           # Change the admin password
           RESPONSE=$(curl -s -w "\n%{http_code}" -u "$ADMIN_USER:$OLD_PASSWORD" -X POST "$SONARQUBE_URL/api/users/change_password" \
             -d "login=$ADMIN_USER" \
-            -d "password=$NEW_PASSWORD" \
-            -d "previousPassword=$OLD_PASSWORD")
+            -d "previousPassword=$OLD_PASSWORD" \
+            -d "password=$NEW_PASSWORD")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | head -n-1)
