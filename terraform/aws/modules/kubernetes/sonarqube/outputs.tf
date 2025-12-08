@@ -46,17 +46,3 @@ output "initial_credentials" {
     note     = "IMPORTANTE: Altere estas credenciais após o primeiro login em ${var.sonarqube_subdomain}.${var.domain_name}"
   }
 }
-
-output "github_integration_status" {
-  description = "Status da integração com GitHub"
-  value = var.github_app_enabled ? {
-    enabled             = true
-    github_org          = var.github_organization
-    github_app_id       = var.github_app_id != "" ? "Configured" : "Not configured"
-    webhook_url         = "https://${var.sonarqube_subdomain}.${var.domain_name}/api/alm_integration/handle_github_event"
-    configuration_guide = "kubectl get configmap sonarqube-github-webhook-guide -n ${var.namespace} -o yaml"
-    } : {
-    enabled = false
-    note    = "GitHub integration is disabled. Set github_app_enabled = true to enable."
-  }
-}
