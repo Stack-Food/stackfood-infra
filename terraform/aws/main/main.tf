@@ -466,22 +466,6 @@ module "sonarqube" {
 
   # Monitoring
   monitoring_passcode = "stackfood-sonar-monitoring"
-
-  # GitHub App Integration (opcional)
-  github_app_enabled    = var.github_app_enabled
-  github_organization   = var.github_organization
-  github_app_id         = var.github_app_id
-  github_client_id      = var.github_client_id
-  github_client_secret  = var.github_client_secret
-  github_private_key    = var.github_private_key
-  github_webhook_secret = var.github_webhook_secret
-  github_api_url        = var.github_api_url
-
-  # Credenciais admin (necessário para configuração via API)
-  sonarqube_admin_user         = "admin"
-  sonarqube_admin_password     = "admin"
-  sonarqube_new_admin_password = var.sonarqube_new_admin_password
-
   depends_on = [
     module.dns,
     module.eks,
