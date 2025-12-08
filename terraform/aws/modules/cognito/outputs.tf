@@ -104,26 +104,6 @@ output "grafana_issuer_url" {
 }
 
 ###########################
-# SonarQube Client Outputs #
-###########################
-
-output "sonarqube_client_id" {
-  description = "ID do client SonarQube"
-  value       = aws_cognito_user_pool_client.sonarqube.id
-}
-
-output "sonarqube_client_secret" {
-  description = "Secret do client SonarQube"
-  value       = aws_cognito_user_pool_client.sonarqube.client_secret
-  sensitive   = true
-}
-
-output "sonarqube_issuer_url" {
-  description = "URL do issuer OIDC para SonarQube"
-  value       = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
-}
-
-###########################
 # Groups Outputs          #
 ###########################
 
@@ -145,10 +125,6 @@ output "groups" {
     grafana = {
       name = aws_cognito_user_group.grafana.name
       id   = aws_cognito_user_group.grafana.id
-    }
-    sonarqube = {
-      name = aws_cognito_user_group.sonarqube.name
-      id   = aws_cognito_user_group.sonarqube.id
     }
     system_admins = {
       name = aws_cognito_user_group.system_admins.name

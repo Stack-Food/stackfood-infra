@@ -36,7 +36,7 @@ variable "team_users" {
     name      = string
     email     = string
     user_type = optional(string, "team_member")
-    groups    = list(string) # Possíveis valores: ["argocd", "grafana", "sonarqube", "app-admins", "system-admins"]
+    groups    = list(string) # Possíveis valores: ["argocd", "grafana", "app-admins", "system-admins"]
   }))
   default = {}
 }
@@ -69,18 +69,6 @@ variable "grafana_callback_urls" {
 
 variable "grafana_logout_urls" {
   description = "List of logout URLs for Grafana OIDC (for future use)"
-  type        = list(string)
-  default     = []
-}
-
-variable "sonarqube_callback_urls" {
-  description = "List of callback URLs for SonarQube OIDC"
-  type        = list(string)
-  default     = []
-}
-
-variable "sonarqube_logout_urls" {
-  description = "List of logout URLs for SonarQube OIDC"
   type        = list(string)
   default     = []
 }

@@ -112,14 +112,6 @@ resource "aws_cognito_user_group" "grafana" {
   precedence   = 4
 }
 
-# Grupo para SonarQube
-resource "aws_cognito_user_group" "sonarqube" {
-  name         = "sonarqube"
-  user_pool_id = aws_cognito_user_pool.main.id
-  description  = "Usuários com acesso ao SonarQube"
-  precedence   = 5
-}
-
 # Grupo para administradores de sistema
 resource "aws_cognito_user_group" "system_admins" {
   name         = "system-admins"
@@ -198,12 +190,6 @@ resource "aws_cognito_user_in_group" "stackfood_admin_grafana" {
   user_pool_id = aws_cognito_user_pool.main.id
   username     = aws_cognito_user.stackfood_admin.username
   group_name   = aws_cognito_user_group.grafana.name
-}
-
-resource "aws_cognito_user_in_group" "stackfood_admin_sonarqube" {
-  user_pool_id = aws_cognito_user_pool.main.id
-  username     = aws_cognito_user.stackfood_admin.username
-  group_name   = aws_cognito_user_group.sonarqube.name
 }
 
 # Usuários da equipe
@@ -288,21 +274,5 @@ resource "aws_cognito_user_in_group" "team_users_system_admins" {
   depends_on = [
     aws_cognito_user.team_users,
     aws_cognito_user_group.system_admins
-  ]
-}
-
-resource "aws_cognito_user_in_group" "team_users_sonarqube" {
-  for_each = {
-    for username, user in var.team_users : username => user
-    if contains(lookup(user, "groups", []), "sonarqube")
-  }
-
-  user_pool_id = aws_cognito_user_pool.main.id
-  username     = aws_cognito_user.team_users[each.key].username
-  group_name   = aws_cognito_user_group.sonarqube.name
-
-  depends_on = [
-    aws_cognito_user.team_users,
-    aws_cognito_user_group.sonarqube
   ]
 }

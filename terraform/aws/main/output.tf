@@ -118,18 +118,3 @@ output "monitoring_setup" {
     }
   }
 }
-
-output "sonarqube_access_info" {
-  description = "Informações de acesso ao SonarQube"
-  value = {
-    url              = module.sonarqube.url
-    namespace        = module.sonarqube.namespace
-    initial_username = "admin"
-    initial_password = "admin"
-    important_note   = "ATENÇÃO: Altere as credenciais padrão após o primeiro login!"
-    authentication   = "Built-in authentication (default) - SAML pode ser configurado via UI"
-    saml_guide       = "Consulte terraform/aws/modules/kubernetes/sonarqube/README-SAML.md para configurar SAML"
-    github_guide     = "Consulte terraform/aws/modules/kubernetes/sonarqube/README-GitHub-Integration.md para detalhes"
-  }
-  sensitive = true
-}

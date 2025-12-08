@@ -8,11 +8,6 @@ output "grafana_fqdn" {
   value       = var.create_grafana_record ? "${var.grafana_subdomain}.${var.domain_name}" : null
 }
 
-output "sonarqube_fqdn" {
-  description = "Full domain name for SonarQube"
-  value       = var.create_sonarqube_record ? "${var.sonarqube_subdomain}.${var.domain_name}" : null
-}
-
 output "cloudflare_records" {
   description = "Map of all created Cloudflare records"
   value = {
@@ -25,11 +20,6 @@ output "cloudflare_records" {
       name = cloudflare_record.grafana[0].name
       fqdn = cloudflare_record.grafana[0].name
       type = cloudflare_record.grafana[0].type
-    } : null
-    sonarqube = var.create_sonarqube_record ? {
-      name = cloudflare_record.sonarqube[0].name
-      fqdn = cloudflare_record.sonarqube[0].name
-      type = cloudflare_record.sonarqube[0].type
     } : null
   }
 }

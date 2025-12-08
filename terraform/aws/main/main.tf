@@ -277,14 +277,6 @@ module "cognito" {
   grafana_logout_urls = [
     "https://grafana.${var.domain_name}"
   ]
-
-  # Configurações SonarQube OIDC
-  sonarqube_callback_urls = [
-    "https://sonar.${var.domain_name}/oauth2/callback/oidc"
-  ]
-  sonarqube_logout_urls = [
-    "https://sonar.${var.domain_name}"
-  ]
 }
 
 # Módulo ArgoCD com autenticação Cognito
@@ -339,10 +331,6 @@ module "dns" {
   # Configurações Grafana
   create_grafana_record = true
   grafana_subdomain     = "grafana"
-
-  # Configurações SonarQube
-  create_sonarqube_record = true
-  sonarqube_subdomain     = "sonar"
 
   # DNS Settings
   proxied = true
