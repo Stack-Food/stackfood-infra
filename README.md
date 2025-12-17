@@ -215,7 +215,28 @@ module "cognito" {
 
 ## 🐳 Kubernetes & GitOps
 
-### 📦 **Aplicações**
+### � **ArgoCD - Automação de Deployments**
+
+Este projeto usa **ArgoCD** para GitOps, permitindo automação completa de deployments. Adicione um arquivo YAML e o Terraform cria a Application automaticamente.
+
+#### 📝 Como Adicionar Microserviço
+
+```bash
+# 1. Copiar template
+cd terraform/aws/modules/kubernetes/argocd/applications/
+cp application-template.yaml payment.yaml
+
+# 2. Editar valores (name, path, namespace)
+
+# 3. Aplicar
+terraform apply -var-file=../env/prod.tfvars
+```
+
+**Pronto!** O ArgoCD detecta e implanta automaticamente.
+
+📖 **Documentação completa:** [ArgoCD Guide](docs/ARGOCD-GUIDE.md)
+
+### �📦 **Aplicações**
 
 #### 🎯 **StackFood API**
 
@@ -251,6 +272,7 @@ resources:
 ```
 
 ### 🌐 **Ingress & Load Balancing**
+
 ```yaml
 # NGINX Ingress configurado para:
 annotations:
