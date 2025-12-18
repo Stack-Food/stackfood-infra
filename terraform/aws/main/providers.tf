@@ -24,7 +24,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket  = "stackfood-tfstate-soat04"
+    bucket  = "stackfood-tfstate-soat05"
     key     = "terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
