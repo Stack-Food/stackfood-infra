@@ -157,7 +157,7 @@ resource "aws_appautoscaling_policy" "write" {
 
 # CloudWatch Alarms
 resource "aws_cloudwatch_metric_alarm" "read_throttle" {
-  count = var.create_alarms ? 1 : 0
+  count = var.create_alarms == true ? 1 : 0
 
   alarm_name          = "${var.table_name}-read-throttle"
   comparison_operator = "GreaterThanThreshold"
@@ -183,7 +183,7 @@ resource "aws_cloudwatch_metric_alarm" "read_throttle" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "write_throttle" {
-  count = var.create_alarms ? 1 : 0
+  count = var.create_alarms == true ? 1 : 0
 
   alarm_name          = "${var.table_name}-write-throttle"
   comparison_operator = "GreaterThanThreshold"
