@@ -166,6 +166,80 @@ variable "rds_instances" {
 }
 
 ######################
+# DynamoDB Configuration #
+######################
+
+variable "dynamodb_tables" {
+  description = "Map of DynamoDB tables to create"
+  type = map(object({
+    hash_key                       = string
+    range_key                      = optional(string)
+    billing_mode                   = optional(string)
+    read_capacity                  = optional(number)
+    write_capacity                 = optional(number)
+    stream_enabled                 = optional(bool)
+    stream_view_type               = optional(string)
+    ttl_enabled                    = optional(bool)
+    ttl_attribute_name             = optional(string)
+    point_in_time_recovery_enabled = optional(bool)
+    encryption_enabled             = optional(bool)
+    kms_key_arn                    = optional(string)
+    table_class                    = optional(string)
+    autoscaling_enabled            = optional(bool)
+    autoscaling_read_max_capacity  = optional(number)
+    autoscaling_write_max_capacity = optional(number)
+    autoscaling_read_target_value  = optional(number)
+    autoscaling_write_target_value = optional(number)
+    create_alarms                  = optional(bool)
+    alarm_read_throttle_threshold  = optional(number)
+    alarm_write_throttle_threshold = optional(number)
+
+    attributes = list(object({
+      name = string
+      type = string
+    }))
+
+    global_secondary_indexes = optional(list(object({
+      name               = string
+      hash_key           = string
+      range_key          = optional(string)
+      projection_type    = string
+      non_key_attributes = optional(list(string))
+      read_capacity      = optional(number)
+      write_capacity     = optional(number)
+    })))
+
+    local_secondary_indexes = optional(list(object({
+      name               = string
+      range_key          = string
+      projection_type    = string
+      non_key_attributes = optional(list(string))
+    })))
+  }))
+  default = {}
+}
+
+######################
+# SQS Configuration #
+######################
+
+variable "sqs_queues" {
+  description = "Map of SQS queues to create"
+  type        = any
+  default     = {}
+}
+
+######################
+# SNS Configuration #
+######################
+
+variable "sns_topics" {
+  description = "Map of SNS topics to create"
+  type        = any
+  default     = {}
+}
+
+######################
 # Lambda Configuration #
 ######################
 

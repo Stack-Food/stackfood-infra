@@ -163,6 +163,135 @@ module "rds" {
   deletion_protection          = lookup(each.value, "deletion_protection", false)
 }
 
+# DynamoDB Tables
+module "dynamodb" {
+  source   = "../modules/dynamodb/"
+  for_each = var.dynamodb_tables
+
+  # General Settings
+  table_name  = each.key
+  environment = var.environment
+  tags        = var.tags
+
+  # Table Keys
+  hash_key  = each.value.hash_key
+  range_key = lookup(each.value, "range_key", null)
+
+  # Attributes
+  attributes = each.value.attributes
+
+  # Billing Mode
+  billing_mode   = lookup(each.value, "billing_mode", "PAY_PER_REQUEST")
+  read_capacity  = lookup(each.value, "read_capacity", 5)
+  write_capacity = lookup(each.value, "write_capacity", 5)
+
+  # Streams
+  stream_enabled   = lookup(each.value, "stream_enabled", false)
+  stream_view_type = lookup(each.value, "stream_view_type", "NEW_AND_OLD_IMAGES")
+
+  # TTL
+  ttl_enabled        = lookup(each.value, "ttl_enabled", false)
+  ttl_attribute_name = lookup(each.value, "ttl_attribute_name", "ttl")
+
+  # Point-in-time Recovery
+  point_in_time_recovery_enabled = lookup(each.value, "point_in_time_recovery_enabled", true)
+
+  # Encryption
+  encryption_enabled = lookup(each.value, "encryption_enabled", true)
+  kms_key_arn        = lookup(each.value, "kms_key_arn", null)
+
+  # Table Class
+  table_class = lookup(each.value, "table_class", "STANDARD")
+
+  # Global Secondary Indexes
+  global_secondary_indexes = lookup(each.value, "global_secondary_indexes", [])
+
+  # Local Secondary Indexes
+  local_secondary_indexes = lookup(each.value, "local_secondary_indexes", [])
+
+  # Autoscaling
+  autoscaling_enabled            = lookup(each.value, "autoscaling_enabled", false)
+  autoscaling_read_max_capacity  = lookup(each.value, "autoscaling_read_max_capacity", 100)
+  autoscaling_write_max_capacity = lookup(each.value, "autoscaling_write_max_capacity", 100)
+  autoscaling_read_target_value  = lookup(each.value, "autoscaling_read_target_value", 70)
+  autoscaling_write_target_value = lookup(each.value, "autoscaling_write_target_value", 70)
+
+  # CloudWatch Alarms
+  create_alarms                  = lookup(each.value, "create_alarms", false)
+  alarm_read_throttle_threshold  = lookup(each.value, "alarm_read_throttle_threshold", 10)
+  alarm_write_throttle_threshold = lookup(each.value, "alarm_write_throttle_threshold", 10)
+}
+
+# SQS Queues
+module "sqs" {
+  source   = "../modules/sqs/"
+  for_each = var.sqs_queues
+
+  # General Settings
+  queue_name = each.key
+  tags       = merge(var.tags, lookup(each.value, "tags", {}))
+
+  # Queue Configuration
+  fifo_queue                  = lookup(each.value, "fifo_queue", false)
+  content_based_deduplication = lookup(each.value, "content_based_deduplication", false)
+  deduplication_scope         = lookup(each.value, "deduplication_scope", null)
+  fifo_throughput_limit       = lookup(each.value, "fifo_throughput_limit", null)
+
+  # Message Settings
+  delay_seconds              = lookup(each.value, "delay_seconds", 0)
+  max_message_size           = lookup(each.value, "max_message_size", 262144)
+  message_retention_seconds  = lookup(each.value, "message_retention_seconds", 345600)
+  receive_wait_time_seconds  = lookup(each.value, "receive_wait_time_seconds", 0)
+  visibility_timeout_seconds = lookup(each.value, "visibility_timeout_seconds", 30)
+
+  # Encryption
+  sqs_managed_sse_enabled = lookup(each.value, "sqs_managed_sse_enabled", true)
+  kms_master_key_id       = lookup(each.value, "kms_master_key_id", null)
+
+  # Policies
+  policy               = lookup(each.value, "policy", null)
+  redrive_allow_policy = lookup(each.value, "redrive_allow_policy", null)
+
+  # Dead Letter Queue
+  create_dlq        = lookup(each.value, "create_dlq", false)
+  dlq_name          = lookup(each.value, "dlq_name", null)
+  max_receive_count = lookup(each.value, "max_receive_count", 5)
+  dlq_config        = lookup(each.value, "dlq_config", {})
+
+  # Default Policy
+  create_default_policy = lookup(each.value, "create_default_policy", false)
+}
+
+# SNS Topics
+module "sns" {
+  source   = "../modules/sns/"
+  for_each = var.sns_topics
+
+  # General Settings
+  topic_name = each.key
+  tags       = merge(var.tags, lookup(each.value, "tags", {}))
+
+  # Topic Configuration
+  fifo_topic                  = lookup(each.value, "fifo_topic", false)
+  content_based_deduplication = lookup(each.value, "content_based_deduplication", false)
+  display_name                = lookup(each.value, "display_name", null)
+
+  # Encryption
+  kms_master_key_id = lookup(each.value, "kms_master_key_id", null)
+
+  # Policies
+  topic_policy    = lookup(each.value, "topic_policy", null)
+  delivery_policy = lookup(each.value, "delivery_policy", null)
+
+  # Subscriptions
+  sqs_subscriptions   = lookup(each.value, "sqs_subscriptions", {})
+  email_subscriptions = lookup(each.value, "email_subscriptions", [])
+  https_subscriptions = lookup(each.value, "https_subscriptions", {})
+
+  # Dependencies - garantir que as filas SQS sejam criadas antes das subscriptions
+  depends_on = [module.sqs]
+}
+
 # NGINX Ingress
 module "nginx-ingress" {
   source     = "../modules/kubernetes/nginx-ingress"
