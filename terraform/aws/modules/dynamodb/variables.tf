@@ -70,7 +70,7 @@ variable "stream_view_type" {
   default     = "NEW_AND_OLD_IMAGES"
 
   validation {
-    condition = contains([
+    condition = var.stream_view_type == null || contains([
       "KEYS_ONLY",
       "NEW_IMAGE",
       "OLD_IMAGE",

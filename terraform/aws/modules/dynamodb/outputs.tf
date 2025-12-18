@@ -54,12 +54,12 @@ output "write_capacity" {
 
 output "global_secondary_indexes" {
   description = "List of global secondary index names"
-  value       = [for gsi in var.global_secondary_indexes : gsi.name]
+  value       = var.global_secondary_indexes != null ? [for gsi in var.global_secondary_indexes : gsi.name] : []
 }
 
 output "local_secondary_indexes" {
   description = "List of local secondary index names"
-  value       = [for lsi in var.local_secondary_indexes : lsi.name]
+  value       = var.local_secondary_indexes != null ? [for lsi in var.local_secondary_indexes : lsi.name] : []
 }
 
 output "point_in_time_recovery_enabled" {
