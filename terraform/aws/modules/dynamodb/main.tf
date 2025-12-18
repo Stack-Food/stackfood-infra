@@ -49,7 +49,7 @@ resource "aws_dynamodb_table" "this" {
 
   # Global Secondary Indexes
   dynamic "global_secondary_index" {
-    for_each = var.global_secondary_indexes
+    for_each = var.global_secondary_indexes != null ? var.global_secondary_indexes : []
     content {
       name               = global_secondary_index.value.name
       hash_key           = global_secondary_index.value.hash_key
@@ -63,7 +63,7 @@ resource "aws_dynamodb_table" "this" {
 
   # Local Secondary Indexes
   dynamic "local_secondary_index" {
-    for_each = var.local_secondary_indexes
+    for_each = var.local_secondary_indexes != null ? var.local_secondary_indexes : []
     content {
       name               = local_secondary_index.value.name
       range_key          = local_secondary_index.value.range_key
@@ -74,7 +74,7 @@ resource "aws_dynamodb_table" "this" {
 
   # Replica configurations (for global tables)
   dynamic "replica" {
-    for_each = var.replica_regions
+    for_each = var.replica_regions != null ? var.replica_regions : []
     content {
       region_name            = replica.value.region_name
       kms_key_arn            = lookup(replica.value, "kms_key_arn", null)
