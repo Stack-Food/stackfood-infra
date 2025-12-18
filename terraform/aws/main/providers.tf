@@ -7,11 +7,11 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.3"
+      version = "~> 3.0"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0.2"
+      version = "~> 3.0"
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
