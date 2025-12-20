@@ -480,7 +480,7 @@ sqs_queues = {
     create_default_policy       = true
 
     allowed_sns_topic_names = [
-      "stackfood-sns-orders-completed"
+      "stackfood-sns-orders-completed-topic"
     ]
 
     create_dlq        = true
