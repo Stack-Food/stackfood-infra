@@ -353,7 +353,7 @@ monitoring_namespace = "monitoring"
 ############
 sqs_queues = {
   # Orders API Queue
-  "stackfood-sqs-orders-queue" = {
+  "stackfood-sqs-orders-created-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -368,7 +368,59 @@ sqs_queues = {
 
     # DLQ Configuration
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-orders-dlq"
+    dlq_name          = "stackfood-sqs-orders-created-dlq"
+    max_receive_count = 5
+
+    # Custom DLQ Configuration Object 
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "orders"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "orders"
+    }
+  },
+
+  "stackfood-sqs-orders-cancelled-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    # DLQ Configuration
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-orders-cancelled-dlq"
     max_receive_count = 5
 
     # Custom DLQ Configuration Object 
@@ -406,7 +458,7 @@ sqs_queues = {
   }
 
   # Payments API Queue
-  "stackfood-sqs-payments-queue" = {
+  "stackfood-sqs-orders-completed-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -420,7 +472,7 @@ sqs_queues = {
     create_default_policy       = true
 
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-payments-dlq"
+    dlq_name          = "stackfood-sqs-orders-completed-dlq"
     max_receive_count = 5
 
     dlq_config = {
@@ -443,7 +495,7 @@ sqs_queues = {
 
       tags = {
         ManagedBy = "Terraform"
-        API       = "payments"
+        API       = "Orders"
       }
     }
 
@@ -571,12 +623,12 @@ create_ecs_cluster = false
 ############
 sns_topics = {
   # Orders API Topic
-  "stackfood-sns-orders-topic" = {
+  "stackfood-sns-orders-created" = {
     fifo_topic   = false
-    display_name = "StackFood Orders Events"
+    display_name = "StackFood Orders Created Events"
 
     sqs_subscriptions = {
-      "stackfood-sqs-orders-queue" = {
+      "stackfood-sqs-orders-created-queue" = {
         raw_message_delivery = false
       }
     }
@@ -587,37 +639,37 @@ sns_topics = {
     }
   }
 
-  # Payments API Topic
-  "stackfood-sns-payments-topic" = {
+  # Orders Canceled API Topic
+  "stackfood-sns-orders-cancelled" = {
     fifo_topic   = false
-    display_name = "StackFood Payments Events"
+    display_name = "StackFood Orders Cancelled Events"
 
     sqs_subscriptions = {
-      "stackfood-sqs-payments-queue" = {
+      "stackfood-sqs-orders-cancelled-queue" = {
         raw_message_delivery = false
       }
     }
 
     tags = {
       ManagedBy = "Terraform"
-      API       = "payments"
+      API       = "orders"
     }
   }
 
-  # Products API Topic
-  "stackfood-sns-products-topic" = {
+  # Order Completed API Topic
+  "stackfood-sns-orders-completed-topic" = {
     fifo_topic   = false
-    display_name = "StackFood Products Events"
+    display_name = "StackFood Orders Completed Events"
 
     sqs_subscriptions = {
-      "stackfood-sqs-products-queue" = {
+      "stackfood-sqs-orders-completed-queue" = {
         raw_message_delivery = false
       }
     }
 
     tags = {
       ManagedBy = "Terraform"
-      API       = "products"
+      API       = "orders"
     }
   }
 
