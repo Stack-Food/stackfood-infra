@@ -224,43 +224,42 @@ module "dynamodb" {
 
 # SQS Queues
 module "sqs" {
-  source   = "../modules/sqs/"
   for_each = var.sqs_queues
 
-  # General Settings
-  queue_name = each.key
-  tags       = merge(var.tags, lookup(each.value, "tags", {}))
+  source                            = "../modules/sqs"
+  queue_name                        = each.key
+  queue_name_prefix                 = try(each.value.queue_name_prefix, null)
+  fifo_queue                        = try(each.value.fifo_queue, false)
+  content_based_deduplication       = try(each.value.content_based_deduplication, true)
+  deduplication_scope               = try(each.value.deduplication_scope, null)
+  delay_seconds                     = try(each.value.delay_seconds, null)
+  fifo_throughput_limit             = try(each.value.fifo_throughput_limit, null)
+  kms_master_key_id                 = try(each.value.kms_master_key_id, null)
+  kms_data_key_reuse_period_seconds = try(each.value.kms_data_key_reuse_period_seconds, null)
+  max_message_size                  = try(each.value.max_message_size, 262144)
+  message_retention_seconds         = try(each.value.message_retention_seconds, null)
+  receive_wait_time_seconds         = try(each.value.receive_wait_time_seconds, null)
+  visibility_timeout_seconds        = try(each.value.visibility_timeout_seconds, null)
+  redrive_allow_policy              = try(each.value.redrive_allow_policy, null)
+  redrive_policy                    = try(each.value.redrive_policy, null)
+  sqs_managed_sse_enabled           = try(each.value.sqs_managed_sse_enabled, false)
+  tags                              = try(each.value.tags, {})
+  enable_backup_tagging             = try(each.value.enable_backup_tagging, false)
 
-  # Queue Configuration
-  fifo_queue                  = lookup(each.value, "fifo_queue", false)
-  content_based_deduplication = lookup(each.value, "content_based_deduplication", false)
-  deduplication_scope         = lookup(each.value, "deduplication_scope", null)
-  fifo_throughput_limit       = lookup(each.value, "fifo_throughput_limit", null)
+  # Policy configuration
+  create_default_policy         = try(each.value.create_default_policy, true)
+  policy                        = try(each.value.policy, null)
+  allowed_sns_topic_names       = try(each.value.allowed_sns_topic_names, [])
+  allowed_lambda_function_names = try(each.value.allowed_lambda_function_names, [])
 
-  # Message Settings
-  delay_seconds              = lookup(each.value, "delay_seconds", 0)
-  max_message_size           = lookup(each.value, "max_message_size", 262144)
-  message_retention_seconds  = lookup(each.value, "message_retention_seconds", 345600)
-  receive_wait_time_seconds  = lookup(each.value, "receive_wait_time_seconds", 0)
-  visibility_timeout_seconds = lookup(each.value, "visibility_timeout_seconds", 30)
-
-  # Encryption
-  sqs_managed_sse_enabled = lookup(each.value, "sqs_managed_sse_enabled", true)
-  kms_master_key_id       = lookup(each.value, "kms_master_key_id", null)
-
-  # Policies
-  policy               = lookup(each.value, "policy", null)
-  redrive_allow_policy = lookup(each.value, "redrive_allow_policy", null)
-
-  # Dead Letter Queue
-  create_dlq        = lookup(each.value, "create_dlq", false)
-  dlq_name          = lookup(each.value, "dlq_name", null)
-  max_receive_count = lookup(each.value, "max_receive_count", 5)
-  dlq_config        = lookup(each.value, "dlq_config", {})
-
-  # Default Policy
-  create_default_policy = lookup(each.value, "create_default_policy", false)
+  # Dead Letter Queue configuration
+  create_dlq                    = try(each.value.create_dlq, false)
+  dlq_name                      = try(each.value.dlq_name, null)
+  max_receive_count             = try(each.value.max_receive_count, null)
+  dlq_message_retention_seconds = try(each.value.dlq_message_retention_seconds, null)
+  dlq_config                    = try(each.value.dlq_config, null)
 }
+
 
 # SNS Topics
 module "sns" {

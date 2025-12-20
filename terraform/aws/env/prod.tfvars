@@ -366,6 +366,10 @@ sqs_queues = {
     sqs_managed_sse_enabled     = true
     create_default_policy       = true
 
+    allowed_sns_topic_names = [
+      "stackfood-sns-orders-created"
+    ]
+
     # DLQ Configuration
     create_dlq        = true
     dlq_name          = "stackfood-sqs-orders-created-dlq"
@@ -417,6 +421,10 @@ sqs_queues = {
     receive_wait_time_seconds   = 5
     sqs_managed_sse_enabled     = true
     create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-orders-cancelled"
+    ]
 
     # DLQ Configuration
     create_dlq        = true
@@ -471,6 +479,10 @@ sqs_queues = {
     sqs_managed_sse_enabled     = true
     create_default_policy       = true
 
+    allowed_sns_topic_names = [
+      "stackfood-sns-orders-completed"
+    ]
+
     create_dlq        = true
     dlq_name          = "stackfood-sqs-orders-completed-dlq"
     max_receive_count = 5
@@ -521,6 +533,10 @@ sqs_queues = {
     receive_wait_time_seconds   = 5
     sqs_managed_sse_enabled     = true
     create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-production-topic"
+    ]
 
     create_dlq        = true
     dlq_name          = "stackfood-sqs-products-dlq"
@@ -573,6 +589,10 @@ sqs_queues = {
     sqs_managed_sse_enabled     = true
     create_default_policy       = true
 
+    allowed_sns_topic_names = [
+      "stackfood-sns-production-topic"
+    ]
+
     create_dlq        = true
     dlq_name          = "stackfood-sqs-production-dlq"
     max_receive_count = 5
@@ -622,6 +642,10 @@ sqs_queues = {
     receive_wait_time_seconds   = 5
     sqs_managed_sse_enabled     = true
     create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-payments-topic"
+    ]
 
     create_dlq        = true
     dlq_name          = "stackfood-sqs-payments-dlq"
