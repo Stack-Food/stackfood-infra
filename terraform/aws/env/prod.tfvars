@@ -608,7 +608,7 @@ sqs_queues = {
       ManagedBy = "Terraform"
       API       = "production"
     }
-  }.
+  }
 
   "stackfood-sqs-payments-queue" = {
     fifo_queue                  = false
