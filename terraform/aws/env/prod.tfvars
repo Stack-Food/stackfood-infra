@@ -608,6 +608,56 @@ sqs_queues = {
       ManagedBy = "Terraform"
       API       = "production"
     }
+  }.
+
+  "stackfood-sqs-payments-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-payments-dlq"
+    max_receive_count = 5
+
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "payments"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "products"
+    }
   }
 }
 
@@ -687,6 +737,23 @@ sns_topics = {
     tags = {
       ManagedBy = "Terraform"
       API       = "production"
+    }
+  }
+
+  # Payments API Topic
+  "stackfood-sns-payments-topic" = {
+    fifo_topic   = false
+    display_name = "StackFood payments Events"
+
+    sqs_subscriptions = {
+      "stackfood-sqs-payments-queue" = {
+        raw_message_delivery = false
+      }
+    }
+
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "payments"
     }
   }
 }
