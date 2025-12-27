@@ -219,17 +219,17 @@ output "configmap_values" {
       "AWS__SNS__CustomerEventsTopicArn" = module.sns["stackfood-customer-events"].topic_arn
     }
     orders = {
-      "AWS__SNS__OrderCreatedTopicArn"      = module.sns["stackfood-order-events"].topic_arn
-      "AWS__SQS__PaymentEventsQueueUrl"     = module.sqs["stackfood-order-payment-events-queue"].queue_url
-      "AWS__SQS__ProductionEventsQueueUrl"  = module.sqs["stackfood-order-production-events-queue"].queue_url
+      "AWS__SNS__OrderCreatedTopicArn"     = module.sns["stackfood-order-events"].topic_arn
+      "AWS__SQS__PaymentEventsQueueUrl"    = module.sqs["stackfood-order-payment-events-queue"].queue_url
+      "AWS__SQS__ProductionEventsQueueUrl" = module.sqs["stackfood-order-production-events-queue"].queue_url
     }
     payments = {
       "AWS__SNS__PaymentEventsTopicArn" = module.sns["stackfood-payment-events"].topic_arn
       "AWS__SQS__OrderEventsQueueUrl"   = module.sqs["stackfood-payment-events-queue"].queue_url
     }
     production = {
-      "AWS__SNS__TopicArn"   = module.sns["stackfood-production-events"].topic_arn
-      "AWS__SQS__QueueUrl"   = module.sqs["stackfood-production-events-queue"].queue_url
+      "AWS__SNS__TopicArn" = module.sns["stackfood-production-events"].topic_arn
+      "AWS__SQS__QueueUrl" = module.sqs["stackfood-production-events-queue"].queue_url
     }
   }
 }
