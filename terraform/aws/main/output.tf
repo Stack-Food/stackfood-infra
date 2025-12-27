@@ -118,3 +118,118 @@ output "monitoring_setup" {
     }
   }
 }
+
+# ============================================
+# Messaging Infrastructure Outputs
+# ============================================
+
+output "sns_topics" {
+  description = "SNS topics created for event-driven architecture"
+  value = {
+    for topic_name, topic in module.sns : topic_name => {
+      topic_arn  = topic.topic_arn
+      topic_name = topic.topic_name
+      topic_id   = topic.topic_id
+    }
+  }
+}
+
+output "sqs_queues" {
+  description = "SQS queues created for event-driven architecture"
+  value = {
+    for queue_name, queue in module.sqs : queue_name => {
+      queue_url  = queue.queue_url
+      queue_arn  = queue.queue_arn
+      queue_name = queue.queue_name
+      dlq_url    = queue.dlq_url
+      dlq_arn    = queue.dlq_arn
+    }
+  }
+}
+
+output "messaging_summary" {
+  description = "Complete summary of messaging infrastructure for microservices"
+  value = {
+    customers = {
+      publishes_to = [
+        {
+          topic_name = "stackfood-customer-events"
+          topic_arn  = module.sns["stackfood-customer-events"].topic_arn
+        }
+      ]
+      consumes_from = []
+    }
+    orders = {
+      publishes_to = [
+        {
+          topic_name = "stackfood-order-events"
+          topic_arn  = module.sns["stackfood-order-events"].topic_arn
+        }
+      ]
+      consumes_from = [
+        {
+          queue_name = "stackfood-order-payment-events-queue"
+          queue_url  = module.sqs["stackfood-order-payment-events-queue"].queue_url
+          source     = "payment-events"
+        },
+        {
+          queue_name = "stackfood-order-production-events-queue"
+          queue_url  = module.sqs["stackfood-order-production-events-queue"].queue_url
+          source     = "production-events"
+        }
+      ]
+    }
+    payments = {
+      publishes_to = [
+        {
+          topic_name = "stackfood-payment-events"
+          topic_arn  = module.sns["stackfood-payment-events"].topic_arn
+        }
+      ]
+      consumes_from = [
+        {
+          queue_name = "stackfood-payment-events-queue"
+          queue_url  = module.sqs["stackfood-payment-events-queue"].queue_url
+          source     = "order-events"
+        }
+      ]
+    }
+    production = {
+      publishes_to = [
+        {
+          topic_name = "stackfood-production-events"
+          topic_arn  = module.sns["stackfood-production-events"].topic_arn
+        }
+      ]
+      consumes_from = [
+        {
+          queue_name = "stackfood-production-events-queue"
+          queue_url  = module.sqs["stackfood-production-events-queue"].queue_url
+          source     = "order-events"
+        }
+      ]
+    }
+  }
+}
+
+output "configmap_values" {
+  description = "Values to update in Kubernetes ConfigMaps for each microservice"
+  value = {
+    customers = {
+      "AWS__SNS__CustomerEventsTopicArn" = module.sns["stackfood-customer-events"].topic_arn
+    }
+    orders = {
+      "AWS__SNS__OrderCreatedTopicArn"      = module.sns["stackfood-order-events"].topic_arn
+      "AWS__SQS__PaymentEventsQueueUrl"     = module.sqs["stackfood-order-payment-events-queue"].queue_url
+      "AWS__SQS__ProductionEventsQueueUrl"  = module.sqs["stackfood-order-production-events-queue"].queue_url
+    }
+    payments = {
+      "AWS__SNS__PaymentEventsTopicArn" = module.sns["stackfood-payment-events"].topic_arn
+      "AWS__SQS__OrderEventsQueueUrl"   = module.sqs["stackfood-payment-events-queue"].queue_url
+    }
+    production = {
+      "AWS__SNS__TopicArn"   = module.sns["stackfood-production-events"].topic_arn
+      "AWS__SQS__QueueUrl"   = module.sqs["stackfood-production-events-queue"].queue_url
+    }
+  }
+}

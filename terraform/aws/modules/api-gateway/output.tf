@@ -84,3 +84,71 @@ output "nlb_zone_id" {
   description = "The zone ID of the NGINX Ingress NLB"
   value       = length(data.aws_lb.eks_nlb) > 0 ? data.aws_lb.eks_nlb[0].zone_id : null
 }
+
+# ============================================
+# Microservices Routes Outputs
+# ============================================
+
+output "microservices_routes" {
+  description = "Map of microservices routes and their endpoints"
+  value = {
+    customers = {
+      path      = "/customers"
+      port      = 8084
+      namespace = "customers"
+      service   = "stackfood-customers"
+      url       = "${aws_api_gateway_stage.dev.invoke_url}/customers"
+    }
+    products = {
+      path      = "/products"
+      port      = 8080
+      namespace = "products"
+      service   = "stackfood-products"
+      url       = "${aws_api_gateway_stage.dev.invoke_url}/products"
+    }
+    orders = {
+      path      = "/orders"
+      port      = 8081
+      namespace = "orders"
+      service   = "stackfood-orders"
+      url       = "${aws_api_gateway_stage.dev.invoke_url}/orders"
+    }
+    payments = {
+      path      = "/payments"
+      port      = 8082
+      namespace = "payments"
+      service   = "stackfood-payments"
+      url       = "${aws_api_gateway_stage.dev.invoke_url}/payments"
+    }
+    production = {
+      path      = "/production"
+      port      = 8083
+      namespace = "production"
+      service   = "stackfood-production"
+      url       = "${aws_api_gateway_stage.dev.invoke_url}/production"
+    }
+  }
+}
+
+output "api_routes_summary" {
+  description = "Summary of all API Gateway routes"
+  value = {
+    base_url = aws_api_gateway_stage.dev.invoke_url
+    custom_domain = var.custom_domain_name != "" ? "https://${var.custom_domain_name}" : null
+    routes = {
+      lambda = {
+        auth     = "/auth"
+        customer = "/customer"
+      }
+      microservices = {
+        customers  = "/customers/{proxy+}"
+        products   = "/products/{proxy+}"
+        orders     = "/orders/{proxy+}"
+        payments   = "/payments/{proxy+}"
+        production = "/production/{proxy+}"
+      }
+    }
+    vpc_link_enabled = true
+    vpc_link_id      = aws_api_gateway_vpc_link.eks.id
+  }
+}
