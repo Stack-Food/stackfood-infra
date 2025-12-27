@@ -15,4 +15,15 @@ patchesStrategicMerge:
 
 images:
   - name: ghcr.io/stack-food/stackfood-api/worker
-    newTag: master
+    newTag: latest
+
+# Labels comuns para todos os recursos
+commonLabels:
+  app.kubernetes.io/name: stackfood-worker
+  app.kubernetes.io/part-of: stackfood
+  app.kubernetes.io/component: worker
+  app.kubernetes.io/managed-by: argocd
+
+# Annotations comuns
+commonAnnotations:
+  app.kubernetes.io/version: "1.0.0"

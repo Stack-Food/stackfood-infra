@@ -148,7 +148,7 @@ module "rds" {
   db_username                 = each.value.db_username
   db_password                 = lookup(each.value, "db_password", null) # Optional password
   manage_master_user_password = false                                   # Secure password management
-  db_name                     = "stackfood"
+  db_name                     = lookup(each.value, "db_name", "stackfood")
   # IAM Role Settings
   rds_role_name = var.rds_role_name
 
@@ -161,6 +161,134 @@ module "rds" {
   multi_az                     = lookup(each.value, "multi_az", false)
   performance_insights_enabled = lookup(each.value, "performance_insights_enabled", false)
   deletion_protection          = lookup(each.value, "deletion_protection", false)
+}
+
+# DynamoDB Tables
+module "dynamodb" {
+  source   = "../modules/dynamodb/"
+  for_each = var.dynamodb_tables
+
+  # General Settings
+  table_name  = each.key
+  environment = var.environment
+  tags        = var.tags
+
+  # Table Keys
+  hash_key  = each.value.hash_key
+  range_key = lookup(each.value, "range_key", null)
+
+  # Attributes
+  attributes = each.value.attributes
+
+  # Billing Mode
+  billing_mode   = lookup(each.value, "billing_mode", "PAY_PER_REQUEST")
+  read_capacity  = lookup(each.value, "read_capacity", 5)
+  write_capacity = lookup(each.value, "write_capacity", 5)
+
+  # Streams
+  stream_enabled   = lookup(each.value, "stream_enabled", false)
+  stream_view_type = lookup(each.value, "stream_view_type", "NEW_AND_OLD_IMAGES")
+
+  # TTL
+  ttl_enabled        = lookup(each.value, "ttl_enabled", false)
+  ttl_attribute_name = lookup(each.value, "ttl_attribute_name", "ttl")
+
+  # Point-in-time Recovery
+  point_in_time_recovery_enabled = lookup(each.value, "point_in_time_recovery_enabled", true)
+
+  # Encryption
+  encryption_enabled = lookup(each.value, "encryption_enabled", true)
+  kms_key_arn        = lookup(each.value, "kms_key_arn", null)
+
+  # Table Class
+  table_class = lookup(each.value, "table_class", "STANDARD")
+
+  # Global Secondary Indexes
+  global_secondary_indexes = lookup(each.value, "global_secondary_indexes", [])
+
+  # Local Secondary Indexes
+  local_secondary_indexes = lookup(each.value, "local_secondary_indexes", [])
+
+  # Autoscaling
+  autoscaling_enabled            = lookup(each.value, "autoscaling_enabled", false)
+  autoscaling_read_max_capacity  = lookup(each.value, "autoscaling_read_max_capacity", 100)
+  autoscaling_write_max_capacity = lookup(each.value, "autoscaling_write_max_capacity", 100)
+  autoscaling_read_target_value  = lookup(each.value, "autoscaling_read_target_value", 70)
+  autoscaling_write_target_value = lookup(each.value, "autoscaling_write_target_value", 70)
+
+  # CloudWatch Alarms
+  create_alarms                  = lookup(each.value, "create_alarms", false)
+  alarm_read_throttle_threshold  = lookup(each.value, "alarm_read_throttle_threshold", 10)
+  alarm_write_throttle_threshold = lookup(each.value, "alarm_write_throttle_threshold", 10)
+}
+
+# SQS Queues
+module "sqs" {
+  for_each = var.sqs_queues
+
+  source                            = "../modules/sqs"
+  queue_name                        = each.key
+  queue_name_prefix                 = try(each.value.queue_name_prefix, null)
+  fifo_queue                        = try(each.value.fifo_queue, false)
+  content_based_deduplication       = try(each.value.content_based_deduplication, true)
+  deduplication_scope               = try(each.value.deduplication_scope, null)
+  delay_seconds                     = try(each.value.delay_seconds, null)
+  fifo_throughput_limit             = try(each.value.fifo_throughput_limit, null)
+  kms_master_key_id                 = try(each.value.kms_master_key_id, null)
+  kms_data_key_reuse_period_seconds = try(each.value.kms_data_key_reuse_period_seconds, null)
+  max_message_size                  = try(each.value.max_message_size, 262144)
+  message_retention_seconds         = try(each.value.message_retention_seconds, null)
+  receive_wait_time_seconds         = try(each.value.receive_wait_time_seconds, null)
+  visibility_timeout_seconds        = try(each.value.visibility_timeout_seconds, null)
+  redrive_allow_policy              = try(each.value.redrive_allow_policy, null)
+  redrive_policy                    = try(each.value.redrive_policy, null)
+  sqs_managed_sse_enabled           = try(each.value.sqs_managed_sse_enabled, false)
+  tags                              = try(each.value.tags, {})
+  enable_backup_tagging             = try(each.value.enable_backup_tagging, false)
+
+  # Policy configuration
+  create_default_policy         = try(each.value.create_default_policy, true)
+  policy                        = try(each.value.policy, null)
+  allowed_sns_topic_names       = try(each.value.allowed_sns_topic_names, [])
+  allowed_lambda_function_names = try(each.value.allowed_lambda_function_names, [])
+
+  # Dead Letter Queue configuration
+  create_dlq                    = try(each.value.create_dlq, false)
+  dlq_name                      = try(each.value.dlq_name, null)
+  max_receive_count             = try(each.value.max_receive_count, null)
+  dlq_message_retention_seconds = try(each.value.dlq_message_retention_seconds, null)
+  dlq_config                    = try(each.value.dlq_config, null)
+}
+
+
+# SNS Topics
+module "sns" {
+  source   = "../modules/sns/"
+  for_each = var.sns_topics
+
+  # General Settings
+  topic_name = each.key
+  tags       = merge(var.tags, lookup(each.value, "tags", {}))
+
+  # Topic Configuration
+  fifo_topic                  = lookup(each.value, "fifo_topic", false)
+  content_based_deduplication = lookup(each.value, "content_based_deduplication", false)
+  display_name                = lookup(each.value, "display_name", null)
+
+  # Encryption
+  kms_master_key_id = lookup(each.value, "kms_master_key_id", null)
+
+  # Policies
+  topic_policy    = lookup(each.value, "topic_policy", null)
+  delivery_policy = lookup(each.value, "delivery_policy", null)
+
+  # Subscriptions
+  sqs_subscriptions   = lookup(each.value, "sqs_subscriptions", {})
+  email_subscriptions = lookup(each.value, "email_subscriptions", [])
+  https_subscriptions = lookup(each.value, "https_subscriptions", {})
+
+  # Dependencies - garantir que as filas SQS sejam criadas antes das subscriptions
+  depends_on = [module.sqs]
 }
 
 # NGINX Ingress
@@ -251,5 +379,153 @@ module "cognito" {
   user_pool_name = "stackfood"
   environment    = var.environment
 
+  # Configurações do usuário convidado
+  create_guest_user   = true
   guest_user_password = "Convidado123!"
+
+  # Configurações do administrador
+  stackfood_admin_password = var.argocd_admin_password
+
+  # Configurações dos usuários da equipe
+  team_users          = var.team_users
+  team_users_password = var.argocd_team_password
+
+  # Configurações ArgoCD OIDC
+  argocd_callback_urls = [
+    "https://argo.${var.domain_name}/auth/callback"
+  ]
+  argocd_logout_urls = [
+    "https://argo.${var.domain_name}"
+  ]
+
+  # Configurações Grafana OIDC
+  grafana_callback_urls = [
+    "https://grafana.${var.domain_name}/login/generic_oauth"
+  ]
+  grafana_logout_urls = [
+    "https://grafana.${var.domain_name}"
+  ]
+}
+
+# Módulo ArgoCD com autenticação Cognito
+module "argocd" {
+  source = "../modules/kubernetes/argocd/"
+
+  # Configurações básicas
+  domain_name      = var.domain_name
+  argocd_subdomain = "argo"
+  environment      = var.environment
+  chart_version    = "4.5.2"
+
+  # Configurações Cognito - USANDO O USER POOL ARGOCD DO MÓDULO UNIFICADO
+  cognito_user_pool_id      = module.cognito.argocd_user_pool_id
+  cognito_client_id         = module.cognito.argocd_client_id
+  cognito_client_issuer_url = module.cognito.argocd_issuer_url
+  cognito_client_secret     = module.cognito.argocd_client_secret
+  cognito_region            = data.aws_region.current.region
+  user_pool_name            = module.cognito.argocd_user_pool_name
+
+  # Configurações de grupos
+  admin_group_name    = "argocd-admin"
+  readonly_group_name = "argocd-readonly"
+
+  # Certificado SSL (opcional)
+  certificate_arn = module.acm.certificate_arn
+
+  # Tags
+  tags = var.tags
+
+  depends_on = [
+    module.cognito,
+    module.dns,
+    module.eks,
+    module.nginx-ingress,
+  ]
+}
+
+module "dns" {
+  source = "../modules/dns/"
+
+  # Configurações básicas
+  cloudflare_zone_id = var.cloudflare_zone_id
+  domain_name        = var.domain_name
+  environment        = var.environment
+  eks_cluster_name   = var.eks_cluster_name
+
+  # Configurações ArgoCD
+  create_argocd_record = true
+  argocd_subdomain     = "argo"
+
+  # Configurações Grafana
+  create_grafana_record = true
+  grafana_subdomain     = "grafana"
+
+  # DNS Settings
+  proxied = true
+  ttl     = 300
+
+  # Tags
+  tags = var.tags
+
+  depends_on = [module.eks, module.nginx-ingress]
+}
+
+# Módulo Grafana com autenticação Cognito
+module "grafana" {
+  source = "../modules/kubernetes/grafana/"
+
+  # Configurações básicas
+  namespace         = "monitoring"
+  domain_name       = var.domain_name
+  grafana_subdomain = "grafana"
+  environment       = var.environment
+  chart_version     = "8.5.2"
+
+  # Configurações Cognito - USANDO O MESMO USER POOL DO ARGOCD
+  cognito_user_pool_id      = module.cognito.user_pool_id
+  cognito_client_id         = module.cognito.grafana_client_id
+  cognito_client_secret     = module.cognito.grafana_client_secret
+  cognito_region            = data.aws_region.current.region
+  cognito_client_issuer_url = module.cognito.grafana_issuer_url
+  user_pool_name            = module.cognito.user_pool_name
+
+  # Configurações de grupos do Cognito
+  admin_group_name        = "grafana"
+  readonly_group_name     = "grafana-readonly"
+  system_admin_group_name = "system-admins"
+
+  # Certificado SSL
+  certificate_arn = module.acm.certificate_arn
+
+  # Configurações do Prometheus
+  prometheus_url               = "http://prometheus-server.monitoring.svc.cluster.local"
+  enable_prometheus_datasource = true
+
+  # ⚠️ Configurações de armazenamento (NÃO USADAS - persistence desabilitada)
+  # Mantidas para compatibilidade, mas não têm efeito enquanto persistence: false
+  # Quando EBS CSI Driver for habilitado, essas configurações voltarão a ser usadas
+  storage_size  = "10Gi"
+  storage_class = "gp2"
+
+  # Configurações de recursos
+  grafana_resources = {
+    requests = {
+      cpu    = "100m"
+      memory = "128Mi"
+    }
+    limits = {
+      cpu    = "500m"
+      memory = "512Mi"
+    }
+  }
+
+  # Tags
+  tags = var.tags
+
+  depends_on = [
+    module.cognito,
+    module.dns,
+    module.eks,
+    module.nginx-ingress,
+  ]
 }

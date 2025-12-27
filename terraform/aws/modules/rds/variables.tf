@@ -14,8 +14,9 @@ variable "engine" {
 }
 
 variable "engine_version" {
-  description = "The engine version to use"
+  description = "The engine version to use. If not specified, uses the latest available version for the major version."
   type        = string
+  default     = null
 }
 
 variable "instance_class" {

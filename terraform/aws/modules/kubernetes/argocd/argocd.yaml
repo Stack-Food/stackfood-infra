@@ -1,0 +1,55 @@
+global:
+  domain: https://${argocd_subdomain}.${domain_name}
+configs:
+  params:
+    "server.insecure": true
+  cm:
+    create: true
+  rbac:
+    create: true
+    policy.default: ""
+    policy.csv: |
+      # Políticas para grupos do Cognito
+      g, argocd, role:admin
+      g, system-admins, role:admin
+
+      # Políticas para roles
+      p, role:admin, applications, *, */*, allow
+      p, role:admin, clusters, *, *, allow
+      p, role:admin, repositories, *, *, allow
+      p, role:admin, accounts, *, *, allow
+      p, role:admin, certificates, *, *, allow
+      p, role:admin, gpgkeys, *, *, allow
+      p, role:admin, logs, *, *, allow
+      p, role:admin, exec, *, *, allow
+    scopes: "[cognito:groups]"
+repoServer:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+server:
+  config:
+    url: "https://${argocd_subdomain}.${domain_name}"
+    oidc.config: |
+      name: StackFood SSO
+      issuer: ${cognito_client_issuer_url}
+      clientId: ${cognito_client_id}
+      clientSecret: ${cognito_client_secret}
+      redirectUri: https://${argocd_subdomain}.${domain_name}/auth/callback
+      requestedScopes: ["openid", "email", "profile"]
+      groupsClaim: "cognito:groups"
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+      nginx.ingress.kubernetes.io/cors-expose-headers: "*, X-CustomResponseHeader"
+      nlb.ingress.kubernetes.io/scheme: internet-facing
+      nlb.ingress.kubernetes.io/target-type: instance
+      nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
+    hosts:
+      - ${argocd_subdomain}.${domain_name}

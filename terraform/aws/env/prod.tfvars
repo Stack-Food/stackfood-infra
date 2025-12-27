@@ -61,7 +61,7 @@ public_subnets = {
 # EKS Configuration #
 ######################
 eks_cluster_name           = "stackfood-eks"
-kubernetes_version         = "1.33"
+kubernetes_version         = "1.34"
 eks_endpoint_public_access = true
 eks_authentication_mode    = "API_AND_CONFIG_MAP"
 
@@ -91,7 +91,7 @@ rds_instances = {
     db_password                  = "postgres" # Ensure this meets complexity requirements
     manage_master_user_password  = false
     engine                       = "postgres" # Lowercase as required
-    engine_version               = "16.3"     # Updated version
+    engine_version               = "16.10"    # Valid PostgreSQL 16 version
     major_engine_version         = "16"
     identifier                   = "stackfood-postgres"
     publicly_accessible          = true
@@ -270,5 +270,618 @@ cognito_user_pools = {
         }
       }
     ]
+  }
+}
+
+######################
+# ArgoCD Users Configuration #
+######################
+
+# Usuários da equipe StackFood para ArgoCD
+team_users = {
+  "leonardo.duarte" = {
+    name      = "Leonardo Duarte"
+    email     = "leo.duarte.dev@gmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
+  }
+  "luiz.felipe" = {
+    name      = "Luiz Felipe Maia"
+    email     = "luiz.felipeam@hotmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana", "system-admins"]
+  }
+  "leonardo.lemos" = {
+    name      = "Leonardo Luiz Lemos"
+    email     = "leoo_lemos@outlook.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
+  }
+  "rodrigo.silva" = {
+    name      = "Rodrigo Rodriguez Figueiredo de Oliveira Silva"
+    email     = "rodrigorfig1@gmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
+  }
+  "vinicius.targa" = {
+    name      = "Vinicius Targa Gonçalves"
+    email     = "viniciustarga@gmail.com"
+    user_type = "developer"
+    groups    = ["argocd", "grafana"]
+  }
+}
+
+# Senhas para usuários
+argocd_admin_password = "Fiap@2025"
+argocd_team_password  = "StackFood@2025"
+
+
+
+################
+# Grafana Configuration #
+################
+
+# Configurações específicas do Grafana
+grafana_subdomain     = "grafana"
+grafana_storage_size  = "10Gi"
+grafana_storage_class = "gp2"
+
+# Configurações de recursos do Grafana
+grafana_resources = {
+  requests = {
+    cpu    = "100m"
+    memory = "128Mi"
+  }
+  limits = {
+    cpu    = "500m"
+    memory = "512Mi"
+  }
+}
+
+# URL do Prometheus (ajuste conforme sua instalação)
+prometheus_url = "http://prometheus-server.monitoring.svc.cluster.local"
+
+# Habilitar datasource automático do Prometheus
+enable_prometheus_datasource = true
+
+# Namespace para instalação
+monitoring_namespace = "monitoring"
+
+
+############
+### SQS ####
+############
+sqs_queues = {
+  # Orders API Queue
+  "stackfood-sqs-orders-created-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-orders-created"
+    ]
+
+    # DLQ Configuration
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-orders-created-dlq"
+    max_receive_count = 5
+
+    # Custom DLQ Configuration Object 
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "orders"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "orders"
+    }
+  },
+
+  "stackfood-sqs-orders-cancelled-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-orders-cancelled"
+    ]
+
+    # DLQ Configuration
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-orders-cancelled-dlq"
+    max_receive_count = 5
+
+    # Custom DLQ Configuration Object 
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "orders"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "orders"
+    }
+  }
+
+  # Payments API Queue
+  "stackfood-sqs-orders-completed-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-orders-completed-topic"
+    ]
+
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-orders-completed-dlq"
+    max_receive_count = 5
+
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "Orders"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "payments"
+    }
+  }
+
+  # Products API Queue
+  "stackfood-sqs-products-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-production-topic"
+    ]
+
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-products-dlq"
+    max_receive_count = 5
+
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "products"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "products"
+    }
+  }
+
+  # Production API Queue
+  "stackfood-sqs-production-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-production-topic"
+    ]
+
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-production-dlq"
+    max_receive_count = 5
+
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "production"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "production"
+    }
+  }
+
+  "stackfood-sqs-payments-queue" = {
+    fifo_queue                  = false
+    content_based_deduplication = true
+    deduplication_scope         = null
+    fifo_throughput_limit       = null
+    delay_seconds               = 0
+    message_retention_seconds   = 1209600
+    max_message_size            = 262144
+    visibility_timeout_seconds  = 300
+    receive_wait_time_seconds   = 5
+    sqs_managed_sse_enabled     = true
+    create_default_policy       = true
+
+    allowed_sns_topic_names = [
+      "stackfood-sns-payments-topic"
+    ]
+
+    create_dlq        = true
+    dlq_name          = "stackfood-sqs-payments-dlq"
+    max_receive_count = 5
+
+    dlq_config = {
+      delay_seconds              = 0
+      max_message_size           = 262144
+      message_retention_seconds  = 1209600
+      receive_wait_time_seconds  = 0
+      visibility_timeout_seconds = 30
+
+      sqs_managed_sse_enabled           = true
+      kms_master_key_id                 = null
+      kms_data_key_reuse_period_seconds = 300
+
+      content_based_deduplication = false
+      deduplication_scope         = null
+      fifo_throughput_limit       = null
+
+      redrive_allow_policy = null
+      policy               = null
+
+      tags = {
+        ManagedBy = "Terraform"
+        API       = "payments"
+      }
+    }
+
+    redrive_allow_policy = {
+      redrivePermission = "allowAll"
+    }
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "products"
+    }
+  }
+}
+
+
+################
+# ECS Clusters #
+################
+
+create_ecs_cluster = false
+
+############
+### SNS ####
+############
+sns_topics = {
+  # Orders API Topic
+  "stackfood-sns-orders-created" = {
+    fifo_topic   = false
+    display_name = "StackFood Orders Created Events"
+
+    sqs_subscriptions = {
+      "stackfood-sqs-orders-created-queue" = {
+        raw_message_delivery = false
+      }
+    }
+
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "orders"
+    }
+  }
+
+  # Orders Canceled API Topic
+  "stackfood-sns-orders-cancelled" = {
+    fifo_topic   = false
+    display_name = "StackFood Orders Cancelled Events"
+
+    sqs_subscriptions = {
+      "stackfood-sqs-orders-cancelled-queue" = {
+        raw_message_delivery = false
+      }
+    }
+
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "orders"
+    }
+  }
+
+  # Order Completed API Topic
+  "stackfood-sns-orders-completed-topic" = {
+    fifo_topic   = false
+    display_name = "StackFood Orders Completed Events"
+
+    sqs_subscriptions = {
+      "stackfood-sqs-orders-completed-queue" = {
+        raw_message_delivery = false
+      }
+    }
+
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "orders"
+    }
+  }
+
+  # Production API Topic
+  "stackfood-sns-production-topic" = {
+    fifo_topic   = false
+    display_name = "StackFood Production Events"
+
+    sqs_subscriptions = {
+      "stackfood-sqs-production-queue" = {
+        raw_message_delivery = false
+      }
+    }
+
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "production"
+    }
+  }
+
+  # Payments API Topic
+  "stackfood-sns-payments-topic" = {
+    fifo_topic   = false
+    display_name = "StackFood payments Events"
+
+    sqs_subscriptions = {
+      "stackfood-sqs-payments-queue" = {
+        raw_message_delivery = false
+      }
+    }
+
+    tags = {
+      ManagedBy = "Terraform"
+      API       = "payments"
+    }
+  }
+}
+
+##################
+### DynamoDB ####
+##################
+dynamodb_tables = {
+  "stackfood-orders-prod" = {
+    hash_key  = "order_id"
+    range_key = "created_at"
+
+    attributes = [
+      {
+        name = "order_id"
+        type = "S"
+      },
+      {
+        name = "created_at"
+        type = "N"
+      },
+      {
+        name = "customer_id"
+        type = "S"
+      },
+      {
+        name = "status"
+        type = "S"
+      }
+    ]
+
+    # Índices secundários globais
+    global_secondary_indexes = [
+      {
+        name            = "customer-index"
+        hash_key        = "customer_id"
+        range_key       = "created_at"
+        projection_type = "ALL"
+      },
+      {
+        name            = "status-index"
+        hash_key        = "status"
+        range_key       = "created_at"
+        projection_type = "KEYS_ONLY"
+      }
+    ]
+
+    # Configurações de billing
+    billing_mode = "PAY_PER_REQUEST"
+
+    # Habilitar streams para integração com Lambda/processamento de eventos
+    stream_enabled   = true
+    stream_view_type = "NEW_AND_OLD_IMAGES"
+
+    # TTL para expiração automática de pedidos antigos (90 dias)
+    ttl_enabled        = true
+    ttl_attribute_name = "ttl"
+
+    # Point-in-time recovery para backup
+    point_in_time_recovery_enabled = true
+
+    # Criptografia habilitada
+    encryption_enabled = true
+
+    # Classe da tabela
+    table_class = "STANDARD"
+  }
+
+  "stackfood-products-prod" = {
+    hash_key = "product_id"
+
+    attributes = [
+      {
+        name = "product_id"
+        type = "S"
+      },
+      {
+        name = "category"
+        type = "S"
+      },
+      {
+        name = "name"
+        type = "S"
+      }
+    ]
+
+    # Índice secundário para busca por categoria
+    global_secondary_indexes = [
+      {
+        name            = "category-index"
+        hash_key        = "category"
+        range_key       = "name"
+        projection_type = "ALL"
+      }
+    ]
+
+    # Pay-per-request para carga variável
+    billing_mode = "PAY_PER_REQUEST"
+
+    # Configurações padrão
+    stream_enabled                 = false
+    ttl_enabled                    = false
+    point_in_time_recovery_enabled = true
+    encryption_enabled             = true
+    table_class                    = "STANDARD"
   }
 }

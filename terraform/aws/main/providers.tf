@@ -7,26 +7,40 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.3"
+      version = "~> 3.0"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0.2"
+      version = "~> 3.0"
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "~> 4.52.5"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~>1.19.0"
+    }
   }
 
   backend "s3" {
-    bucket  = "stackfood-s3-tfstate-fiap"
+    bucket  = "stackfood-tfstate-soat05"
     key     = "terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
   }
 }
 
+
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", var.eks_cluster_name]
+  }
+}
 provider "aws" {
   region = var.aws_region
 
@@ -52,12 +66,11 @@ data "aws_eks_cluster_auth" "eks" {
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.eks.token
-  # exec {
-  #   api_version = "client.authentication.k8s.io/v1beta1"
-  #   command     = "aws"
-  #   args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_id, "--region", var.aws_region]
-  # }
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", var.eks_cluster_name]
+  }
 }
 
 # Configure Helm provider with EKS cluster config

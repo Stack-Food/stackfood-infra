@@ -166,6 +166,80 @@ variable "rds_instances" {
 }
 
 ######################
+# DynamoDB Configuration #
+######################
+
+variable "dynamodb_tables" {
+  description = "Map of DynamoDB tables to create"
+  type = map(object({
+    hash_key                       = string
+    range_key                      = optional(string)
+    billing_mode                   = optional(string)
+    read_capacity                  = optional(number)
+    write_capacity                 = optional(number)
+    stream_enabled                 = optional(bool)
+    stream_view_type               = optional(string)
+    ttl_enabled                    = optional(bool)
+    ttl_attribute_name             = optional(string)
+    point_in_time_recovery_enabled = optional(bool)
+    encryption_enabled             = optional(bool)
+    kms_key_arn                    = optional(string)
+    table_class                    = optional(string)
+    autoscaling_enabled            = optional(bool)
+    autoscaling_read_max_capacity  = optional(number)
+    autoscaling_write_max_capacity = optional(number)
+    autoscaling_read_target_value  = optional(number)
+    autoscaling_write_target_value = optional(number)
+    create_alarms                  = optional(bool)
+    alarm_read_throttle_threshold  = optional(number)
+    alarm_write_throttle_threshold = optional(number)
+
+    attributes = list(object({
+      name = string
+      type = string
+    }))
+
+    global_secondary_indexes = optional(list(object({
+      name               = string
+      hash_key           = string
+      range_key          = optional(string)
+      projection_type    = string
+      non_key_attributes = optional(list(string))
+      read_capacity      = optional(number)
+      write_capacity     = optional(number)
+    })))
+
+    local_secondary_indexes = optional(list(object({
+      name               = string
+      range_key          = string
+      projection_type    = string
+      non_key_attributes = optional(list(string))
+    })))
+  }))
+  default = {}
+}
+
+######################
+# SQS Configuration #
+######################
+
+variable "sqs_queues" {
+  description = "Map of SQS queues to create"
+  type        = any
+  default     = {}
+}
+
+######################
+# SNS Configuration #
+######################
+
+variable "sns_topics" {
+  description = "Map of SNS topics to create"
+  type        = any
+  default     = {}
+}
+
+######################
 # Lambda Configuration #
 ######################
 
@@ -376,4 +450,100 @@ variable "nginx_ingress_namespace" {
 variable "nginx_ingress_version" {
   description = "Version of the NGINX Ingress Helm chart"
   type        = string
+}
+
+######################
+# ArgoCD Configuration #
+######################
+
+variable "team_users" {
+  description = "Map de usuários da equipe com seus grupos de acesso"
+  type = map(object({
+    name      = string
+    email     = string
+    user_type = optional(string, "team_member")
+    groups    = list(string) # Possíveis valores: ["argocd", "grafana", "app-admins", "system-admins"]
+  }))
+  default = {}
+}
+
+variable "argocd_admin_password" {
+  description = "Senha para o usuário administrador stackfood do ArgoCD"
+  type        = string
+  sensitive   = true
+  default     = "Fiap@2025"
+}
+
+variable "argocd_team_password" {
+  description = "Senha para os usuários da equipe ArgoCD"
+  type        = string
+  sensitive   = true
+  default     = "StackFood@2025"
+}
+
+######################
+# Grafana Configuration #
+######################
+
+variable "grafana_subdomain" {
+  description = "Subdomain for Grafana"
+  type        = string
+  default     = "grafana"
+}
+
+# ⚠️ NOTA: Variáveis de storage obsoletas (persistence desabilitada no módulo Grafana)
+# Mantidas apenas para compatibilidade com prod.tfvars
+# Quando o EBS CSI Driver for habilitado, essas variáveis voltarão a ser usadas
+variable "grafana_storage_size" {
+  description = "Size of the persistent volume for Grafana (OBSOLETO - persistence desabilitada)"
+  type        = string
+  default     = "10Gi"
+}
+
+variable "grafana_storage_class" {
+  description = "Storage class for Grafana persistent volume (OBSOLETO - persistence desabilitada)"
+  type        = string
+  default     = "gp2"
+}
+
+variable "grafana_resources" {
+  description = "Resource requests and limits for Grafana"
+  type = object({
+    requests = object({
+      cpu    = string
+      memory = string
+    })
+    limits = object({
+      cpu    = string
+      memory = string
+    })
+  })
+  default = {
+    requests = {
+      cpu    = "100m"
+      memory = "128Mi"
+    }
+    limits = {
+      cpu    = "500m"
+      memory = "512Mi"
+    }
+  }
+}
+
+variable "prometheus_url" {
+  description = "URL of Prometheus server for Grafana datasource"
+  type        = string
+  default     = "http://prometheus-server.monitoring.svc.cluster.local"
+}
+
+variable "enable_prometheus_datasource" {
+  description = "Enable automatic Prometheus datasource configuration in Grafana"
+  type        = bool
+  default     = true
+}
+
+variable "monitoring_namespace" {
+  description = "Kubernetes namespace for monitoring tools (Grafana, Prometheus, etc.)"
+  type        = string
+  default     = "monitoring"
 }

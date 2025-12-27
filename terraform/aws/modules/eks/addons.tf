@@ -62,6 +62,10 @@ resource "aws_eks_addon" "vpc_cni" {
   ]
 }
 
+# EBS CSI Driver - DISABLED for AWS Academy
+# AWS Academy does not support OIDC Identity Providers required for IRSA
+# Error: No OpenIDConnect provider found in your account
+# Workaround: Using emptyDir volumes instead of persistent EBS volumes
 # resource "aws_eks_addon" "ebs_csi_driver" {
 #   cluster_name                = aws_eks_cluster.main.name
 #   addon_name                  = "aws-ebs-csi-driver"
@@ -69,6 +73,7 @@ resource "aws_eks_addon" "vpc_cni" {
 #   resolve_conflicts_on_create = "OVERWRITE"
 #   resolve_conflicts_on_update = "OVERWRITE"
 #   preserve                    = true
+#   service_account_role_arn    = data.aws_iam_role.eks_node_role.arn
 
 #   tags = merge(
 #     {
@@ -79,8 +84,8 @@ resource "aws_eks_addon" "vpc_cni" {
 #   )
 
 #   depends_on = [
-#     aws_eks_node_group.main,
-#     aws_eks_cluster.main
+#     aws_eks_cluster.main,
+#     aws_eks_node_group.main
 #   ]
 # }
 
@@ -101,7 +106,6 @@ resource "aws_eks_addon" "metrics_server" {
   )
 
   depends_on = [
-    aws_eks_node_group.main,
     aws_eks_cluster.main
   ]
 }
@@ -123,7 +127,6 @@ resource "aws_eks_addon" "prometheus_node_exporter" {
   )
 
   depends_on = [
-    aws_eks_node_group.main,
     aws_eks_cluster.main
   ]
 }
