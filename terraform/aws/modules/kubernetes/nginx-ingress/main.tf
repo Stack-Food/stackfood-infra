@@ -52,3 +52,13 @@ resource "null_resource" "wait_for_ingress_webhook" {
 
   depends_on = [helm_release.ingress-nginx]
 }
+
+# Data source to get the LoadBalancer service information
+data "kubernetes_service" "nginx_ingress_controller" {
+  metadata {
+    name      = "ingress-nginx-controller"
+    namespace = var.ingress_namespace
+  }
+
+  depends_on = [null_resource.wait_for_ingress_webhook]
+}

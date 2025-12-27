@@ -83,33 +83,24 @@ resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.this.id
 
   triggers = {
-    redeployment = sha1(jsonencode([
+    redeployment = sha1(jsonencode(concat(
       # Lambda routes
-      aws_api_gateway_resource.auth,
-      aws_api_gateway_resource.customer,
-      aws_api_gateway_method.auth_post,
-      aws_api_gateway_method.customer_post,
-      aws_api_gateway_integration.auth_lambda,
-      aws_api_gateway_integration.customer_lambda,
-      aws_lambda_permission.auth_api_gateway_invoke,
-      aws_lambda_permission.customer_api_gateway_invoke,
-      # Microservices routes
-      aws_api_gateway_resource.customers,
-      aws_api_gateway_resource.products,
-      aws_api_gateway_resource.orders,
-      aws_api_gateway_resource.payments,
-      aws_api_gateway_resource.production,
-      aws_api_gateway_method.customers_any,
-      aws_api_gateway_method.products_any,
-      aws_api_gateway_method.orders_any,
-      aws_api_gateway_method.payments_any,
-      aws_api_gateway_method.production_any,
-      aws_api_gateway_integration.customers_vpc_link,
-      aws_api_gateway_integration.products_vpc_link,
-      aws_api_gateway_integration.orders_vpc_link,
-      aws_api_gateway_integration.payments_vpc_link,
-      aws_api_gateway_integration.production_vpc_link
-    ]))
+      [
+        aws_api_gateway_resource.auth,
+        aws_api_gateway_resource.customer,
+        aws_api_gateway_method.auth_post,
+        aws_api_gateway_method.customer_post,
+        aws_api_gateway_integration.auth_lambda,
+        aws_api_gateway_integration.customer_lambda,
+        aws_lambda_permission.auth_api_gateway_invoke,
+        aws_lambda_permission.customer_api_gateway_invoke
+      ],
+      # Microservices routes (dynamic)
+      values(aws_api_gateway_resource.microservice),
+      values(aws_api_gateway_resource.microservice_proxy),
+      values(aws_api_gateway_method.microservice_any),
+      values(aws_api_gateway_integration.microservice_vpc_link)
+    )))
   }
 
   depends_on = [
@@ -120,17 +111,11 @@ resource "aws_api_gateway_deployment" "this" {
     aws_api_gateway_integration.customer_lambda,
     aws_lambda_permission.auth_api_gateway_invoke,
     aws_lambda_permission.customer_api_gateway_invoke,
-    # Microservices integrations
-    aws_api_gateway_method.customers_any,
-    aws_api_gateway_method.products_any,
-    aws_api_gateway_method.orders_any,
-    aws_api_gateway_method.payments_any,
-    aws_api_gateway_method.production_any,
-    aws_api_gateway_integration.customers_vpc_link,
-    aws_api_gateway_integration.products_vpc_link,
-    aws_api_gateway_integration.orders_vpc_link,
-    aws_api_gateway_integration.payments_vpc_link,
-    aws_api_gateway_integration.production_vpc_link
+    # Microservices integrations (dynamic)
+    aws_api_gateway_resource.microservice,
+    aws_api_gateway_resource.microservice_proxy,
+    aws_api_gateway_method.microservice_any,
+    aws_api_gateway_integration.microservice_vpc_link
   ]
 
   lifecycle {

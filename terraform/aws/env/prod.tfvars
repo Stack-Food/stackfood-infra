@@ -153,6 +153,29 @@ api_gateways = {
       expose_headers    = ["*"]
       max_age           = 86400
     }
+    # Microservices configuration
+    microservices = {
+      "customers" = {
+        path = "customers"
+        port = 8084
+      }
+      "products" = {
+        path = "products"
+        port = 8080
+      }
+      "orders" = {
+        path = "orders"
+        port = 8081
+      }
+      "payments" = {
+        path = "payments"
+        port = 8082
+      }
+      "production" = {
+        path = "production"
+        port = 8083
+      }
+    }
   }
 }
 ##########################

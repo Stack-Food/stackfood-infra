@@ -370,6 +370,10 @@ module "api_gateway" {
   cors_configuration   = each.value.cors_configuration
   lambda_invoke_arn    = module.lambda["stackfood-auth"].function_invoke_arn
   lambda_function_name = module.lambda["stackfood-auth"].function_name
+
+  # Microservices configuration
+  nlb_dns_name  = module.nginx-ingress.load_balancer_hostname
+  microservices = lookup(each.value, "microservices", {})
 }
 
 # Cognito Module
