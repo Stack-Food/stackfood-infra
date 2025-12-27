@@ -1,4 +1,4 @@
-# StackFood - Infraestrutura Completa
+# StackFood - Infraestrutura Completa Teste
 
 > 🍽️ **Plataforma de gestão para food service com arquitetura moderna em nuvem**
 
