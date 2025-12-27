@@ -23,7 +23,7 @@ resource "aws_db_parameter_group" "this" {
 
   name        = var.parameter_group_name != null ? var.parameter_group_name : "${var.identifier}-pg"
   description = "Database parameter group for ${var.identifier}"
-  family      = var.family
+  family      = data.aws_rds_engine_version.family.parameter_group_family
 
   dynamic "parameter" {
     for_each = var.parameters
@@ -167,7 +167,7 @@ resource "aws_db_instance" "this" {
   identifier = var.identifier
 
   engine                      = var.engine
-  engine_version              = var.engine_version
+  engine_version              = var.engine_version != null ? var.engine_version : data.aws_rds_engine_version.this.version
   instance_class              = var.instance_class
   allocated_storage           = var.allocated_storage
   max_allocated_storage       = var.max_allocated_storage

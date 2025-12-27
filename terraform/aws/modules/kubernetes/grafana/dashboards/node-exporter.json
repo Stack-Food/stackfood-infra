@@ -1,0 +1,246 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Node Exporter Full",
+    "tags": ["node-exporter", "system"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "CPU Cores",
+        "type": "stat",
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "count(count(node_cpu_seconds_total) by (cpu))",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "CPU Usage",
+        "type": "stat",
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 4,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "max": 100,
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Memory Usage",
+        "type": "stat",
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 8,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "100 * (1 - ((node_memory_MemAvailable_bytes or node_memory_MemFree_bytes) / node_memory_MemTotal_bytes))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "max": 100,
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Disk Usage",
+        "type": "stat",
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 12,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"rootfs\"})",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "max": 100,
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Load Average",
+        "type": "stat",
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 16,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "node_load1",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Network I/O",
+        "type": "stat",
+        "gridPos": {
+          "h": 6,
+          "w": 4,
+          "x": 20,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Bps"
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "CPU Usage Over Time",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 6
+        },
+        "targets": [
+          {
+            "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "refId": "A",
+            "legendFormat": "CPU Usage %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Memory Usage Over Time",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 6
+        },
+        "targets": [
+          {
+            "expr": "100 * (1 - ((node_memory_MemAvailable_bytes or node_memory_MemFree_bytes) / node_memory_MemTotal_bytes))",
+            "refId": "A",
+            "legendFormat": "Memory Usage %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Network Traffic",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 14
+        },
+        "targets": [
+          {
+            "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
+            "refId": "A",
+            "legendFormat": "{{ device }} - Receive"
+          },
+          {
+            "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])",
+            "refId": "B",
+            "legendFormat": "{{ device }} - Transmit"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Bps"
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Disk I/O",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 14
+        },
+        "targets": [
+          {
+            "expr": "rate(node_disk_read_bytes_total[5m])",
+            "refId": "A",
+            "legendFormat": "{{ device }} - Read"
+          },
+          {
+            "expr": "rate(node_disk_written_bytes_total[5m])",
+            "refId": "B",
+            "legendFormat": "{{ device }} - Written"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Bps"
+          }
+        }
+      }
+    ]
+  }
+}

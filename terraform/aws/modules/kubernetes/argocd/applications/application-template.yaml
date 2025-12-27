@@ -1,0 +1,54 @@
+# 📝 Template de Application do ArgoCD
+
+# Este é um template para criar Applications no ArgoCD.
+# Copie este arquivo, renomeie-o e ajuste os valores conforme necessário.
+
+# INSTRUÇÕES:
+# 1. Copie este arquivo: cp application-template.yaml api.yaml
+# 2. Edite os valores entre <>
+# 3. Aplique: terraform apply
+# 4. A Application será criada automaticamente no ArgoCD
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: <SERVICE-NAME> # Nome da application (ex: api, worker, payment)
+  namespace: argocd
+  labels:
+    app: <SERVICE-NAME>
+    team: stackfood
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io # Garante limpeza dos recursos
+spec:
+  project: default
+
+  # Fonte: De onde o ArgoCD vai buscar os manifestos
+  source:
+    repoURL: https://github.com/Stack-Food/stackfood-infra.git
+    targetRevision: main # Branch, tag ou commit
+    path: apps/<SERVICE-NAME>/prod # Caminho dos manifestos
+
+  # Destino: Onde os recursos serão criados
+  destination:
+    server: https://kubernetes.default.svc # Cluster local
+    namespace: <SERVICE-NAME> # Namespace no Kubernetes
+
+  # Política de sincronização
+  syncPolicy:
+    automated:
+      prune: true # Remove recursos deletados do Git
+      selfHeal: true # Corrige drifts automaticamente
+      allowEmpty: false # Não sincroniza se não houver recursos
+
+    syncOptions:
+      - CreateNamespace=true # Cria namespace automaticamente se não existir
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
