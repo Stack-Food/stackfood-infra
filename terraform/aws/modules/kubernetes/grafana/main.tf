@@ -1,10 +1,10 @@
 # IMPORTANTE: Ordem de criação dos recursos
-# 1. kubernetes_namespace cria o namespace PRIMEIRO
+# 1. kubernetes_namespace_v1 cria o namespace PRIMEIRO
 # 2. kubernetes_secret.grafana_oauth é criado no namespace
 # 3. helm_release.grafana instala o chart (create_namespace = false, pois já existe)
 
 # Create namespace first
-resource "kubernetes_namespace" "grafana" {
+resource "kubernetes_namespace_v1" "grafana" {
   metadata {
     name = var.namespace
     labels = {
@@ -36,7 +36,7 @@ resource "kubernetes_secret" "grafana_oauth" {
   }
 
   depends_on = [
-    kubernetes_namespace.grafana
+    kubernetes_namespace_v1.grafana
   ]
 }
 
@@ -115,18 +115,18 @@ resource "helm_release" "grafana" {
   ]
 
   depends_on = [
-    kubernetes_namespace.grafana,
+    kubernetes_namespace_v1.grafana,
     kubernetes_secret.grafana_oauth
   ]
 }
 
 # Data source para o namespace (já criado)
-data "kubernetes_namespace" "grafana" {
+data "kubernetes_namespace_v1" "grafana" {
   metadata {
     name = var.namespace
   }
 
   depends_on = [
-    kubernetes_namespace.grafana
+    kubernetes_namespace_v1.grafana
   ]
 }
