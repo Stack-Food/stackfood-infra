@@ -224,7 +224,7 @@ module "dynamodb" {
 
 # SQS Queues
 module "sqs" {
-  for_each = local.sqs_queues
+  for_each = var.sqs_queues
 
   source                            = "../modules/sqs"
   queue_name                        = each.key
@@ -264,7 +264,7 @@ module "sqs" {
 # SNS Topics
 module "sns" {
   source   = "../modules/sns/"
-  for_each = local.sns_topics
+  for_each = var.sns_topics
 
   # General Settings
   topic_name = each.key
