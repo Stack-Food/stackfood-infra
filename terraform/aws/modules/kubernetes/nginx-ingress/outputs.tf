@@ -27,3 +27,8 @@ output "load_balancer_ip" {
   description = "The IP address of the Network Load Balancer created by NGINX Ingress Controller"
   value       = try(data.kubernetes_service.nginx_ingress_controller.status[0].load_balancer[0].ingress[0].ip, "")
 }
+
+output "load_balancer-arn" {
+  description = "The ARN of the Network Load Balancer created by NGINX Ingress Controller"
+  value       = try(data.kubernetes_service.nginx_ingress_controller.metadata[0].annotations["service.beta.kubernetes.io/aws-load-balancer-arn"], "")
+}
