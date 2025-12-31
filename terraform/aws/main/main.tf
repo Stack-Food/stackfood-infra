@@ -375,6 +375,22 @@ module "api_gateway" {
   nlb_dns_name  = module.nginx-ingress.load_balancer_hostname
   microservices = lookup(each.value, "microservices", {})
 }
+module "stackfood_http_api" {
+
+  source     = "../modules/api-gateway-http/"
+  name       = "stackfood-http-api"
+  depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
+
+  nlb_listener_arn           = aws_lb_listener.ingress_http.arn
+  lb_arn                     = module.nginx-ingress.load_balancer-arn
+  cluster_security_group_ids = module.eks.cluster_security_group_id
+
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  tags = var.tags
+}
 
 # Cognito Module
 module "cognito" {
@@ -532,4 +548,14 @@ module "grafana" {
     module.eks,
     module.nginx-ingress,
   ]
+}
+
+module "loki" {
+  source     = "../modules/kubernetes/loki/"
+  depends_on = [module.eks, module.nginx-ingress]
+}
+
+module "prometheus" {
+  source     = "../modules/kubernetes/prometheus/"
+  depends_on = [module.eks, module.nginx-ingress]
 }
