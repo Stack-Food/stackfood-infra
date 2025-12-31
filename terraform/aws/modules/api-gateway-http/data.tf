@@ -5,7 +5,7 @@ data "aws_lbs" "internal" {
 }
 
 data "aws_lb" "ingress_nlb" {
-  arn = data.aws_lbs.internal.arns[0]
+  arn = tolist(data.aws_lbs.internal.arns)[0]
 }
 
 
