@@ -42,6 +42,6 @@ variable "lb_arn" {
 
 variable "cluster_security_group_ids" {
   description = "Security Group IDs associados ao cluster EKS"
-  type        = list(string)
+  type        = string
 }
 

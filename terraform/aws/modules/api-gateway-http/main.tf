@@ -6,7 +6,7 @@ resource "aws_apigatewayv2_api" "this" {
 resource "aws_apigatewayv2_vpc_link" "this" {
   name               = "${var.name}-vpc-link"
   subnet_ids         = var.private_subnet_ids
-  security_group_ids = var.cluster_security_group_ids
+  security_group_ids = [var.cluster_security_group_ids]
 }
 
 resource "aws_apigatewayv2_integration" "this" {
@@ -17,7 +17,7 @@ resource "aws_apigatewayv2_integration" "this" {
   connection_id   = aws_apigatewayv2_vpc_link.this.id
 
   integration_method = "ANY"
-  integration_uri    = var.lb_arn
+  integration_uri    = data.aws_lb_listener.http.arn
 
   payload_format_version = "1.0"
   timeout_milliseconds   = 30000
