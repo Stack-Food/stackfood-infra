@@ -46,7 +46,7 @@ resource "null_resource" "wait_for_ingress_webhook" {
 }
 
 # Data source to get the LoadBalancer service information
-data "kubernetes_service" "nginx_ingress_controller" {
+data "kubernetes_service_v1" "nginx_ingress_controller" {
   metadata {
     name      = "ingress-nginx-controller"
     namespace = var.ingress_namespace

@@ -37,7 +37,7 @@ resource "aws_apigatewayv2_stage" "default" {
 
 resource "aws_security_group" "apigw_vpc_link" {
   name   = "apigw-vpc-link"
-  vpc_id = module.vpc.vpc_id
+  vpc_id = var.vpc_id
 
   egress {
     from_port   = 0

@@ -381,7 +381,7 @@ module "stackfood_http_api" {
   name       = "stackfood-http-api"
   depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
 
-  nlb_listener_arn           = aws_lb_listener.ingress_http.arn
+  nlb_listener_arn           = module.nginx-ingress.load_balancer-arn
   lb_arn                     = module.nginx-ingress.load_balancer-arn
   cluster_security_group_ids = module.eks.cluster_security_group_id
 
