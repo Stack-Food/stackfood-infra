@@ -550,12 +550,12 @@ module "grafana" {
   ]
 }
 
-module "loki" {
-  source     = "../modules/kubernetes/loki/"
-  depends_on = [module.eks, module.nginx-ingress]
-}
+# module "loki" {
+#   source     = "../modules/kubernetes/loki/"
+#   depends_on = [module.eks, module.nginx-ingress]
+# }
 
-module "prometheus" {
-  source     = "../modules/kubernetes/prometheus/"
-  depends_on = [module.eks, module.nginx-ingress]
-}
+# module "prometheus" {
+#   source     = "../modules/kubernetes/prometheus/"
+#   depends_on = [module.eks, module.nginx-ingress]
+# }
