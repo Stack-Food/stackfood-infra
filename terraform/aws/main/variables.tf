@@ -279,13 +279,6 @@ variable "eks_cluster_role_name" {
   description = "Name of the IAM role to use for the EKS cluster"
   type        = string
 }
-##########################
-# API Gateway Configuration #
-##########################
-
-variable "api_gateways" {
-  description = "Map of API Gateways to create"
-}
 
 ##########################
 # Cognito Configuration #

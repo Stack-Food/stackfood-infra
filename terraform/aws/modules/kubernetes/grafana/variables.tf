@@ -148,3 +148,16 @@ variable "enable_service_monitor" {
   type        = bool
   default     = false
 }
+
+# Loki Configuration
+variable "loki_url" {
+  description = "Loki URL for log aggregation"
+  type        = string
+  default     = "http://loki-stack.monitoring.svc.cluster.local:3100"
+}
+
+variable "enable_loki_datasource" {
+  description = "Enable Loki as datasource for logs"
+  type        = bool
+  default     = true
+}

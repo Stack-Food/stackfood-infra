@@ -340,36 +340,27 @@ module "lambda" {
   lambda_role_name = var.lambda_role_name
 }
 
-# API Gateway
-module "api_gateway" {
-  for_each = var.api_gateways
-  source   = "../modules/api-gateway/"
-  # Dependencies - Garantir que Lambda functions sejam criadas primeiro
+# API Gateway HTTP (v2)
+module "stackfood_http_api" {
+
+  source     = "../modules/api-gateway-http/"
+  name       = "stackfood-http-api"
   depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
 
-  # General Settings
-  api_name    = each.key
-  description = each.value.description
-  environment = var.environment
-  tags        = var.tags
+  nlb_listener_arn           = module.nginx-ingress.load_balancer-arn
+  lb_arn                     = module.nginx-ingress.load_balancer-arn
+  cluster_security_group_ids = module.eks.cluster_security_group_id
 
-  # Simplified variables for single Lambda and EKS cluster
-  eks_cluster_name    = var.eks_cluster_name
-  vpc_id              = module.vpc.vpc_id
-  private_subnet_ids  = module.vpc.private_subnet_ids
-  public_subnet_ids   = module.vpc.public_subnet_ids
-  acm_certificate_arn = module.acm.certificate_arn
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
 
-  # New configurable variables
-  custom_domain_name   = each.value.custom_domain_name
-  base_path            = each.value.base_path
-  stage_name           = each.value.stage_name
-  route_key            = each.value.route_key
-  security_group_name  = each.value.security_group_name
-  vpc_link_name        = each.value.vpc_link_name
-  cors_configuration   = each.value.cors_configuration
-  lambda_invoke_arn    = module.lambda["stackfood-auth"].function_invoke_arn
-  lambda_function_name = module.lambda["stackfood-auth"].function_name
+  # Lambda Integration
+  enable_lambda_integration = true
+  lambda_invoke_arn         = module.lambda["stackfood-auth"].function_invoke_arn
+  lambda_function_name      = module.lambda["stackfood-auth"].function_name
+
+  tags = var.tags
 }
 
 # Cognito Module
@@ -498,8 +489,12 @@ module "grafana" {
   certificate_arn = module.acm.certificate_arn
 
   # Configurações do Prometheus
-  prometheus_url               = "http://prometheus-server.monitoring.svc.cluster.local"
+  prometheus_url               = module.prometheus.prometheus_url
   enable_prometheus_datasource = true
+
+  # Configurações do Loki
+  loki_url               = module.loki.loki_url
+  enable_loki_datasource = true
 
   # ⚠️ Configurações de armazenamento (NÃO USADAS - persistence desabilitada)
   # Mantidas para compatibilidade, mas não têm efeito enquanto persistence: false
@@ -527,5 +522,44 @@ module "grafana" {
     module.dns,
     module.eks,
     module.nginx-ingress,
+    module.prometheus,
+    module.loki,
   ]
+}
+
+# Prometheus Module - Install before Grafana
+module "prometheus" {
+  source = "../modules/kubernetes/prometheus/"
+
+  # Basic configuration
+  namespace     = "monitoring"
+  chart_version = "25.27.0"
+
+  # Retention configuration
+  retention_days = 15
+
+  # Persistence (disabled for AWS Academy)
+  enable_persistence = false
+  storage_size       = "20Gi"
+  storage_class      = "gp2"
+
+  depends_on = [module.eks, module.nginx-ingress]
+}
+
+# Loki Module - Install before Grafana
+module "loki" {
+  source = "../modules/kubernetes/loki/"
+
+  # Basic configuration
+  namespace     = "monitoring"
+  chart_version = "2.10.2"
+
+  # Retention configuration
+  retention_period = "168h" # 7 days
+
+  # Persistence (disabled for AWS Academy)
+  enable_persistence = false
+  storage_size       = "10Gi"
+
+  depends_on = [module.eks, module.nginx-ingress]
 }

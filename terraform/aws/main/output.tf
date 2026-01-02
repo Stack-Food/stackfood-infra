@@ -65,12 +65,6 @@ output "cognito_unified_summary" {
   }
 }
 
-# Output para compatibilidade com API Gateway (usando o User Pool da aplicação)
-output "api_gateway_config" {
-  description = "Configuração para API Gateway Authorizer"
-  value       = module.cognito.api_gateway_authorizer_config
-}
-
 # Outputs do Grafana
 output "grafana_cognito_info" {
   description = "Informações do Cognito para Grafana"
@@ -115,6 +109,34 @@ output "monitoring_setup" {
       admin_groups    = ["system-admins", "grafana"]
       readonly_groups = ["grafana-readonly"]
       shared_cognito  = "Same User Pool as ArgoCD"
+    }
+  }
+}
+
+# ============================================
+# Messaging Infrastructure Outputs
+# ============================================
+
+output "sns_topics" {
+  description = "SNS topics created for event-driven architecture"
+  value = {
+    for topic_name, topic in module.sns : topic_name => {
+      topic_arn  = topic.topic_arn
+      topic_name = topic.topic_name
+      topic_id   = topic.topic_id
+    }
+  }
+}
+
+output "sqs_queues" {
+  description = "SQS queues created for event-driven architecture"
+  value = {
+    for queue_name, queue in module.sqs : queue_name => {
+      queue_url  = queue.queue_url
+      queue_arn  = queue.queue_arn
+      queue_name = queue.queue_name
+      dlq_url    = queue.dlq_url
+      dlq_arn    = queue.dlq_arn
     }
   }
 }

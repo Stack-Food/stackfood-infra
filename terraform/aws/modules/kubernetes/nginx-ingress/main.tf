@@ -22,14 +22,6 @@ resource "helm_release" "ingress-nginx" {
 
   # Limitar a quantidade de histórico para evitar sobrecarga
   max_history = 3
-
-  set = [
-    {
-      name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-ssl-cert"
-      value = var.ssl_certificate_arn
-      type  = "string"
-    }
-  ]
 }
 
 # Wait for NGINX Ingress admission webhook to be ready
@@ -51,4 +43,14 @@ resource "null_resource" "wait_for_ingress_webhook" {
   }
 
   depends_on = [helm_release.ingress-nginx]
+}
+
+# Data source to get the LoadBalancer service information
+data "kubernetes_service_v1" "nginx_ingress_controller" {
+  metadata {
+    name      = "ingress-nginx-controller"
+    namespace = var.ingress_namespace
+  }
+
+  depends_on = [null_resource.wait_for_ingress_webhook]
 }

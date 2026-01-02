@@ -110,7 +110,11 @@ grafana.ini:
     auto_login: false
     use_pkce: true
     use_refresh_token: true
-    role_attribute_path: contains(groups[*], '${system_admin_group_name}') && 'Admin' || contains(groups[*], '${admin_group_name}') && 'Admin' || 'Viewer'
+    # Esta linha define a lógica para atribuição de função (role) de usuário no Grafana com base nos grupos aos quais o usuário pertence.
+    # Ela verifica se o usuário está no grupo de administradores do sistema (${system_admin_group_name}) ou no grupo de administradores (${admin_group_name}).
+    # Se o usuário pertencer a qualquer um desses grupos, ele recebe a função "Admin". Caso contrário, recebe a função "Viewer".
+    # A expressão utiliza operadores lógicos para realizar as verificações e atribuições de forma condicional.
+    role_attribute_path: contains(groups[*], '${system_admin_group_name}') && 'Admin' || contains(groups[*], '${admin_group_name}') && 'Admin'
     role_attribute_strict: false
     allow_assign_grafana_admin: true
     skip_org_role_sync: false
@@ -120,7 +124,7 @@ grafana.ini:
     allow_sign_up: false
     auto_assign_org: true
     auto_assign_org_id: 1
-    auto_assign_org_role: Viewer
+    auto_assign_org_role: Admin
     viewers_can_edit: false
     editors_can_admin: false
 

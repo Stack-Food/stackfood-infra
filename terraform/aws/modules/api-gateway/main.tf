@@ -83,25 +83,39 @@ resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.this.id
 
   triggers = {
-    redeployment = sha1(jsonencode([
-      aws_api_gateway_resource.auth,
-      aws_api_gateway_resource.customer,
-      aws_api_gateway_method.auth_post,
-      aws_api_gateway_method.customer_post,
-      aws_api_gateway_integration.auth_lambda,
-      aws_api_gateway_integration.customer_lambda,
-      aws_lambda_permission.auth_api_gateway_invoke,
-      aws_lambda_permission.customer_api_gateway_invoke
-    ]))
+    redeployment = sha1(jsonencode(concat(
+      # Lambda routes
+      [
+        aws_api_gateway_resource.auth,
+        aws_api_gateway_resource.customer,
+        aws_api_gateway_method.auth_post,
+        aws_api_gateway_method.customer_post,
+        aws_api_gateway_integration.auth_lambda,
+        aws_api_gateway_integration.customer_lambda,
+        aws_lambda_permission.auth_api_gateway_invoke,
+        aws_lambda_permission.customer_api_gateway_invoke
+      ],
+      # Microservices routes (dynamic)
+      values(aws_api_gateway_resource.microservice),
+      values(aws_api_gateway_resource.microservice_proxy),
+      values(aws_api_gateway_method.microservice_any),
+      values(aws_api_gateway_integration.microservice_vpc_link)
+    )))
   }
 
   depends_on = [
+    # Lambda integrations
     aws_api_gateway_method.auth_post,
     aws_api_gateway_method.customer_post,
     aws_api_gateway_integration.auth_lambda,
     aws_api_gateway_integration.customer_lambda,
     aws_lambda_permission.auth_api_gateway_invoke,
-    aws_lambda_permission.customer_api_gateway_invoke
+    aws_lambda_permission.customer_api_gateway_invoke,
+    # Microservices integrations (dynamic)
+    aws_api_gateway_resource.microservice,
+    aws_api_gateway_resource.microservice_proxy,
+    aws_api_gateway_method.microservice_any,
+    aws_api_gateway_integration.microservice_vpc_link
   ]
 
   lifecycle {

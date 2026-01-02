@@ -112,3 +112,18 @@ variable "lambda_function_name" {
   type        = string
   description = "Lambda Function name to be integrated with API Gateway"
 }
+
+variable "nlb_dns_name" {
+  type        = string
+  description = "DNS name of the Network Load Balancer from NGINX Ingress Controller"
+  default     = ""
+}
+
+variable "microservices" {
+  type = map(object({
+    path = string
+    port = number
+  }))
+  description = "Map of microservices to route through API Gateway via NLB"
+  default     = {}
+}

@@ -1,10 +1,10 @@
 # IMPORTANTE: Ordem de criação dos recursos
-# 1. kubernetes_namespace cria o namespace PRIMEIRO
-# 2. kubernetes_secret.grafana_oauth é criado no namespace
+# 1. kubernetes_namespace_v1 cria o namespace PRIMEIRO
+# 2. kubernetes_secret_v1.grafana_oauth é criado no namespace
 # 3. helm_release.grafana instala o chart (create_namespace = false, pois já existe)
 
 # Create namespace first
-resource "kubernetes_namespace" "grafana" {
+resource "kubernetes_namespace_v1" "grafana" {
   metadata {
     name = var.namespace
     labels = {
@@ -16,7 +16,7 @@ resource "kubernetes_namespace" "grafana" {
 }
 
 # Create Kubernetes Secret for OAuth client secret (after namespace exists)
-resource "kubernetes_secret" "grafana_oauth" {
+resource "kubernetes_secret_v1" "grafana_oauth" {
   metadata {
     name      = "grafana-oauth-secret"
     namespace = var.namespace
@@ -36,7 +36,7 @@ resource "kubernetes_secret" "grafana_oauth" {
   }
 
   depends_on = [
-    kubernetes_namespace.grafana
+    kubernetes_namespace_v1.grafana
   ]
 }
 
@@ -74,59 +74,77 @@ resource "helm_release" "grafana" {
       user_pool_name            = var.user_pool_name
       # storage_size e storage_class REMOVIDOS - não usados (persistence desabilitada)
       prometheus_url    = var.prometheus_url
+      loki_url          = var.loki_url
       grafana_resources = var.grafana_resources
     }),
+    # Configure Prometheus datasource
     var.enable_prometheus_datasource ? yamlencode({
       datasources = {
         "datasources.yaml" = {
           apiVersion = 1
-          datasources = [
-            {
-              name      = "Prometheus"
-              type      = "prometheus"
-              url       = var.prometheus_url
-              access    = "proxy"
-              isDefault = true
-              editable  = true
-              jsonData = {
-                timeInterval = "5s"
-                queryTimeout = "300s"
-                httpMethod   = "POST"
+          datasources = concat(
+            [
+              {
+                name      = "Prometheus"
+                type      = "prometheus"
+                url       = var.prometheus_url
+                access    = "proxy"
+                isDefault = !var.enable_loki_datasource
+                editable  = true
+                jsonData = {
+                  timeInterval = "5s"
+                  queryTimeout = "300s"
+                  httpMethod   = "POST"
+                }
+              },
+              {
+                name      = "Node Exporter"
+                type      = "prometheus"
+                url       = var.prometheus_url
+                access    = "proxy"
+                isDefault = false
+                editable  = true
+                jsonData = {
+                  timeInterval                = "5s"
+                  queryTimeout                = "300s"
+                  httpMethod                  = "POST"
+                  exemplarTraceIdDestinations = []
+                }
               }
-            },
-            {
-              name      = "Node Exporter"
-              type      = "prometheus"
-              url       = var.prometheus_url
-              access    = "proxy"
-              isDefault = false
-              editable  = true
-              jsonData = {
-                timeInterval                = "5s"
-                queryTimeout                = "300s"
-                httpMethod                  = "POST"
-                exemplarTraceIdDestinations = []
+            ],
+            var.enable_loki_datasource ? [
+              {
+                name      = "Loki"
+                type      = "loki"
+                url       = var.loki_url
+                access    = "proxy"
+                isDefault = true
+                editable  = true
+                jsonData = {
+                  maxLines      = 1000
+                  derivedFields = []
+                }
               }
-            }
-          ]
+            ] : []
+          )
         }
       }
     }) : ""
   ]
 
   depends_on = [
-    kubernetes_namespace.grafana,
-    kubernetes_secret.grafana_oauth
+    kubernetes_namespace_v1.grafana,
+    kubernetes_secret_v1.grafana_oauth
   ]
 }
 
 # Data source para o namespace (já criado)
-data "kubernetes_namespace" "grafana" {
+data "kubernetes_namespace_v1" "grafana" {
   metadata {
     name = var.namespace
   }
 
   depends_on = [
-    kubernetes_namespace.grafana
+    kubernetes_namespace_v1.grafana
   ]
 }
