@@ -518,8 +518,12 @@ module "grafana" {
   certificate_arn = module.acm.certificate_arn
 
   # Configurações do Prometheus
-  prometheus_url               = "http://prometheus-server.monitoring.svc.cluster.local"
+  prometheus_url               = module.prometheus.prometheus_url
   enable_prometheus_datasource = true
+
+  # Configurações do Loki
+  loki_url               = module.loki.loki_url
+  enable_loki_datasource = true
 
   # ⚠️ Configurações de armazenamento (NÃO USADAS - persistence desabilitada)
   # Mantidas para compatibilidade, mas não têm efeito enquanto persistence: false
@@ -547,15 +551,44 @@ module "grafana" {
     module.dns,
     module.eks,
     module.nginx-ingress,
+    module.prometheus,
+    module.loki,
   ]
 }
 
-# module "loki" {
-#   source     = "../modules/kubernetes/loki/"
-#   depends_on = [module.eks, module.nginx-ingress]
-# }
+# Prometheus Module - Install before Grafana
+module "prometheus" {
+  source = "../modules/kubernetes/prometheus/"
 
-# module "prometheus" {
-#   source     = "../modules/kubernetes/prometheus/"
-#   depends_on = [module.eks, module.nginx-ingress]
-# }
+  # Basic configuration
+  namespace     = "monitoring"
+  chart_version = "25.27.0"
+
+  # Retention configuration
+  retention_days = 15
+
+  # Persistence (disabled for AWS Academy)
+  enable_persistence = false
+  storage_size       = "20Gi"
+  storage_class      = "gp2"
+
+  depends_on = [module.eks, module.nginx-ingress]
+}
+
+# Loki Module - Install before Grafana
+module "loki" {
+  source = "../modules/kubernetes/loki/"
+
+  # Basic configuration
+  namespace     = "monitoring"
+  chart_version = "2.10.2"
+
+  # Retention configuration
+  retention_period = "168h" # 7 days
+
+  # Persistence (disabled for AWS Academy)
+  enable_persistence = false
+  storage_size       = "10Gi"
+
+  depends_on = [module.eks, module.nginx-ingress]
+}

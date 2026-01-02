@@ -74,41 +74,59 @@ resource "helm_release" "grafana" {
       user_pool_name            = var.user_pool_name
       # storage_size e storage_class REMOVIDOS - não usados (persistence desabilitada)
       prometheus_url    = var.prometheus_url
+      loki_url          = var.loki_url
       grafana_resources = var.grafana_resources
     }),
+    # Configure Prometheus datasource
     var.enable_prometheus_datasource ? yamlencode({
       datasources = {
         "datasources.yaml" = {
           apiVersion = 1
-          datasources = [
-            {
-              name      = "Prometheus"
-              type      = "prometheus"
-              url       = var.prometheus_url
-              access    = "proxy"
-              isDefault = true
-              editable  = true
-              jsonData = {
-                timeInterval = "5s"
-                queryTimeout = "300s"
-                httpMethod   = "POST"
+          datasources = concat(
+            [
+              {
+                name      = "Prometheus"
+                type      = "prometheus"
+                url       = var.prometheus_url
+                access    = "proxy"
+                isDefault = !var.enable_loki_datasource
+                editable  = true
+                jsonData = {
+                  timeInterval = "5s"
+                  queryTimeout = "300s"
+                  httpMethod   = "POST"
+                }
+              },
+              {
+                name      = "Node Exporter"
+                type      = "prometheus"
+                url       = var.prometheus_url
+                access    = "proxy"
+                isDefault = false
+                editable  = true
+                jsonData = {
+                  timeInterval                = "5s"
+                  queryTimeout                = "300s"
+                  httpMethod                  = "POST"
+                  exemplarTraceIdDestinations = []
+                }
               }
-            },
-            {
-              name      = "Node Exporter"
-              type      = "prometheus"
-              url       = var.prometheus_url
-              access    = "proxy"
-              isDefault = false
-              editable  = true
-              jsonData = {
-                timeInterval                = "5s"
-                queryTimeout                = "300s"
-                httpMethod                  = "POST"
-                exemplarTraceIdDestinations = []
+            ],
+            var.enable_loki_datasource ? [
+              {
+                name      = "Loki"
+                type      = "loki"
+                url       = var.loki_url
+                access    = "proxy"
+                isDefault = true
+                editable  = true
+                jsonData = {
+                  maxLines      = 1000
+                  derivedFields = []
+                }
               }
-            }
-          ]
+            ] : []
+          )
         }
       }
     }) : ""
