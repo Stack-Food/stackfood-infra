@@ -1,17 +1,37 @@
-# Disable components we don't need
+# Prometheus Helm Chart Values
+# Chart: prometheus-community/prometheus
+# Version: 25.27.0
+# Reference: https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus
+# Values Reference: https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus/values.yaml
+
+# ============================================================================
+# SUB-CHARTS CONFIGURATION
+# ============================================================================
+
+# Alertmanager - Alert management and routing
 alertmanager:
   enabled: false
 
-prometheus-node-exporter:
-  enabled: true
-
-prometheus-pushgateway:
-  enabled: false
-
+# Kube State Metrics - Kubernetes cluster metrics
 kube-state-metrics:
   enabled: true
 
-# Prometheus Server Configuration
+# Prometheus Node Exporter - Host/Node metrics
+prometheus-node-exporter:
+  enabled: true
+  rbac:
+    pspEnabled: false
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+
+# Prometheus Pushgateway - For batch job metrics
+prometheus-pushgateway:
+  enabled: false
+
+# ============================================================================
+# PROMETHEUS SERVER CONFIGURATION
+# ============================================================================
+
 server:
   enabled: true
 
@@ -20,14 +40,18 @@ server:
     type: ClusterIP
     servicePort: 80
 
-  # Persistence (disabled for AWS Academy compatibility)
+  # Data persistence configuration
   persistentVolume:
-    enabled: false
+    enabled: ${enable_persistence}
+    size: ${storage_size}
+    storageClass: ${storage_class}
+    accessModes:
+      - ReadWriteOnce
 
-  # Retention configuration
-  retention: "15d"
+  # Data retention period
+  retention: "${retention_days}d"
 
-  # Resource limits
+  # Resource allocation
   resources:
     requests:
       cpu: 200m
@@ -36,12 +60,32 @@ server:
       cpu: 1000m
       memory: 2Gi
 
-  # Global scrape configuration
+  # Global Prometheus settings
   global:
     scrape_interval: 15s
     scrape_timeout: 10s
     evaluation_interval: 15s
 
-  # Ingress disabled (we use nginx-ingress separately)
+  # Ingress (disabled - using nginx-ingress controller)
   ingress:
     enabled: false
+
+  # Security context
+  securityContext:
+    runAsUser: 65534
+    runAsNonRoot: true
+    runAsGroup: 65534
+    fsGroup: 65534
+
+  # Readiness and liveness probes
+  readinessProbeInitialDelay: 30
+  readinessProbePeriodSeconds: 5
+  readinessProbeTimeout: 4
+  readinessProbeFailureThreshold: 3
+  readinessProbeSuccessThreshold: 1
+
+  livenessProbeInitialDelay: 30
+  livenessProbePeriodSeconds: 15
+  livenessProbeTimeout: 10
+  livenessProbeFailureThreshold: 3
+  livenessProbeSuccessThreshold: 1
