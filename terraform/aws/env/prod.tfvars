@@ -134,51 +134,6 @@ lambda_functions = {
 }
 
 ##########################
-# API Gateway Configuration #
-##########################
-api_gateways = {
-  "stackfood-api" = {
-    description         = "StackFood API Gateway for production environment"
-    custom_domain_name  = "api.stackfood.com.br"
-    base_path           = "v1" # Empty for root path, or specify a path like "v1" for api.domain.com/v1
-    stage_name          = "v1"
-    route_key           = "ANY /{proxy+}"
-    security_group_name = "stackfood-api-gateway-vpc-link-sg"
-    vpc_link_name       = "stackfood-api-gateway-vpc-link"
-    cors_configuration = {
-      allow_credentials = false
-      allow_headers     = ["*"]
-      allow_methods     = ["*"]
-      allow_origins     = ["*"]
-      expose_headers    = ["*"]
-      max_age           = 86400
-    }
-    # Microservices configuration
-    microservices = {
-      "customers" = {
-        path = "customers"
-        port = 8084
-      }
-      "products" = {
-        path = "products"
-        port = 8080
-      }
-      "orders" = {
-        path = "orders"
-        port = 8081
-      }
-      "payments" = {
-        path = "payments"
-        port = 8082
-      }
-      "production" = {
-        path = "production"
-        port = 8083
-      }
-    }
-  }
-}
-##########################
 # Cognito Configuration #
 ##########################
 cognito_user_pools = {

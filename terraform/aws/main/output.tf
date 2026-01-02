@@ -65,12 +65,6 @@ output "cognito_unified_summary" {
   }
 }
 
-# Output para compatibilidade com API Gateway (usando o User Pool da aplicação)
-output "api_gateway_config" {
-  description = "Configuração para API Gateway Authorizer"
-  value       = module.cognito.api_gateway_authorizer_config
-}
-
 # Outputs do Grafana
 output "grafana_cognito_info" {
   description = "Informações do Cognito para Grafana"

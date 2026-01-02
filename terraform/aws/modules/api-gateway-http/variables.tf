@@ -45,3 +45,22 @@ variable "cluster_security_group_ids" {
   type        = string
 }
 
+# Lambda Integration Variables
+variable "lambda_invoke_arn" {
+  description = "ARN de invoke da função Lambda para integração com API Gateway"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_function_name" {
+  description = "Nome da função Lambda para integração com API Gateway"
+  type        = string
+  default     = ""
+}
+
+variable "enable_lambda_integration" {
+  description = "Habilitar integração com Lambda para rotas /auth e /customer"
+  type        = bool
+  default     = false
+}
+
