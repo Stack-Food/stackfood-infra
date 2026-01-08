@@ -16,7 +16,7 @@ data "aws_iam_policy_document" "default_policy" {
     }
 
     actions   = ["sqs:*"]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.queue_name}"]
+    resources = ["arn:aws:sqs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:${var.queue_name}"]
   }
 }
 
@@ -34,7 +34,7 @@ data "aws_iam_policy_document" "sns_policy" {
     }
 
     actions   = ["sqs:SendMessage"]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.queue_name}"]
+    resources = ["arn:aws:sqs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:${var.queue_name}"]
 
     condition {
       test     = "StringEquals"
@@ -68,7 +68,7 @@ data "aws_iam_policy_document" "lambda_policy" {
       "sqs:DeleteMessage",
       "sqs:GetQueueAttributes"
     ]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.queue_name}"]
+    resources = ["arn:aws:sqs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:${var.queue_name}"]
   }
 }
 
@@ -101,7 +101,7 @@ data "aws_iam_policy_document" "dlq_default_policy" {
     }
 
     actions   = ["sqs:*"]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.dlq_name != null ? var.dlq_name : "${var.queue_name}-dlq"}"]
+    resources = ["arn:aws:sqs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:${var.dlq_name != null ? var.dlq_name : "${var.queue_name}-dlq"}"]
   }
 }
 
@@ -119,7 +119,7 @@ data "aws_iam_policy_document" "dlq_sns_policy" {
     }
 
     actions   = ["sqs:SendMessage"]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.dlq_name != null ? var.dlq_name : "${var.queue_name}-dlq"}"]
+    resources = ["arn:aws:sqs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:${var.dlq_name != null ? var.dlq_name : "${var.queue_name}-dlq"}"]
 
     condition {
       test     = "StringEquals"
@@ -153,7 +153,7 @@ data "aws_iam_policy_document" "dlq_lambda_policy" {
       "sqs:DeleteMessage",
       "sqs:GetQueueAttributes"
     ]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.dlq_name != null ? var.dlq_name : "${var.queue_name}-dlq"}"]
+    resources = ["arn:aws:sqs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:${var.dlq_name != null ? var.dlq_name : "${var.queue_name}-dlq"}"]
   }
 }
 

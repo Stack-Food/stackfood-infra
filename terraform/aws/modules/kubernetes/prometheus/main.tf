@@ -6,7 +6,7 @@ resource "helm_release" "prometheus" {
   namespace        = var.namespace
   create_namespace = true
 
-  timeout         = 600
+  timeout         = 1200
   wait            = true
   wait_for_jobs   = true
   cleanup_on_fail = true
