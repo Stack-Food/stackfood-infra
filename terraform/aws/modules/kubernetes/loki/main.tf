@@ -10,6 +10,8 @@ resource "helm_release" "loki" {
   wait            = true
   wait_for_jobs   = true
   cleanup_on_fail = true
+  replace         = true
+  force_update    = true
 
   values = [
     templatefile("${path.module}/loki.yml", {
