@@ -261,7 +261,7 @@ team_users = {
     name      = "Leonardo Duarte"
     email     = "leo.duarte.dev@gmail.com"
     user_type = "developer"
-    groups    = ["argocd", "grafana"]
+    groups    = ["argocd", "grafana", "system-admins"]
   }
   "luiz.felipe" = {
     name      = "Luiz Felipe Maia"
@@ -273,19 +273,19 @@ team_users = {
     name      = "Leonardo Luiz Lemos"
     email     = "leoo_lemos@outlook.com"
     user_type = "developer"
-    groups    = ["argocd", "grafana"]
+    groups    = ["argocd", "grafana", "system-admins"]
   }
   "rodrigo.silva" = {
     name      = "Rodrigo Rodriguez Figueiredo de Oliveira Silva"
     email     = "rodrigorfig1@gmail.com"
     user_type = "developer"
-    groups    = ["argocd", "grafana"]
+    groups    = ["argocd", "grafana", "system-admins"]
   }
   "vinicius.targa" = {
     name      = "Vinicius Targa Gonçalves"
     email     = "viniciustarga@gmail.com"
     user_type = "developer"
-    groups    = ["argocd", "grafana"]
+    groups    = ["argocd", "grafana", "system-admins"]
   }
 }
 
