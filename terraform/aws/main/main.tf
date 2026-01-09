@@ -308,7 +308,7 @@ module "nginx-ingress" {
 # Para ArgoCD, Grafana e outras ferramentas de gestão
 module "nginx-ingress-public" {
   source     = "../modules/kubernetes/nginx-ingress-public"
-  depends_on = [module.eks]
+  depends_on = [module.eks, module.acm]
 
   namespace     = "ingress-nginx-public"
   chart_version = var.nginx_ingress_version
