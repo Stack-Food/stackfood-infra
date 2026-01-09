@@ -1,27 +1,7 @@
 # IMPORTANTE: Ordem de criação dos recursos
-# 1. kubernetes_namespace_v1 cria o namespace PRIMEIRO
+# 1. helm_release.grafana cria o namespace automaticamente se não existir (create_namespace = true)
 # 2. kubernetes_secret_v1.grafana_oauth é criado no namespace
-# 3. helm_release.grafana instala o chart (create_namespace = false, pois já existe)
-
-# Create namespace first
-resource "kubernetes_namespace_v1" "grafana" {
-  metadata {
-    name = var.namespace
-    labels = {
-      name                           = var.namespace
-      "app.kubernetes.io/managed-by" = "terraform"
-      "app.kubernetes.io/part-of"    = "monitoring"
-    }
-  }
-
-  lifecycle {
-    ignore_changes = [
-      metadata[0].labels,
-      metadata[0].annotations,
-    ]
-    prevent_destroy = false
-  }
-}
+# 3. Helm instala o chart
 
 # Create Kubernetes Secret for OAuth client secret (after namespace exists)
 resource "kubernetes_secret_v1" "grafana_oauth" {
@@ -42,10 +22,6 @@ resource "kubernetes_secret_v1" "grafana_oauth" {
       metadata[0].labels,
     ]
   }
-
-  depends_on = [
-    kubernetes_namespace_v1.grafana
-  ]
 }
 
 resource "helm_release" "grafana" {
@@ -53,7 +29,7 @@ resource "helm_release" "grafana" {
   repository       = "https://grafana.github.io/helm-charts"
   chart            = "grafana"
   namespace        = var.namespace
-  create_namespace = false # Namespace já foi criado acima
+  create_namespace = true # Cria namespace se não existir, não dá erro se já existir
   version          = var.chart_version
 
   # Adicionar timeouts para ações de CI/CD
@@ -141,18 +117,7 @@ resource "helm_release" "grafana" {
   ]
 
   depends_on = [
-    kubernetes_namespace_v1.grafana,
     kubernetes_secret_v1.grafana_oauth
   ]
 }
 
-# Data source para o namespace (já criado)
-data "kubernetes_namespace_v1" "grafana" {
-  metadata {
-    name = var.namespace
-  }
-
-  depends_on = [
-    kubernetes_namespace_v1.grafana
-  ]
-}
