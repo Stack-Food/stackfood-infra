@@ -934,44 +934,6 @@ sns_topics = {
 ### DynamoDB ####
 ##################
 dynamodb_tables = {
-  "stackfood-products-prod" = {
-    hash_key = "product_id"
-
-    attributes = [
-      {
-        name = "product_id"
-        type = "S"
-      },
-      {
-        name = "category"
-        type = "S"
-      },
-      {
-        name = "name"
-        type = "S"
-      }
-    ]
-
-    # Índice secundário para busca por categoria
-    global_secondary_indexes = [
-      {
-        name            = "category-index"
-        hash_key        = "category"
-        range_key       = "name"
-        projection_type = "ALL"
-      }
-    ]
-
-    # Pay-per-request para carga variável
-    billing_mode = "PAY_PER_REQUEST"
-
-    # Configurações padrão
-    stream_enabled                 = false
-    ttl_enabled                    = false
-    point_in_time_recovery_enabled = true
-    encryption_enabled             = true
-    table_class                    = "STANDARD"
-  }
 
   "stackfood-payments" = {
     hash_key = "payment_id"
