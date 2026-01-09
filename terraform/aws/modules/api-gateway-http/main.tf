@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "this" {
 
 resource "aws_apigatewayv2_vpc_link" "this" {
   name               = "${var.name}-vpc-link"
-  subnet_ids         = var.private_subnet_ids
+  subnet_ids         = var.public_subnet_ids
   security_group_ids = [var.cluster_security_group_ids]
 }
 
