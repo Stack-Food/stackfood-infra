@@ -23,6 +23,21 @@ prometheus-node-exporter:
     pspEnabled: false
   containerSecurityContext:
     allowPrivilegeEscalation: false
+  
+  # Disable hostPort to avoid port conflicts (use ClusterIP instead)
+  service:
+    type: ClusterIP
+    port: 9100
+  
+  # Remove hostNetwork to avoid port binding issues
+  hostNetwork: false
+  
+  # Tolerate all taints to run on all nodes
+  tolerations:
+    - operator: Exists
+  
+  # Remove NodeAffinity restrictions
+  affinity: {}
 
 # Prometheus Pushgateway - For batch job metrics
 prometheus-pushgateway:
