@@ -43,13 +43,9 @@ server:
     - --insecure
   ingress:
     enabled: true
-    ingressClassName: nginx
+    ingressClassName: nginx-public
     annotations:
       nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
       nginx.ingress.kubernetes.io/cors-expose-headers: "*, X-CustomResponseHeader"
-      nlb.ingress.kubernetes.io/scheme: internet-facing
-      nlb.ingress.kubernetes.io/target-type: instance
-      nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-      nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
     hosts:
       - ${argocd_subdomain}.${domain_name}

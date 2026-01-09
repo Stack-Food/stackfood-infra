@@ -62,14 +62,10 @@ service:
 # Ingress configuration
 ingress:
   enabled: true
-  ingressClassName: nginx
+  ingressClassName: nginx-public
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/cors-expose-headers: "*, X-CustomResponseHeader"
-    nlb.ingress.kubernetes.io/scheme: internet-facing
-    nlb.ingress.kubernetes.io/target-type: instance
-    nlb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    nlb.ingress.kubernetes.io/certificate-arn: ${certificate_arn}
   hosts:
     - ${grafana_subdomain}.${domain_name}
 
@@ -262,7 +258,7 @@ sidecar:
     provider:
       allowUiUpdates: false
   datasources:
-    enabled: false  # Desabilitado - datasources provisionados via Terraform
+    enabled: false # Desabilitado - datasources provisionados via Terraform
     label: grafana_datasource
     labelValue: "1"
     searchNamespace: ALL
