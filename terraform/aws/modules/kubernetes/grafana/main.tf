@@ -80,20 +80,6 @@ resource "helm_release" "grafana" {
                   queryTimeout = "300s"
                   httpMethod   = "POST"
                 }
-              },
-              {
-                name      = "Node Exporter"
-                type      = "prometheus"
-                url       = var.prometheus_url
-                access    = "proxy"
-                isDefault = false
-                editable  = true
-                jsonData = {
-                  timeInterval                = "5s"
-                  queryTimeout                = "300s"
-                  httpMethod                  = "POST"
-                  exemplarTraceIdDestinations = []
-                }
               }
             ],
             var.enable_loki_datasource ? [
