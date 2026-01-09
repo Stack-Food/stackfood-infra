@@ -934,66 +934,6 @@ sns_topics = {
 ### DynamoDB ####
 ##################
 dynamodb_tables = {
-  "stackfood-orders-prod" = {
-    hash_key  = "order_id"
-    range_key = "created_at"
-
-    attributes = [
-      {
-        name = "order_id"
-        type = "S"
-      },
-      {
-        name = "created_at"
-        type = "N"
-      },
-      {
-        name = "customer_id"
-        type = "S"
-      },
-      {
-        name = "status"
-        type = "S"
-      }
-    ]
-
-    # Índices secundários globais
-    global_secondary_indexes = [
-      {
-        name            = "customer-index"
-        hash_key        = "customer_id"
-        range_key       = "created_at"
-        projection_type = "ALL"
-      },
-      {
-        name            = "status-index"
-        hash_key        = "status"
-        range_key       = "created_at"
-        projection_type = "KEYS_ONLY"
-      }
-    ]
-
-    # Configurações de billing
-    billing_mode = "PAY_PER_REQUEST"
-
-    # Habilitar streams para integração com Lambda/processamento de eventos
-    stream_enabled   = true
-    stream_view_type = "NEW_AND_OLD_IMAGES"
-
-    # TTL para expiração automática de pedidos antigos (90 dias)
-    ttl_enabled        = true
-    ttl_attribute_name = "ttl"
-
-    # Point-in-time recovery para backup
-    point_in_time_recovery_enabled = true
-
-    # Criptografia habilitada
-    encryption_enabled = true
-
-    # Classe da tabela
-    table_class = "STANDARD"
-  }
-
   "stackfood-products-prod" = {
     hash_key = "product_id"
 
@@ -1026,6 +966,43 @@ dynamodb_tables = {
     billing_mode = "PAY_PER_REQUEST"
 
     # Configurações padrão
+    stream_enabled                 = false
+    ttl_enabled                    = false
+    point_in_time_recovery_enabled = true
+    encryption_enabled             = true
+    table_class                    = "STANDARD"
+  }
+
+  "stackfood-payments" = {
+    hash_key = "payment_id"
+
+    attributes = [
+      {
+        name = "payment_id"
+        type = "S"
+      },
+      {
+        name = "order_id"
+        type = "S"
+      },
+      {
+        name = "status"
+        type = "S"
+      }
+    ]
+
+    # Índice secundário para busca por status
+    global_secondary_indexes = [
+      {
+        name            = "status-index"
+        hash_key        = "status"
+        range_key       = "order_id"
+        projection_type = "ALL"
+      }
+    ]
+
+    billing_mode = "PAY_PER_REQUEST"
+
     stream_enabled                 = false
     ttl_enabled                    = false
     point_in_time_recovery_enabled = true
