@@ -262,7 +262,7 @@ sidecar:
     provider:
       allowUiUpdates: false
   datasources:
-    enabled: true
+    enabled: false  # Desabilitado - datasources provisionados via Terraform
     label: grafana_datasource
     labelValue: "1"
     searchNamespace: ALL
