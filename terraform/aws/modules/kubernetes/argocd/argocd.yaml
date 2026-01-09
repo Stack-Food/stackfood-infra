@@ -7,7 +7,7 @@ configs:
     create: true
   rbac:
     create: true
-    policy.default: ""
+    policy.default: "role:admin"
     policy.csv: |
       # Políticas para grupos do Cognito
       g, argocd, role:admin
