@@ -294,21 +294,20 @@ module "sns" {
 # NGINX Ingress
 module "nginx-ingress" {
   source     = "../modules/kubernetes/nginx-ingress"
-  depends_on = [module.eks, module.acm]
+  depends_on = [module.eks]
 
-  ingress_name        = var.nginx_ingress_name
-  ingress_repository  = var.nginx_ingress_repository
-  ingress_chart       = var.nginx_ingress_chart
-  ingress_namespace   = var.nginx_ingress_namespace
-  ingress_version     = var.nginx_ingress_version
-  ssl_certificate_arn = module.acm.certificate_arn
+  ingress_name       = var.nginx_ingress_name
+  ingress_repository = var.nginx_ingress_repository
+  ingress_chart      = var.nginx_ingress_chart
+  ingress_namespace  = var.nginx_ingress_namespace
+  ingress_version    = var.nginx_ingress_version
 }
 
 # NGINX Ingress Controller - Public (Internet-facing)
 # Para ArgoCD, Grafana e outras ferramentas de gestão
 module "nginx-ingress-public" {
   source     = "../modules/kubernetes/nginx-ingress-public"
-  depends_on = [module.eks, module.acm]
+  depends_on = [module.eks]
 
   namespace     = "ingress-nginx-public"
   chart_version = var.nginx_ingress_version
@@ -473,7 +472,7 @@ module "dns" {
   # Tags
   tags = var.tags
 
-  depends_on = [module.eks, module.nginx-ingress-public]
+  depends_on = [module.eks, module.nginx-ingress-public, module.acm, module.nginx-ingress]
 }
 
 # Módulo Grafana com autenticação Cognito

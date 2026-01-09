@@ -23,7 +23,3 @@ variable "ingress_version" {
   type        = string
 }
 
-variable "ssl_certificate_arn" {
-  description = "ARN of the SSL certificate to use with the load balancer"
-  type        = string
-}
