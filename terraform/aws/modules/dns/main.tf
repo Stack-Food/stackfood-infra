@@ -4,12 +4,12 @@
 
 # DNS Record para ArgoCD
 resource "cloudflare_record" "argocd" {
-  count = var.create_argocd_record ? 1 : 0
+  count = var.create_argocd_record && var.public_nlb_dns_name != "" ? 1 : 0
 
   zone_id         = var.cloudflare_zone_id
   name            = var.argocd_subdomain
   type            = "CNAME"
-  content         = data.aws_lb.eks_nlb_public[0].dns_name
+  content         = var.public_nlb_dns_name
   proxied         = var.proxied
   ttl             = var.proxied ? 1 : var.ttl
   allow_overwrite = true
@@ -21,12 +21,12 @@ resource "cloudflare_record" "argocd" {
 
 # DNS Record para Grafana
 resource "cloudflare_record" "grafana" {
-  count = var.create_grafana_record ? 1 : 0
+  count = var.create_grafana_record && var.public_nlb_dns_name != "" ? 1 : 0
 
   zone_id         = var.cloudflare_zone_id
   name            = var.grafana_subdomain
   type            = "CNAME"
-  content         = data.aws_lb.eks_nlb_public[0].dns_name
+  content         = var.public_nlb_dns_name
   proxied         = var.proxied
   ttl             = var.proxied ? 1 : var.ttl
   allow_overwrite = true

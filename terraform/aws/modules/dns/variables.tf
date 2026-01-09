@@ -63,6 +63,12 @@ variable "ttl" {
   default     = 300
 }
 
+variable "public_nlb_dns_name" {
+  description = "DNS name do NLB público (nginx-ingress-public) para ArgoCD e Grafana"
+  type        = string
+  default     = ""
+}
+
 # Generic DNS records variable
 variable "dns_records" {
   description = "Map of DNS records to create"

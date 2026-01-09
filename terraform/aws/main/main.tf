@@ -455,6 +455,9 @@ module "dns" {
   environment        = var.environment
   eks_cluster_name   = var.eks_cluster_name
 
+  # NLB público para ArgoCD e Grafana
+  public_nlb_dns_name = module.nginx-ingress-public.load_balancer_dns
+
   # Configurações ArgoCD
   create_argocd_record = true
   argocd_subdomain     = "argo"
