@@ -13,6 +13,14 @@ resource "kubernetes_namespace_v1" "grafana" {
       "app.kubernetes.io/part-of"    = "monitoring"
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      metadata[0].labels,
+      metadata[0].annotations,
+    ]
+    prevent_destroy = false
+  }
 }
 
 # Create Kubernetes Secret for OAuth client secret (after namespace exists)
