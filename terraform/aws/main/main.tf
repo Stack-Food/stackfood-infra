@@ -522,44 +522,44 @@ module "grafana" {
     module.dns,
     module.eks,
     module.nginx-ingress,
-    # module.prometheus,
-    # module.loki,
+    module.prometheus,
+    module.loki,
   ]
 }
 
 # Prometheus Module - Install before Grafana
-# module "prometheus" {
-#   source = "../modules/kubernetes/prometheus/"
+module "prometheus" {
+  source = "../modules/kubernetes/prometheus/"
 
-#   # Basic configuration
-#   namespace     = "monitoring"
-#   chart_version = "25.27.0"
+  # Basic configuration
+  namespace     = "monitoring"
+  chart_version = "25.27.0"
 
-#   # Retention configuration
-#   retention_days = 15
+  # Retention configuration
+  retention_days = 15
 
-#   # Persistence (disabled for AWS Academy)
-#   enable_persistence = false
-#   storage_size       = "20Gi"
-#   storage_class      = "gp2"
+  # Persistence (disabled for AWS Academy)
+  enable_persistence = false
+  storage_size       = "20Gi"
+  storage_class      = "gp2"
 
-#   depends_on = [module.eks, module.nginx-ingress]
-# }
+  depends_on = [module.eks, module.nginx-ingress]
+}
 
 # Loki Module - Install before Grafana
-# module "loki" {
-#   source = "../modules/kubernetes/loki/"
+module "loki" {
+  source = "../modules/kubernetes/loki/"
 
-#   # Basic configuration
-#   namespace     = "monitoring"
-#   chart_version = "2.10.2"
+  # Basic configuration
+  namespace     = "monitoring"
+  chart_version = "2.10.2"
 
-#   # Retention configuration
-#   retention_period = "168h" # 7 days
+  # Retention configuration
+  retention_period = "168h" # 7 days
 
-#   # Persistence (disabled for AWS Academy)
-#   enable_persistence = false
-#   storage_size       = "10Gi"
+  # Persistence (disabled for AWS Academy)
+  enable_persistence = false
+  storage_size       = "10Gi"
 
-#   depends_on = [module.eks, module.nginx-ingress]
-# }
+  depends_on = [module.eks, module.nginx-ingress]
+}
