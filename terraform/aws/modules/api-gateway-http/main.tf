@@ -127,3 +127,32 @@ resource "aws_lambda_permission" "customer_api_gateway_invoke" {
   }
 }
 
+# ========================================
+# Custom Domain Configuration
+# ========================================
+
+resource "aws_apigatewayv2_domain_name" "this" {
+  count       = var.custom_domain_name != "" ? 1 : 0
+  domain_name = var.custom_domain_name
+
+  domain_name_configuration {
+    certificate_arn = var.acm_certificate_arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
+
+  tags = var.tags
+}
+
+# API Mapping - conecta o custom domain ao stage da API
+resource "aws_apigatewayv2_api_mapping" "this" {
+  count       = var.custom_domain_name != "" ? 1 : 0
+  api_id      = aws_apigatewayv2_api.this.id
+  domain_name = aws_apigatewayv2_domain_name.this[0].id
+  stage       = aws_apigatewayv2_stage.default.id
+
+  depends_on = [
+    aws_apigatewayv2_domain_name.this,
+    aws_apigatewayv2_stage.default
+  ]
+}

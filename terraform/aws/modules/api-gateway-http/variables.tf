@@ -64,3 +64,15 @@ variable "enable_lambda_integration" {
   default     = false
 }
 
+variable "custom_domain_name" {
+  description = "Custom domain name for the API Gateway (e.g., api.stackfood.com.br)"
+  type        = string
+  default     = ""
+}
+
+variable "acm_certificate_arn" {
+  description = "ARN do certificado ACM para o custom domain"
+  type        = string
+  default     = ""
+}
+
