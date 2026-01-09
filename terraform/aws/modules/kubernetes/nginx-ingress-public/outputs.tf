@@ -20,5 +20,5 @@ output "service_name" {
 
 output "load_balancer_dns" {
   description = "DNS name do NLB criado pelo NGINX Ingress Controller (disponível após criação)"
-  value       = try(data.kubernetes_service.nginx_ingress_public.status[0].load_balancer[0].ingress[0].hostname, "")
+  value       = try(data.kubernetes_service_v1.nginx_ingress_public.status[0].load_balancer[0].ingress[0].hostname, "")
 }
