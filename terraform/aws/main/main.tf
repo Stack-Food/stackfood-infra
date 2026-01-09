@@ -350,6 +350,7 @@ module "stackfood_http_api" {
   nlb_listener_arn           = module.nginx-ingress.load_balancer-arn
   lb_arn                     = module.nginx-ingress.load_balancer-arn
   cluster_security_group_ids = module.eks.cluster_security_group_id
+  custom_domain_name         = "api.${var.domain_name}"
 
   vpc_id             = module.vpc.vpc_id
   public_subnet_ids  = module.vpc.public_subnet_ids
