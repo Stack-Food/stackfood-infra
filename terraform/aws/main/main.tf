@@ -80,7 +80,7 @@ module "eks" {
   # Configuração dos grupos de nós
   node_groups = {
     api = {
-      desired_size   = 1
+      desired_size   = 2
       max_size       = 3
       min_size       = 1
       instance_types = ["t3.large"]
@@ -91,7 +91,7 @@ module "eks" {
       }
     }
     worker = {
-      desired_size   = 1
+      desired_size   = 2
       max_size       = 3
       min_size       = 1
       instance_types = ["t3.large"]
