@@ -26,7 +26,7 @@ output "argocd_access_info" {
   description = "Informações de acesso ao ArgoCD"
   value = {
     url                    = module.argocd.argocd_url
-    admin_user             = "stackfood"
+    admin_user             = "OptimusFrame"
     admin_password         = "Fiap@2025"
     cognito_login_url      = module.cognito.argocd_issuer_url
     admin_password_command = module.argocd.admin_password_command

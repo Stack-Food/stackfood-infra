@@ -51,7 +51,7 @@ metadata:
   namespace: argocd # Sempre argocd
   labels:
     app: <nome>
-    team: stackfood
+    team: OptimusFrame
 
 spec:
   project: default # Projeto do ArgoCD

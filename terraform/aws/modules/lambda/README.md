@@ -50,9 +50,9 @@ Lambda Functions
 ```hcl
 lambda_functions = {
   "auth" = {
-    function_name = "stackfood-auth"
+    function_name = "OptimusFrame-auth"
     runtime      = "dotnet8"
-    handler      = "StackFood.Auth::StackFood.Auth.Function::FunctionHandler"
+    handler      = "OptimusFrame.Auth::OptimusFrame.Auth.Function::FunctionHandler"
     memory_size  = 512
     timeout      = 30
     filename     = "auth-function.zip"
@@ -61,9 +61,9 @@ lambda_functions = {
     }
   }
   "customer" = {
-    function_name = "stackfood-customer"
+    function_name = "OptimusFrame-customer"
     runtime      = "dotnet8"
-    handler      = "StackFood.Customer::StackFood.Customer.Function::FunctionHandler"
+    handler      = "OptimusFrame.Customer::OptimusFrame.Customer.Function::FunctionHandler"
     memory_size  = 256
     timeout      = 15
     filename     = "customer-function.zip"
@@ -93,9 +93,9 @@ module "lambda" {
 
   lambda_functions = {
     "auth" = {
-      function_name = "stackfood-auth-prod"
+      function_name = "OptimusFrame-auth-prod"
       runtime      = "dotnet8"
-      handler      = "StackFood.Auth::StackFood.Auth.Function::FunctionHandler"
+      handler      = "OptimusFrame.Auth::OptimusFrame.Auth.Function::FunctionHandler"
       memory_size  = 512
       timeout      = 30
       filename     = "auth-function.zip"
@@ -112,7 +112,7 @@ module "lambda" {
   }
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```

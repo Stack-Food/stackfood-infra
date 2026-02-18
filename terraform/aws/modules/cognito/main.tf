@@ -30,9 +30,9 @@ resource "aws_cognito_user_pool" "main" {
     allow_admin_create_user_only = true
 
     invite_message_template {
-      email_message = "Olá {username}! Bem-vindo ao StackFood! 🚀\n\nSua conta foi criada com sucesso. Use as credenciais abaixo para acessar:\n\nUsername: {username}\nSenha temporária: {####}\n\nVocê será solicitado a alterar sua senha no primeiro login.\n\nEquipe StackFood"
-      email_subject = "🚀 Acesso ao StackFood - Bem-vindo à equipe!"
-      sms_message   = "StackFood - Username: {username}, Senha temporária: {####}"
+      email_message = "Olá {username}! Bem-vindo ao OptimusFrame! 🚀\n\nSua conta foi criada com sucesso. Use as credenciais abaixo para acessar:\n\nUsername: {username}\nSenha temporária: {####}\n\nVocê será solicitado a alterar sua senha no primeiro login.\n\nEquipe OptimusFrame"
+      email_subject = "🚀 Acesso ao OptimusFrame - Bem-vindo à equipe!"
+      sms_message   = "OptimusFrame - Username: {username}, Senha temporária: {####}"
     }
   }
 
@@ -84,7 +84,7 @@ resource "aws_cognito_user_pool_domain" "main" {
 resource "aws_cognito_user_group" "app_users" {
   name         = "app-users"
   user_pool_id = aws_cognito_user_pool.main.id
-  description  = "Usuários da aplicação principal StackFood"
+  description  = "Usuários da aplicação principal OptimusFrame"
   precedence   = 10
 }
 
@@ -92,7 +92,7 @@ resource "aws_cognito_user_group" "app_users" {
 resource "aws_cognito_user_group" "app_admins" {
   name         = "app-admins"
   user_pool_id = aws_cognito_user_pool.main.id
-  description  = "Administradores da aplicação StackFood"
+  description  = "Administradores da aplicação OptimusFrame"
   precedence   = 5
 }
 
@@ -136,7 +136,7 @@ resource "aws_cognito_user" "guest" {
 
   attributes = {
     name               = "Usuário Convidado"
-    email              = "convidado@stackfood.com.br"
+    email              = "convidado@optimus-frame.com.br"
     email_verified     = true
     "custom:user_type" = "guest"
     preferred_username = "convidado"
@@ -157,38 +157,38 @@ resource "aws_cognito_user_in_group" "guest_app_users" {
   ]
 }
 
-# Usuário admin principal StackFood
-resource "aws_cognito_user" "stackfood_admin" {
+# Usuário admin principal OptimusFrame
+resource "aws_cognito_user" "OptimusFrame_admin" {
   user_pool_id = aws_cognito_user_pool.main.id
-  username     = "stackfood"
-  password     = var.stackfood_admin_password
+  username     = "OptimusFrame"
+  password     = var.OptimusFrame_admin_password
 
   message_action = "SUPPRESS"
 
   attributes = {
-    name               = "StackFood Administrator"
-    email              = "admin@stackfood.com.br"
+    name               = "OptimusFrame Administrator"
+    email              = "admin@optimus-frame.com.br"
     email_verified     = true
     "custom:user_type" = "system_admin"
   }
 }
 
 # Adicionar admin aos grupos
-resource "aws_cognito_user_in_group" "stackfood_admin_system" {
+resource "aws_cognito_user_in_group" "OptimusFrame_admin_system" {
   user_pool_id = aws_cognito_user_pool.main.id
-  username     = aws_cognito_user.stackfood_admin.username
+  username     = aws_cognito_user.OptimusFrame_admin.username
   group_name   = aws_cognito_user_group.system_admins.name
 }
 
-resource "aws_cognito_user_in_group" "stackfood_admin_argocd" {
+resource "aws_cognito_user_in_group" "OptimusFrame_admin_argocd" {
   user_pool_id = aws_cognito_user_pool.main.id
-  username     = aws_cognito_user.stackfood_admin.username
+  username     = aws_cognito_user.OptimusFrame_admin.username
   group_name   = aws_cognito_user_group.argocd.name
 }
 
-resource "aws_cognito_user_in_group" "stackfood_admin_grafana" {
+resource "aws_cognito_user_in_group" "OptimusFrame_admin_grafana" {
   user_pool_id = aws_cognito_user_pool.main.id
-  username     = aws_cognito_user.stackfood_admin.username
+  username     = aws_cognito_user.OptimusFrame_admin.username
   group_name   = aws_cognito_user_group.grafana.name
 }
 

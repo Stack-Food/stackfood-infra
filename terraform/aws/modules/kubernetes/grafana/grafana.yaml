@@ -93,7 +93,7 @@ grafana.ini:
   # Generic OAuth settings for Cognito
   auth.generic_oauth:
     enabled: true
-    name: StackFood SSO
+    name: OptimusFrame SSO
     client_id: ${cognito_client_id}
     # client_secret moved to envFromSecret for security
     scopes: openid email profile

@@ -22,8 +22,8 @@ variable "guest_user_password" {
 }
 
 # System Admin Configuration
-variable "stackfood_admin_password" {
-  description = "Senha para o usuário administrador stackfood"
+variable "OptimusFrame_admin_password" {
+  description = "Senha para o usuário administrador OptimusFrame"
   type        = string
   sensitive   = true
   default     = "Fiap@2025"
@@ -45,7 +45,7 @@ variable "team_users_password" {
   description = "Senha padrão para os usuários da equipe"
   type        = string
   sensitive   = true
-  default     = "StackFood@2025"
+  default     = "OptimusFrame@2025"
 }
 
 # Client Configuration

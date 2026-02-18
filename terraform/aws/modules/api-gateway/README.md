@@ -1,4 +1,4 @@
-# API Gateway Module - StackFood
+# API Gateway Module - OptimusFrame
 
 Módulo Terraform para criar AWS API Gateway com roteamento híbrido: Lambda (auth) + VPC Link para microserviços no EKS.
 
@@ -10,8 +10,8 @@ Módulo Terraform para criar AWS API Gateway com roteamento híbrido: Lambda (au
 Internet
     ↓
 AWS API Gateway (Regional)
-    ├── /auth → Lambda (stackfood-auth)
-    ├── /customer → Lambda (stackfood-auth)
+    ├── /auth → Lambda (OptimusFrame-auth)
+    ├── /customer → Lambda (OptimusFrame-auth)
     └── /microservices/* → VPC Link
                               ↓
                         Network Load Balancer (NLB)
@@ -19,11 +19,11 @@ AWS API Gateway (Regional)
                         NGINX Ingress Controller
                               ↓
                         Kubernetes Services (EKS)
-                              ├── stackfood-customers:8084
-                              ├── stackfood-products:8080
-                              ├── stackfood-orders:8081
-                              ├── stackfood-payments:8082
-                              └── stackfood-production:8083
+                              ├── OptimusFrame-customers:8084
+                              ├── OptimusFrame-products:8080
+                              ├── OptimusFrame-orders:8081
+                              ├── OptimusFrame-payments:8082
+                              └── OptimusFrame-production:8083
 ```
 
 ---
@@ -50,11 +50,11 @@ AWS API Gateway (Regional)
 
 | Route | Microserviço | K8s Service | Port | Namespace |
 |-------|--------------|-------------|------|-----------|
-| `/customers/{proxy+}` | Customers | stackfood-customers | 8084 | customers |
-| `/products/{proxy+}` | Products | stackfood-products | 8080 | products |
-| `/orders/{proxy+}` | Orders | stackfood-orders | 8081 | orders |
-| `/payments/{proxy+}` | Payments | stackfood-payments | 8082 | payments |
-| `/production/{proxy+}` | Production | stackfood-production | 8083 | production |
+| `/customers/{proxy+}` | Customers | OptimusFrame-customers | 8084 | customers |
+| `/products/{proxy+}` | Products | OptimusFrame-products | 8080 | products |
+| `/orders/{proxy+}` | Orders | OptimusFrame-orders | 8081 | orders |
+| `/payments/{proxy+}` | Payments | OptimusFrame-payments | 8082 | payments |
+| `/production/{proxy+}` | Production | OptimusFrame-production | 8083 | production |
 
 ---
 
@@ -67,8 +67,8 @@ module "api_gateway" {
   source = "../modules/api-gateway/"
 
   # General Settings
-  api_name    = "stackfood-api"
-  description = "StackFood API Gateway with hybrid routing"
+  api_name    = "optimus-frame-api"
+  description = "OptimusFrame API Gateway with hybrid routing"
   environment = "production"
 
   # VPC Configuration
@@ -77,21 +77,21 @@ module "api_gateway" {
   public_subnet_ids  = module.vpc.public_subnet_ids
 
   # EKS Integration
-  eks_cluster_name = "stackfood-eks"
+  eks_cluster_name = "OptimusFrame-eks"
 
   # Lambda Integration
-  lambda_invoke_arn    = module.lambda["stackfood-auth"].function_invoke_arn
-  lambda_function_name = module.lambda["stackfood-auth"].function_name
+  lambda_invoke_arn    = module.lambda["OptimusFrame-auth"].function_invoke_arn
+  lambda_function_name = module.lambda["OptimusFrame-auth"].function_name
 
   # Custom Domain (Optional)
-  custom_domain_name   = "api.stackfood.com.br"
+  custom_domain_name   = "api.optimus-frame.com.br"
   acm_certificate_arn  = module.acm.certificate_arn
   base_path            = ""
   stage_name           = "v1"
 
   # Security
-  vpc_link_name        = "stackfood-vpc-link"
-  security_group_name  = "stackfood-api-gateway-sg"
+  vpc_link_name        = "OptimusFrame-vpc-link"
+  security_group_name  = "optimus-frame-api-gateway-sg"
 
   tags = var.tags
 
@@ -112,7 +112,7 @@ output.api_gateway_stage_invoke_url
 
 # Custom Domain (se configurado)
 output.custom_domain_name
-# Example: api.stackfood.com.br
+# Example: api.optimus-frame.com.br
 
 # VPC Link ID
 output.vpc_link_id
@@ -148,7 +148,7 @@ output.api_routes_summary
 
 **POST /auth**
 ```
-Client → API Gateway → Lambda (stackfood-auth)
+Client → API Gateway → Lambda (OptimusFrame-auth)
                          ↓
                     AWS Cognito
                          ↓
@@ -157,7 +157,7 @@ Client → API Gateway → Lambda (stackfood-auth)
 
 **POST /customer**
 ```
-Client → API Gateway → Lambda (stackfood-auth)
+Client → API Gateway → Lambda (OptimusFrame-auth)
                          ↓
                     PostgreSQL + Cognito
                          ↓
@@ -170,13 +170,13 @@ Client → API Gateway → Lambda (stackfood-auth)
 ```
 Client → API Gateway → VPC Link → NLB → NGINX Ingress
                                                 ↓
-                                    stackfood-customers.customers.svc.cluster.local:8084
+                                    OptimusFrame-customers.customers.svc.cluster.local:8084
 ```
 
 **Exemplos de Requests**:
-- `GET /customers/api/customers` → `http://stackfood-customers:8084/api/customers`
-- `POST /customers/api/customers` → `http://stackfood-customers:8084/api/customers`
-- `GET /customers/api/customers/{id}` → `http://stackfood-customers:8084/api/customers/{id}`
+- `GET /customers/api/customers` → `http://optimus-frame-customers:8084/api/customers`
+- `POST /customers/api/customers` → `http://optimus-frame-customers:8084/api/customers`
+- `GET /customers/api/customers/{id}` → `http://optimus-frame-customers:8084/api/customers/{id}`
 
 **⚠️ Nota**: O `{proxy+}` captura todo o path após `/customers/` e repassa para o microserviço.
 
@@ -198,7 +198,7 @@ Client → API Gateway → VPC Link → NLB → NGINX Ingress
 
 | Variável | Tipo | Default | Descrição |
 |----------|------|---------|-----------|
-| `custom_domain_name` | string | `""` | Custom domain (ex: api.stackfood.com.br) |
+| `custom_domain_name` | string | `""` | Custom domain (ex: api.optimus-frame.com.br) |
 | `acm_certificate_arn` | string | `""` | ARN do certificado ACM |
 | `base_path` | string | `"v1"` | Base path do custom domain |
 | `stage_name` | string | `"v1"` | Nome do stage |
@@ -244,7 +244,7 @@ aws apigateway get-vpc-links
 **Possíveis causas**:
 1. **Service não existe no K8s**:
    ```bash
-   kubectl get svc stackfood-customers -n customers
+   kubectl get svc OptimusFrame-customers -n customers
    ```
 
 2. **Pods não estão rodando**:
@@ -254,13 +254,13 @@ aws apigateway get-vpc-links
 
 3. **Health check falhando**:
    ```bash
-   kubectl logs -f deployment/stackfood-customers -n customers
+   kubectl logs -f deployment/optimus-frame-customers -n customers
    ```
 
 4. **DNS interno não resolve**:
    ```bash
    kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- sh
-   curl http://stackfood-customers.customers.svc.cluster.local:8084/health
+   curl http://optimus-frame-customers.customers.svc.cluster.local:8084/health
    ```
 
 ### Lambda não é invocada
@@ -270,10 +270,10 @@ aws apigateway get-vpc-links
 **Solução**:
 ```bash
 # Verificar se Lambda tem permissão
-aws lambda get-policy --function-name stackfood-auth
+aws lambda get-policy --function-name OptimusFrame-auth
 
 # Verificar logs da Lambda
-aws logs tail /aws/lambda/stackfood-auth --follow
+aws logs tail /aws/lambda/optimus-frame-auth --follow
 ```
 
 ---

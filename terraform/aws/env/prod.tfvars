@@ -2,15 +2,15 @@ aws_region  = "us-east-1"
 environment = "prod"
 
 tags = {
-  Project = "StackFood"
+  Project = "OptimusFrame"
   Team    = "SOAT-FIAP"
 }
 
 ######################
 # Domain Configuration #
 ######################
-domain_name               = "stackfood.com.br"
-subject_alternative_names = ["*.stackfood.com.br"]
+domain_name               = "optimus-frame.com.br"
+subject_alternative_names = ["*.optimus-frame.com.br"]
 
 # DNS Provider Configuration (Cloudflare)
 cloudflare_zone_id = "09f31a057e454d7d71ab44b6b5960723" # Substitua pelo seu Zone ID real
@@ -18,7 +18,7 @@ cloudflare_zone_id = "09f31a057e454d7d71ab44b6b5960723" # Substitua pelo seu Zon
 ######################
 # VPC Configuration #
 ######################
-vpc_name        = "stackfood-vpc"
+vpc_name        = "OptimusFrame-vpc"
 vpc_cidr_blocks = ["10.0.0.0/16"]
 
 private_subnets = {
@@ -60,7 +60,7 @@ public_subnets = {
 ######################
 # EKS Configuration #
 ######################
-eks_cluster_name           = "stackfood-eks"
+eks_cluster_name           = "OptimusFrame-eks"
 kubernetes_version         = "1.34"
 eks_endpoint_public_access = true
 eks_authentication_mode    = "API_AND_CONFIG_MAP"
@@ -82,18 +82,18 @@ nginx_ingress_version    = "4.10.0"
 # RDS Configuration #
 ######################
 rds_instances = {
-  "stackfood-db" = {
+  "OptimusFrame-db" = {
     # AWS Academy compliant settings
     allocated_storage            = 20            # Changed from 50 to 20 (within 100GB limit)
     storage_encrypted            = false         # Simplified for AWS Academy
     db_instance_class            = "db.t3.micro" # Changed to supported instance type
-    db_username                  = "stackfood"
+    db_username                  = "OptimusFrame"
     db_password                  = "postgres" # Ensure this meets complexity requirements
     manage_master_user_password  = false
     engine                       = "postgres" # Lowercase as required
     engine_version               = "16.10"    # Valid PostgreSQL 16 version
     major_engine_version         = "16"
-    identifier                   = "stackfood-postgres"
+    identifier                   = "OptimusFrame-postgres"
     publicly_accessible          = true
     multi_az                     = false # Disabled for cost savings
     performance_insights_enabled = false # Enhanced monitoring not supported
@@ -114,31 +114,31 @@ lambda_role_name      = "LabRole"
 ######################
 # Lambda Configuration #
 ######################
-lambda_functions = {
-  "stackfood-auth" = {
-    description  = "Lambda for CPF authentication and JWT validation"
-    package_type = "Zip"
-    # Imagem base oficial AWS Lambda para .NET 8 - RUNTIME
-    memory_size = 256
-    runtime     = "dotnet8"
-    timeout     = 30
-    vpc_access  = true
-    handler     = "StackFood.Lambda::StackFood.Lambda.Function::FunctionHandler"
-    environment_variables = {
-      USER_POOL_ID           = ""
-      CLIENT_ID              = ""
-      LOG_LEVEL              = "info"
-      ASPNETCORE_ENVIRONMENT = "Production"
-    }
-  }
-}
+# lambda_functions = {
+#   "OptimusFrame-auth" = {
+#     description  = "Lambda for CPF authentication and JWT validation"
+#     package_type = "Zip"
+#     # Imagem base oficial AWS Lambda para .NET 8 - RUNTIME
+#     memory_size = 256
+#     runtime     = "dotnet8"
+#     timeout     = 30
+#     vpc_access  = true
+#     handler     = "OptimusFrame.Lambda::OptimusFrame.Lambda.Function::FunctionHandler"
+#     environment_variables = {
+#       USER_POOL_ID           = ""
+#       CLIENT_ID              = ""
+#       LOG_LEVEL              = "info"
+#       ASPNETCORE_ENVIRONMENT = "Production"
+#     }
+#   }
+# }
 
 ##########################
 # Cognito Configuration #
 ##########################
 cognito_user_pools = {
-  "stackfood-users" = {
-    name                                          = "stackfood-users"
+  "OptimusFrame-users" = {
+    name                                          = "OptimusFrame-users"
     alias_attributes                              = ["preferred_username"] # CPF será usado via preferred_username
     auto_verified_attributes                      = []                     # Sem verificação automática (apenas CPF)
     attributes_require_verification_before_update = []                     # Nenhum atributo requer verificação antes de atualizar
@@ -172,12 +172,12 @@ cognito_user_pools = {
     }
 
     # Domain for hosted UI (opcional para POC)
-    domain = "stackfood-users-domain"
+    domain = "OptimusFrame-users-domain"
 
     # Client Applications - Configurado para autenticação sem senha
     clients = {
       "cpf-auth-app" = {
-        name                         = "stackfood-cpf-auth"
+        name                         = "OptimusFrame-cpf-auth"
         generate_secret              = false # Frontend não precisa de secret
         refresh_token_validity       = 30
         access_token_validity        = 60
@@ -190,8 +190,8 @@ cognito_user_pools = {
         allowed_oauth_flows                  = ["implicit"]
         allowed_oauth_flows_user_pool_client = true
         allowed_oauth_scopes                 = ["openid", "profile", "aws.cognito.signin.user.admin"]
-        callback_urls                        = ["http://localhost:3000/callback", "https://stackfood.com.br/callback"]
-        logout_urls                          = ["http://localhost:3000/logout", "https://stackfood.com.br/logout"]
+        callback_urls                        = ["http://localhost:3000/callback", "https://optimus-frame.com.br/callback"]
+        logout_urls                          = ["http://localhost:3000/logout", "https://optimus-frame.com.br/logout"]
 
         # Autenticação customizada para CPF sem senha
         explicit_auth_flows           = ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
@@ -204,7 +204,7 @@ cognito_user_pools = {
       }
 
       "api-backend" = {
-        name                         = "stackfood-api-backend"
+        name                         = "optimus-frame-api-backend"
         generate_secret              = true # Backend precisa de secret
         refresh_token_validity       = 30
         access_token_validity        = 120 # Maior validade para API
@@ -234,7 +234,7 @@ cognito_user_pools = {
     allow_unauthenticated_identities = false
     default_client_key               = "cpf-auth-app"
 
-    # Custom Attributes para StackFood - Foco em CPF
+    # Custom Attributes para OptimusFrame - Foco em CPF
     schemas = [
       {
         attribute_data_type      = "String"
@@ -255,7 +255,7 @@ cognito_user_pools = {
 # ArgoCD Users Configuration #
 ######################
 
-# Usuários da equipe StackFood para ArgoCD
+# Usuários da equipe OptimusFrame para ArgoCD
 team_users = {
   "leonardo.duarte" = {
     name      = "Leonardo Duarte"
@@ -291,7 +291,7 @@ team_users = {
 
 # Senhas para usuários
 argocd_admin_password = "Fiap@2025"
-argocd_team_password  = "StackFood@2025"
+argocd_team_password  = "OptimusFrame@2025"
 
 
 
@@ -331,7 +331,7 @@ monitoring_namespace = "monitoring"
 ############
 sqs_queues = {
   # Orders API Queue
-  "stackfood-sqs-orders-created-queue" = {
+  "OptimusFrame-sqs-orders-created-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -345,12 +345,12 @@ sqs_queues = {
     create_default_policy       = true
 
     allowed_sns_topic_names = [
-      "stackfood-sns-orders-created"
+      "OptimusFrame-sns-orders-created"
     ]
 
     # DLQ Configuration
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-orders-created-dlq"
+    dlq_name          = "OptimusFrame-sqs-orders-created-dlq"
     max_receive_count = 5
 
     # Custom DLQ Configuration Object 
@@ -387,7 +387,7 @@ sqs_queues = {
     }
   },
 
-  "stackfood-sqs-orders-cancelled-queue" = {
+  "OptimusFrame-sqs-orders-cancelled-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -401,12 +401,12 @@ sqs_queues = {
     create_default_policy       = true
 
     allowed_sns_topic_names = [
-      "stackfood-sns-orders-cancelled"
+      "OptimusFrame-sns-orders-cancelled"
     ]
 
     # DLQ Configuration
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-orders-cancelled-dlq"
+    dlq_name          = "OptimusFrame-sqs-orders-cancelled-dlq"
     max_receive_count = 5
 
     # Custom DLQ Configuration Object 
@@ -444,7 +444,7 @@ sqs_queues = {
   }
 
   # Payments API Queue
-  "stackfood-sqs-orders-completed-queue" = {
+  "OptimusFrame-sqs-orders-completed-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -458,11 +458,11 @@ sqs_queues = {
     create_default_policy       = true
 
     allowed_sns_topic_names = [
-      "stackfood-sns-orders-completed-topic"
+      "OptimusFrame-sns-orders-completed-topic"
     ]
 
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-orders-completed-dlq"
+    dlq_name          = "OptimusFrame-sqs-orders-completed-dlq"
     max_receive_count = 5
 
     dlq_config = {
@@ -499,7 +499,7 @@ sqs_queues = {
   }
 
   # Products API Queue
-  "stackfood-sqs-products-queue" = {
+  "OptimusFrame-sqs-products-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -513,11 +513,11 @@ sqs_queues = {
     create_default_policy       = true
 
     allowed_sns_topic_names = [
-      "stackfood-sns-production-topic"
+      "OptimusFrame-sns-production-topic"
     ]
 
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-products-dlq"
+    dlq_name          = "OptimusFrame-sqs-products-dlq"
     max_receive_count = 5
 
     dlq_config = {
@@ -554,7 +554,7 @@ sqs_queues = {
   }
 
   # Production API Queue
-  "stackfood-sqs-production-queue" = {
+  "OptimusFrame-sqs-production-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -568,11 +568,11 @@ sqs_queues = {
     create_default_policy       = true
 
     allowed_sns_topic_names = [
-      "stackfood-sns-production-topic"
+      "OptimusFrame-sns-production-topic"
     ]
 
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-production-dlq"
+    dlq_name          = "OptimusFrame-sqs-production-dlq"
     max_receive_count = 5
 
     dlq_config = {
@@ -608,7 +608,7 @@ sqs_queues = {
     }
   }
 
-  "stackfood-sqs-payments-queue" = {
+  "OptimusFrame-sqs-payments-queue" = {
     fifo_queue                  = false
     content_based_deduplication = true
     deduplication_scope         = null
@@ -622,11 +622,11 @@ sqs_queues = {
     create_default_policy       = true
 
     allowed_sns_topic_names = [
-      "stackfood-sns-payments-topic"
+      "OptimusFrame-sns-payments-topic"
     ]
 
     create_dlq        = true
-    dlq_name          = "stackfood-sqs-payments-dlq"
+    dlq_name          = "OptimusFrame-sqs-payments-dlq"
     max_receive_count = 5
 
     dlq_config = {
@@ -662,7 +662,7 @@ sqs_queues = {
     }
   }
 
-  # "stackfood-payment-events-queue" = {
+  # "OptimusFrame-payment-events-queue" = {
   #   fifo_queue                    = false
   #   content_based_deduplication   = false
   #   delay_seconds                 = 0
@@ -675,17 +675,17 @@ sqs_queues = {
   #   max_receive_count             = 3
   #   dlq_message_retention_seconds = 1209600 # 14 days
   #   create_default_policy         = true
-  #   allowed_sns_topic_names       = ["stackfood-order-events"]
+  #   allowed_sns_topic_names       = ["OptimusFrame-order-events"]
   #   tags = {
   #     Service     = "payments"
   #     MessageType = "queue"
-  #     SourceTopic = "stackfood-order-events"
+  #     SourceTopic = "OptimusFrame-order-events"
   #   }
   # }
 
   # # Production Events Queue
-  # # Consumes: Order events from stackfood-order-events topic
-  # "stackfood-production-events-queue" = {
+  # # Consumes: Order events from OptimusFrame-order-events topic
+  # "OptimusFrame-production-events-queue" = {
   #   fifo_queue                    = false
   #   content_based_deduplication   = false
   #   delay_seconds                 = 0
@@ -698,17 +698,17 @@ sqs_queues = {
   #   max_receive_count             = 3
   #   dlq_message_retention_seconds = 1209600
   #   create_default_policy         = true
-  #   allowed_sns_topic_names       = ["stackfood-order-events"]
+  #   allowed_sns_topic_names       = ["OptimusFrame-order-events"]
   #   tags = {
   #     Service     = "production"
   #     MessageType = "queue"
-  #     SourceTopic = "stackfood-order-events"
+  #     SourceTopic = "OptimusFrame-order-events"
   #   }
   # }
 
   # # Order Payment Events Queue
-  # # Consumes: Payment events from stackfood-payment-events topic
-  # "stackfood-order-payment-events-queue" = {
+  # # Consumes: Payment events from OptimusFrame-payment-events topic
+  # "OptimusFrame-order-payment-events-queue" = {
   #   fifo_queue                    = false
   #   content_based_deduplication   = false
   #   delay_seconds                 = 0
@@ -721,17 +721,17 @@ sqs_queues = {
   #   max_receive_count             = 3
   #   dlq_message_retention_seconds = 1209600
   #   create_default_policy         = true
-  #   allowed_sns_topic_names       = ["stackfood-payment-events"]
+  #   allowed_sns_topic_names       = ["OptimusFrame-payment-events"]
   #   tags = {
   #     Service     = "orders"
   #     MessageType = "queue"
-  #     SourceTopic = "stackfood-payment-events"
+  #     SourceTopic = "OptimusFrame-payment-events"
   #   }
   # }
 
   # # Order Production Events Queue
-  # # Consumes: Production events from stackfood-production-events topic
-  # "stackfood-order-production-events-queue" = {
+  # # Consumes: Production events from OptimusFrame-production-events topic
+  # "OptimusFrame-order-production-events-queue" = {
   #   fifo_queue                    = false
   #   content_based_deduplication   = false
   #   delay_seconds                 = 0
@@ -744,11 +744,11 @@ sqs_queues = {
   #   max_receive_count             = 3
   #   dlq_message_retention_seconds = 1209600
   #   create_default_policy         = true
-  #   allowed_sns_topic_names       = ["stackfood-production-events"]
+  #   allowed_sns_topic_names       = ["OptimusFrame-production-events"]
   #   tags = {
   #     Service     = "orders"
   #     MessageType = "queue"
-  #     SourceTopic = "stackfood-production-events"
+  #     SourceTopic = "OptimusFrame-production-events"
   #   }
   # }
 }
@@ -757,177 +757,22 @@ sqs_queues = {
 ### SNS ####
 ############
 sns_topics = {
-  # Orders API Topic
-  "stackfood-sns-orders-created" = {
+  # Core API Topic
+  "OptimusFrame-sns-core-created" = {
     fifo_topic   = false
-    display_name = "StackFood Orders Created Events"
+    display_name = "OptimusFrame Core Created Events"
 
     sqs_subscriptions = {
-      "stackfood-sqs-orders-created-queue" = {
+      "OptimusFrame-sqs-core-created-queue" = {
         raw_message_delivery = false
       }
     }
 
     tags = {
       ManagedBy = "Terraform"
-      API       = "orders"
+      API       = "core"
     }
   }
-
-  # Orders Canceled API Topic
-  "stackfood-sns-orders-cancelled" = {
-    fifo_topic   = false
-    display_name = "StackFood Orders Cancelled Events"
-
-    sqs_subscriptions = {
-      "stackfood-sqs-orders-cancelled-queue" = {
-        raw_message_delivery = false
-      }
-    }
-
-    tags = {
-      ManagedBy = "Terraform"
-      API       = "orders"
-    }
-  }
-
-  # Order Completed API Topic
-  "stackfood-sns-orders-completed-topic" = {
-    fifo_topic   = false
-    display_name = "StackFood Orders Completed Events"
-
-    sqs_subscriptions = {
-      "stackfood-sqs-orders-completed-queue" = {
-        raw_message_delivery = false
-      }
-    }
-
-    tags = {
-      ManagedBy = "Terraform"
-      API       = "orders"
-    }
-  }
-
-  # Production API Topic
-  "stackfood-sns-production-topic" = {
-    fifo_topic   = false
-    display_name = "StackFood Production Events"
-
-    sqs_subscriptions = {
-      "stackfood-sqs-production-queue" = {
-        raw_message_delivery = false
-      }
-    }
-
-    tags = {
-      ManagedBy = "Terraform"
-      API       = "production"
-    }
-  }
-
-  # Payments API Topic
-  "stackfood-sns-payments-topic" = {
-    fifo_topic   = false
-    display_name = "StackFood payments Events"
-
-    sqs_subscriptions = {
-      "stackfood-sqs-payments-queue" = {
-        raw_message_delivery = false
-      }
-    }
-
-    tags = {
-      ManagedBy = "Terraform"
-      API       = "payments"
-    }
-  }
-
-  # Customer Events Topic
-  "stackfood-customer-events" = {
-    display_name                = "StackFood Customer Events"
-    fifo_topic                  = false
-    content_based_deduplication = false
-    tags = {
-      Service     = "customers"
-      MessageType = "events"
-    }
-    # SQS Subscriptions for Customer Events
-    sqs_subscriptions = {}
-  }
-
-  # Order Events Topic
-  # "stackfood-order-events" = {
-  #   display_name                = "StackFood Order Events"
-  #   fifo_topic                  = false
-  #   content_based_deduplication = false
-  #   tags = {
-  #     Service     = "orders"
-  #     MessageType = "events"
-  #   }
-  #   # SQS Subscriptions for Order Events
-  #   sqs_subscriptions = {
-  #     # Payments Queue - receives order events
-  #     "payments" = {
-  #       queue_name           = "stackfood-payment-events-queue"
-  #       raw_message_delivery = false
-  #       filter_policy = {
-  #         eventType = ["OrderCreated", "OrderCancelled"]
-  #       }
-  #     }
-  #     # Production Queue - receives order events
-  #     "production" = {
-  #       queue_name           = "stackfood-production-events-queue"
-  #       raw_message_delivery = false
-  #       filter_policy = {
-  #         eventType = ["OrderCreated", "OrderConfirmed"]
-  #       }
-  #     }
-  #   }
-  # }
-
-  # # Payment Events Topic
-  # "stackfood-payment-events" = {
-  #   display_name                = "StackFood Payment Events"
-  #   fifo_topic                  = false
-  #   content_based_deduplication = false
-  #   tags = {
-  #     Service     = "payments"
-  #     MessageType = "events"
-  #   }
-  #   # SQS Subscriptions for Payment Events
-  #   sqs_subscriptions = {
-  #     # Orders Queue - receives payment status updates
-  #     "orders-payment" = {
-  #       queue_name           = "stackfood-order-payment-events-queue"
-  #       raw_message_delivery = false
-  #       filter_policy = {
-  #         eventType = ["PaymentApproved", "PaymentFailed", "PaymentRefunded"]
-  #       }
-  #     }
-  #   }
-  # }
-
-  # # Production Events Topic
-  # "stackfood-production-events" = {
-  #   display_name                = "StackFood Production Events"
-  #   fifo_topic                  = false
-  #   content_based_deduplication = false
-  #   tags = {
-  #     Service     = "production"
-  #     MessageType = "events"
-  #   }
-  #   # SQS Subscriptions for Production Events
-  #   sqs_subscriptions = {
-  #     # Orders Queue - receives production status updates
-  #     "orders-production" = {
-  #       queue_name           = "stackfood-order-production-events-queue"
-  #       raw_message_delivery = false
-  #       filter_policy = {
-  #         eventType = ["ProductionStarted", "ProductionCompleted", "ProductionFailed"]
-  #       }
-  #     }
-  #   }
-  # }
 }
 
 ##################
@@ -935,16 +780,12 @@ sns_topics = {
 ##################
 dynamodb_tables = {
 
-  "stackfood-payments" = {
-    hash_key = "payment_id"
+  "OptimusFrame-payments" = {
+    hash_key = "process_id"
 
     attributes = [
       {
-        name = "payment_id"
-        type = "S"
-      },
-      {
-        name = "order_id"
+        name = "process_id"
         type = "S"
       },
       {
@@ -958,7 +799,7 @@ dynamodb_tables = {
       {
         name            = "status-index"
         hash_key        = "status"
-        range_key       = "order_id"
+        range_key       = "process_id"
         projection_type = "ALL"
       }
     ]

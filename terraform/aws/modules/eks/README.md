@@ -62,7 +62,7 @@ EKS Cluster (K8s 1.33)
 module "eks" {
   source = "../modules/eks/"
 
-  eks_cluster_name           = "stackfood-eks"
+  eks_cluster_name           = "OptimusFrame-eks"
   kubernetes_version         = "1.33"
   vpc_id                     = module.vpc.vpc_id
   private_subnet_ids         = module.vpc.private_subnet_ids
@@ -71,7 +71,7 @@ module "eks" {
   environment                = "prod"
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```

@@ -148,7 +148,7 @@ module "rds" {
   db_username                 = each.value.db_username
   db_password                 = lookup(each.value, "db_password", null) # Optional password
   manage_master_user_password = false                                   # Secure password management
-  db_name                     = lookup(each.value, "db_name", "stackfood")
+  db_name                     = lookup(each.value, "db_name", "OptimusFrame")
   # IAM Role Settings
   rds_role_name = var.rds_role_name
 
@@ -326,7 +326,7 @@ module "lambda" {
   tags          = var.tags
 
   # Bucket para armazenar artefatos da Lambda
-  bucket_name = "stackfood-lambda-artifacts-${random_id.bucket_id.hex}"
+  bucket_name = "OptimusFrame-lambda-artifacts-${random_id.bucket_id.hex}"
 
   # Code and Runtime - condicionalmente baseado no package_type
   package_type     = each.value.package_type
@@ -350,10 +350,10 @@ module "lambda" {
 }
 
 # API Gateway HTTP (v2)
-module "stackfood_http_api" {
+module "OptimusFrame_http_api" {
 
   source     = "../modules/api-gateway-http/"
-  name       = "stackfood-http-api"
+  name       = "OptimusFrame-http-api"
   depends_on = [module.eks, module.nginx-ingress, module.acm, module.lambda]
 
   nlb_listener_arn           = module.nginx-ingress.load_balancer-arn
@@ -368,8 +368,8 @@ module "stackfood_http_api" {
 
   # Lambda Integration
   enable_lambda_integration = true
-  lambda_invoke_arn         = module.lambda["stackfood-auth"].function_invoke_arn
-  lambda_function_name      = module.lambda["stackfood-auth"].function_name
+  lambda_invoke_arn         = module.lambda["OptimusFrame-auth"].function_invoke_arn
+  lambda_function_name      = module.lambda["OptimusFrame-auth"].function_name
 
   tags = var.tags
 }
@@ -378,7 +378,7 @@ module "stackfood_http_api" {
 module "cognito" {
   source = "../modules/cognito"
 
-  user_pool_name = "stackfood"
+  user_pool_name = "OptimusFrame"
   environment    = var.environment
 
   # Configurações do usuário convidado
@@ -386,7 +386,7 @@ module "cognito" {
   guest_user_password = "Convidado123!"
 
   # Configurações do administrador
-  stackfood_admin_password = var.argocd_admin_password
+  OptimusFrame_admin_password = var.argocd_admin_password
 
   # Configurações dos usuários da equipe
   team_users          = var.team_users

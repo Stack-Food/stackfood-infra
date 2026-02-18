@@ -148,12 +148,12 @@ output "users_summary" {
     users_created = {
       guest_user = var.create_guest_user ? {
         username = "convidado"
-        email    = "convidado@stackfood.com.br"
+        email    = "convidado@optimus-frame.com.br"
         groups   = ["app-users"]
       } : null
       admin_user = {
-        username = "stackfood"
-        email    = "admin@stackfood.com.br"
+        username = "OptimusFrame"
+        email    = "admin@optimus-frame.com.br"
         groups   = ["system-admins", "argocd", "grafana"]
       }
       team_users = {

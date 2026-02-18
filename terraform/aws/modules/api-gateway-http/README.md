@@ -17,7 +17,7 @@ Este módulo cria um API Gateway HTTP (v2) com integração híbrida para:
 │  │                                                             │ │
 │  │  POST /auth      ──────────┐                               │ │
 │  │  POST /customer  ──────────┼─► Lambda Integration          │ │
-│  │                            │   (stackfood-auth)             │ │
+│  │                            │   (OptimusFrame-auth)             │ │
 │  │                            │                                │ │
 │  │  $default (/*) ────────────┼─► VPC Link ──► NLB ──► EKS    │ │
 │  │                            │   (microservices)              │ │
@@ -26,7 +26,7 @@ Este módulo cria um API Gateway HTTP (v2) com integração híbrida para:
 
 ┌─────────────┐      ┌──────────────┐      ┌───────────────────┐
 │   Lambda    │      │   VPC Link   │      │  NGINX Ingress    │
-│ stackfood-  │      │              │      │  (NLB) in EKS     │
+│ OptimusFrame-  │      │              │      │  (NLB) in EKS     │
 │    auth     │      │  ┌────────┐  │      │                   │
 │             │      │  │Security│  │      │  ┌──────────────┐ │
 │  - /auth    │      │  │ Group  │  │      │  │ Microservices│ │
@@ -72,10 +72,10 @@ Este módulo cria um API Gateway HTTP (v2) com integração híbrida para:
 ### Configuração Básica
 
 ```hcl
-module "stackfood_http_api" {
+module "OptimusFrame_http_api" {
   source = "../modules/api-gateway-http/"
 
-  name       = "stackfood-http-api"
+  name       = "OptimusFrame-http-api"
   depends_on = [module.eks, module.nginx-ingress, module.lambda]
 
   # VPC Configuration
@@ -90,8 +90,8 @@ module "stackfood_http_api" {
 
   # Lambda Integration
   enable_lambda_integration = true
-  lambda_invoke_arn         = module.lambda["stackfood-auth"].function_invoke_arn
-  lambda_function_name      = module.lambda["stackfood-auth"].function_name
+  lambda_invoke_arn         = module.lambda["OptimusFrame-auth"].function_invoke_arn
+  lambda_function_name      = module.lambda["OptimusFrame-auth"].function_name
 
   tags = var.tags
 }
@@ -318,10 +318,10 @@ aws ec2 describe-subnets --subnet-ids <subnet-ids>
 
 ```bash
 # Verificar permissões
-aws lambda get-policy --function-name stackfood-auth
+aws lambda get-policy --function-name OptimusFrame-auth
 
 # Testar Lambda diretamente
-aws lambda invoke --function-name stackfood-auth \
+aws lambda invoke --function-name OptimusFrame-auth \
   --payload '{"cpf":"12345678900"}' response.json
 ```
 
@@ -396,7 +396,7 @@ module "api_gateway_http" {
 module "api_gateway_http" {
   source = "../modules/api-gateway-http/"
 
-  name                      = "stackfood-api"
+  name                      = "optimus-frame-api"
   enable_lambda_integration = true
 
   # Lambda
@@ -415,7 +415,7 @@ module "api_gateway_http" {
 
   tags = {
     Environment = "production"
-    Project     = "stackfood"
+    Project     = "OptimusFrame"
   }
 }
 ```

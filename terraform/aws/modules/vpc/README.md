@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module creates a Virtual Private Cloud (VPC) with public and private subnets across multiple Availability Zones, providing the network foundation for the StackFood infrastructure.
+This module creates a Virtual Private Cloud (VPC) with public and private subnets across multiple Availability Zones, providing the network foundation for the OptimusFrame infrastructure.
 
 ## Resources Created
 
@@ -53,7 +53,7 @@ VPC (10.0.0.0/16)
 module "vpc" {
   source = "../modules/vpc/"
 
-  vpc_name        = "stackfood-vpc"
+  vpc_name        = "OptimusFrame-vpc"
   vpc_cidr_blocks = ["10.0.0.0/16"]
   environment     = "prod"
 
@@ -72,7 +72,7 @@ module "vpc" {
   }
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```

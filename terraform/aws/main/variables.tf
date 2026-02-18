@@ -461,7 +461,7 @@ variable "team_users" {
 }
 
 variable "argocd_admin_password" {
-  description = "Senha para o usuário administrador stackfood do ArgoCD"
+  description = "Senha para o usuário administrador OptimusFrame do ArgoCD"
   type        = string
   sensitive   = true
   default     = "Fiap@2025"
@@ -471,7 +471,7 @@ variable "argocd_team_password" {
   description = "Senha para os usuários da equipe ArgoCD"
   type        = string
   sensitive   = true
-  default     = "StackFood@2025"
+  default     = "OptimusFrame@2025"
 }
 
 ######################

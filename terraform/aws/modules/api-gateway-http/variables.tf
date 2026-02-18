@@ -65,7 +65,7 @@ variable "enable_lambda_integration" {
 }
 
 variable "custom_domain_name" {
-  description = "Custom domain name for the API Gateway (e.g., api.stackfood.com.br)"
+  description = "Custom domain name for the API Gateway (e.g., api.optimus-frame.com.br)"
   type        = string
   default     = ""
 }

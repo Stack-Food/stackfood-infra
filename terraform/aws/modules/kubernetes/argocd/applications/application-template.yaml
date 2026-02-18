@@ -17,7 +17,7 @@ metadata:
   namespace: argocd
   labels:
     app: <SERVICE-NAME>
-    team: stackfood
+    team: OptimusFrame
   finalizers:
     - resources-finalizer.argocd.argoproj.io # Garante limpeza dos recursos
 spec:
@@ -25,7 +25,7 @@ spec:
 
   # Fonte: De onde o ArgoCD vai buscar os manifestos
   source:
-    repoURL: https://github.com/Stack-Food/stackfood-infra.git
+    repoURL: https://github.com/Optimus-Frame/optimus-frame-infra.git
     targetRevision: main # Branch, tag ou commit
     path: apps/<SERVICE-NAME>/prod # Caminho dos manifestos
 

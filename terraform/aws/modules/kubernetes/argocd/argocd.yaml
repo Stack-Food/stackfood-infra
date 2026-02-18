@@ -32,7 +32,7 @@ server:
   config:
     url: "https://${argocd_subdomain}.${domain_name}"
     oidc.config: |
-      name: StackFood SSO
+      name: OptimusFrame SSO
       issuer: ${cognito_client_issuer_url}
       clientId: ${cognito_client_id}
       clientSecret: ${cognito_client_secret}

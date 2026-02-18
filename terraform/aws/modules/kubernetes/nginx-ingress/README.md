@@ -81,7 +81,7 @@ module "nginx_ingress" {
   environment              = "prod"
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```
@@ -139,8 +139,8 @@ Isso impedirá que o Terraform espere pela conclusão da instalação, o que pod
 Se a Solução 1 não funcionar, você pode usar o script manual fornecido:
 
 ```bash
-chmod +x /home/luizf/fiap/stackfood-infra/scripts/manual-nginx-ingress-install.sh
-/home/luizf/fiap/stackfood-infra/scripts/manual-nginx-ingress-install.sh
+chmod +x /home/luizf/fiap/optimus-frame-infra/scripts/manual-nginx-ingress-install.sh
+/home/luizf/fiap/optimus-frame-infra/scripts/manual-nginx-ingress-install.sh
 ```
 
 Depois, comente o módulo nginx-ingress no arquivo `main.tf` principal para evitar conflitos.

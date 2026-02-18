@@ -23,7 +23,7 @@ Este módulo cria e gerencia tabelas DynamoDB com suporte completo para índices
 module "orders_table" {
   source = "../modules/dynamodb/"
 
-  table_name  = "stackfood-orders"
+  table_name  = "OptimusFrame-orders"
   hash_key    = "order_id"
   environment = "prod"
 
@@ -35,7 +35,7 @@ module "orders_table" {
   ]
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```
@@ -46,7 +46,7 @@ module "orders_table" {
 module "orders_table" {
   source = "../modules/dynamodb/"
 
-  table_name  = "stackfood-orders"
+  table_name  = "OptimusFrame-orders"
   hash_key    = "customer_id"
   range_key   = "order_date"
   environment = "prod"
@@ -85,7 +85,7 @@ module "orders_table" {
   ttl_attribute_name = "expiration_time"
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```
@@ -96,7 +96,7 @@ module "orders_table" {
 module "products_table" {
   source = "../modules/dynamodb/"
 
-  table_name   = "stackfood-products"
+  table_name   = "OptimusFrame-products"
   hash_key     = "product_id"
   billing_mode = "PROVISIONED"
   environment  = "prod"
@@ -125,7 +125,7 @@ module "products_table" {
   alarm_write_throttle_threshold = 10
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```
@@ -136,7 +136,7 @@ module "products_table" {
 module "global_table" {
   source = "../modules/dynamodb/"
 
-  table_name  = "stackfood-global"
+  table_name  = "OptimusFrame-global"
   hash_key    = "id"
   environment = "prod"
 
@@ -160,7 +160,7 @@ module "global_table" {
   ]
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```
@@ -231,7 +231,7 @@ module "global_table" {
 module "orders_dynamodb" {
   source = "../modules/dynamodb/"
 
-  table_name  = "stackfood-orders-${var.environment}"
+  table_name  = "OptimusFrame-orders-${var.environment}"
   hash_key    = "order_id"
   range_key   = "created_at"
   environment = var.environment

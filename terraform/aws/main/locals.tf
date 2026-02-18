@@ -6,7 +6,7 @@ locals {
 # Common tags to be assigned to all resources
 locals {
   common_tags = {
-    Project     = "StackFood"
+    Project     = "OptimusFrame"
     Environment = var.environment
     Terraform   = "true"
     Owner       = "DevOps"
@@ -26,6 +26,6 @@ locals {
 
 locals {
   # Naming convention
-  name_prefix = "${var.environment}-stackfood"
+  name_prefix = "${var.environment}-OptimusFrame"
 }
 

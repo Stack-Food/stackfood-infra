@@ -79,21 +79,21 @@ module "rds" {
   environment        = "prod"
 
   rds_instances = {
-    "stackfood-db" = {
+    "OptimusFrame-db" = {
       allocated_storage     = 20
       db_instance_class    = "db.t3.micro"
-      db_username          = "stackfood"
+      db_username          = "OptimusFrame"
       db_password          = "secure-password"
       engine               = "postgres"
       engine_version       = "16.3"
-      identifier           = "stackfood-postgres"
+      identifier           = "OptimusFrame-postgres"
       publicly_accessible  = false
       multi_az            = false
     }
   }
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```

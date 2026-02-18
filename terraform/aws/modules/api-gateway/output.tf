@@ -96,35 +96,35 @@ output "microservices_routes" {
       path      = "/customers"
       port      = 8084
       namespace = "customers"
-      service   = "stackfood-customers"
+      service   = "OptimusFrame-customers"
       url       = "${aws_api_gateway_stage.dev.invoke_url}/customers"
     }
     products = {
       path      = "/products"
       port      = 8080
       namespace = "products"
-      service   = "stackfood-products"
+      service   = "OptimusFrame-products"
       url       = "${aws_api_gateway_stage.dev.invoke_url}/products"
     }
     orders = {
       path      = "/orders"
       port      = 8081
       namespace = "orders"
-      service   = "stackfood-orders"
+      service   = "OptimusFrame-orders"
       url       = "${aws_api_gateway_stage.dev.invoke_url}/orders"
     }
     payments = {
       path      = "/payments"
       port      = 8082
       namespace = "payments"
-      service   = "stackfood-payments"
+      service   = "OptimusFrame-payments"
       url       = "${aws_api_gateway_stage.dev.invoke_url}/payments"
     }
     production = {
       path      = "/production"
       port      = 8083
       namespace = "production"
-      service   = "stackfood-production"
+      service   = "OptimusFrame-production"
       url       = "${aws_api_gateway_stage.dev.invoke_url}/production"
     }
   }

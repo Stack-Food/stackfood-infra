@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module manages DNS records using Cloudflare as the DNS provider, creating and maintaining domain records for the StackFood infrastructure with CDN and security features.
+This module manages DNS records using Cloudflare as the DNS provider, creating and maintaining domain records for the OptimusFrame infrastructure with CDN and security features.
 
 ## Resources Created
 
@@ -17,12 +17,12 @@ This module manages DNS records using Cloudflare as the DNS provider, creating a
 
 ```
 Cloudflare DNS
-├── Zone: stackfood.com.br
+├── Zone: optimus-frame.com.br
 ├── Records
 │   ├── A @ → API Gateway
 │   ├── A api → API Gateway
 │   ├── A argo → EKS Load Balancer
-│   └── CNAME www → stackfood.com.br
+│   └── CNAME www → optimus-frame.com.br
 ├── Proxy Configuration
 │   ├── CDN Caching
 │   ├── DDoS Protection
@@ -54,7 +54,7 @@ Cloudflare DNS
 | A           | @    | API Gateway IP    | Main domain      |
 | A           | api  | API Gateway IP    | API endpoint     |
 | A           | argo | EKS Load Balancer | ArgoCD interface |
-| CNAME       | www  | stackfood.com.br  | WWW redirect     |
+| CNAME       | www  | optimus-frame.com.br  | WWW redirect     |
 
 ## Outputs
 
@@ -71,9 +71,9 @@ module "dns" {
   source = "../modules/dns/"
 
   cloudflare_zone_id = "09f31a057e454d7d71ab44b6b5960723"
-  domain_name        = "stackfood.com.br"
+  domain_name        = "optimus-frame.com.br"
   environment        = "prod"
-  eks_cluster_name   = "stackfood-eks"
+  eks_cluster_name   = "OptimusFrame-eks"
 
   create_argocd_record = true
   argocd_subdomain     = "argo"
@@ -82,7 +82,7 @@ module "dns" {
   ttl     = 300
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```

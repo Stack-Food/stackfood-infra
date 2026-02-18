@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module creates and manages AWS Certificate Manager (ACM) SSL/TLS certificates with DNS validation for secure HTTPS communication across the StackFood infrastructure.
+This module creates and manages AWS Certificate Manager (ACM) SSL/TLS certificates with DNS validation for secure HTTPS communication across the OptimusFrame infrastructure.
 
 ## Resources Created
 
@@ -16,8 +16,8 @@ This module creates and manages AWS Certificate Manager (ACM) SSL/TLS certificat
 ```
 ACM Certificates
 ├── Primary Certificate
-│   ├── Domain: stackfood.com.br
-│   ├── SAN: *.stackfood.com.br
+│   ├── Domain: optimus-frame.com.br
+│   ├── SAN: *.optimus-frame.com.br
 │   └── DNS Validation
 ├── Certificate Validation
 │   ├── CNAME Records
@@ -54,18 +54,18 @@ ACM Certificates
 module "acm" {
   source = "../modules/acm/"
 
-  domain_name = "stackfood.com.br"
+  domain_name = "optimus-frame.com.br"
   subject_alternative_names = [
-    "*.stackfood.com.br",
-    "api.stackfood.com.br",
-    "argo.stackfood.com.br"
+    "*.optimus-frame.com.br",
+    "api.optimus-frame.com.br",
+    "argo.optimus-frame.com.br"
   ]
 
   validation_method = "DNS"
   environment      = "prod"
 
   tags = {
-    Project = "StackFood"
+    Project = "OptimusFrame"
   }
 }
 ```
@@ -110,7 +110,7 @@ module "acm" {
 ## DNS Validation Records
 
 ```
-_acme-challenge.stackfood.com.br CNAME
+_acme-challenge.optimus-frame.com.br CNAME
 _validation.acm-validations.aws.
 ```
 

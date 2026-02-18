@@ -83,7 +83,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/Stack-Food/stackfood-infra.git
+    repoURL: https://github.com/Optimus-Frame/optimus-frame-infra.git
     targetRevision: main
     path: apps/payment/prod # Caminho dos manifestos
 
@@ -138,7 +138,7 @@ spec:
 module "argocd" {
   source = "../modules/kubernetes/argocd/"
 
-  domain_name      = "stackfood.com.br"
+  domain_name      = "optimus-frame.com.br"
   argocd_subdomain = "argo"
 
   cognito_user_pool_id      = module.cognito.argocd_user_pool_id
@@ -146,7 +146,7 @@ module "argocd" {
   cognito_client_secret     = module.cognito.argocd_client_secret
   cognito_region            = "us-east-1"
   cognito_client_issuer_url = module.cognito.argocd_issuer_url
-  user_pool_name            = "stackfood"
+  user_pool_name            = "OptimusFrame"
 
   certificate_arn = module.acm.certificate_arn
 }
@@ -162,7 +162,7 @@ kubectl get applications -n argocd
 kubectl describe application api -n argocd
 
 # Acessar UI
-# https://argo.stackfood.com.br
+# https://argo.optimus-frame.com.br
 
 # Obter senha inicial do admin
 kubectl get secret argocd-initial-admin-secret -n argocd \
@@ -186,9 +186,9 @@ terraform apply -var-file=../env/prod.tfvars
 
 O módulo Cognito cria automaticamente os seguintes usuários:
 
-1. **stackfood** (Admin)
+1. **OptimusFrame** (Admin)
 
-   - Username: `stackfood`
+   - Username: `OptimusFrame`
    - Password: `Fiap@2025`
    - Grupo: `argocd-admin`
    - Permissões: Administrador completo do ArgoCD
@@ -200,7 +200,7 @@ O módulo Cognito cria automaticamente os seguintes usuários:
 
 ### Fluxo de Autenticação OIDC
 
-1. Usuário acessa `https://argo.stackfood.com.br`
+1. Usuário acessa `https://argo.optimus-frame.com.br`
 2. ArgoCD redireciona para Cognito
 3. Usuário faz login com credenciais Cognito
 4. Cognito retorna token com grupos (`cognito:groups`)
@@ -219,7 +219,7 @@ O módulo Cognito cria automaticamente os seguintes usuários:
 
 O módulo DNS cria automaticamente:
 
-- `argo.stackfood.com.br` → Load Balancer do NGINX Ingress
+- `argo.optimus-frame.com.br` → Load Balancer do NGINX Ingress
 
 ### Configurar DNS Manualmente
 
@@ -284,17 +284,17 @@ kubectl get secret argocd-initial-admin-secret -n argocd \
 
 ```bash
 # Verificar resolução DNS
-nslookup argo.stackfood.com.br
+nslookup argo.optimus-frame.com.br
 
 # Testar HTTPS
-curl -I https://argo.stackfood.com.br
+curl -I https://argo.optimus-frame.com.br
 ```
 
 ### ArgoCD CLI
 
 ```bash
 # Login
-argocd login argo.stackfood.com.br
+argocd login argo.optimus-frame.com.br
 
 # Listar applications
 argocd app list
@@ -332,7 +332,7 @@ kubectl logs -n argocd -l app.kubernetes.io/name=argocd-server
 ### Autenticação Cognito falhando
 
 1. Verificar callback URLs no Cognito:
-   - `https://argo.stackfood.com.br/auth/callback`
+   - `https://argo.optimus-frame.com.br/auth/callback`
 2. Verificar client secret:
 
    ```bash
@@ -365,7 +365,7 @@ argocd app sync payment --force
 3. Aguardar propagação (pode levar alguns minutos)
 4. Verificar registros:
    ```bash
-   dig argo.stackfood.com.br
+   dig argo.optimus-frame.com.br
    ```
 
 ---

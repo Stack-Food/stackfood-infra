@@ -42,7 +42,7 @@ variable "private_subnet_ids" {
 variable "db_name" {
   description = "The name of the database to create when the DB instance is created"
   type        = string
-  default     = "stackfood"
+  default     = "OptimusFrame"
 }
 
 variable "public_subnet_ids" {
@@ -237,7 +237,7 @@ variable "options" {
 variable "db_username" {
   description = "The database username"
   type        = string
-  default     = "stackfood"
+  default     = "OptimusFrame"
 }
 
 variable "db_password" {

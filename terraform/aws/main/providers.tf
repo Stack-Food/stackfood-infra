@@ -24,7 +24,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket  = "stackfood-tfstate-soat05"
+    bucket  = "OptimusFrame-tfstate-soat05"
     key     = "terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
@@ -46,7 +46,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "StackFood"
+      Project     = "OptimusFrame"
       Environment = var.environment
       Terraform   = "true"
     }

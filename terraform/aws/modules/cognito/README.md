@@ -1,12 +1,12 @@
 # Módulo Cognito Unificado
 
-Este módulo cria um User Pool do Amazon Cognito unificado para autenticação tanto da aplicação principal StackFood quanto de ferramentas de gerenciamento como ArgoCD e Grafana.
+Este módulo cria um User Pool do Amazon Cognito unificado para autenticação tanto da aplicação principal OptimusFrame quanto de ferramentas de gerenciamento como ArgoCD e Grafana.
 
 ## Arquitetura
 
 ### User Pool Único
 
-- **Nome**: stackfood
+- **Nome**: OptimusFrame
 - **Finalidade**: Autenticação unificada para aplicação e ferramentas de gerenciamento
 - **Configuração**: Suporte a grupos para controle de acesso granular
 
@@ -14,12 +14,12 @@ Este módulo cria um User Pool do Amazon Cognito unificado para autenticação t
 
 1. **app-users** (precedência 10)
 
-   - Usuários regulares da aplicação StackFood
+   - Usuários regulares da aplicação OptimusFrame
    - Acesso apenas à aplicação principal
 
 2. **app-admins** (precedência 5)
 
-   - Administradores da aplicação StackFood
+   - Administradores da aplicação OptimusFrame
    - Acesso administrativo à aplicação principal
 
 3. **argocd** (precedência 3)
@@ -58,7 +58,7 @@ oidc.config: |
 Para aplicar esta nova estrutura unificada do Cognito:
 
 ```bash
-cd /home/luizf/fiap/stackfood-infra/terraform/aws/main
+cd /home/luizf/fiap/optimus-frame-infra/terraform/aws/main
 
 # 1. Validar as mudanças
 terraform plan -target=module.cognito -target=module.argocd -var-file=../env/prod.tfvars

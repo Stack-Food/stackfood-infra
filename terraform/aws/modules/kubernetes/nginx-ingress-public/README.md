@@ -19,7 +19,7 @@ metadata:
 spec:
   ingressClassName: nginx-public # Use esta classe
   rules:
-    - host: argocd.stackfood.com.br
+    - host: argocd.optimus-frame.com.br
       http:
         paths:
           - path: /

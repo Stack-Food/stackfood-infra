@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   labels:
     app: worker
-    team: stackfood
+    team: OptimusFrame
     environment: production
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -13,7 +13,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/Stack-Food/stackfood-infra.git
+    repoURL: https://github.com/Optimus-Frame/optimus-frame-infra.git
     targetRevision: main
     path: apps/worker/prod
 
