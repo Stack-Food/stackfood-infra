@@ -325,6 +325,34 @@ enable_prometheus_datasource = true
 # Namespace para instalação
 monitoring_namespace = "monitoring"
 
+######################
+# RabbitMQ Configuration #
+######################
+
+# Autenticação do RabbitMQ
+rabbitmq_username = "admin"
+rabbitmq_password = "OptimusFrame@2025" # ⚠️ ALTERE EM PRODUÇÃO!
+rabbitmq_erlang_cookie = "OPTIMUSFRAMECOOKIE2025" # ⚠️ ALTERE EM PRODUÇÃO!
+
+# Configurações de armazenamento
+rabbitmq_storage_size  = "20Gi"
+rabbitmq_storage_class = "gp2"
+
+# Configurações de recursos
+rabbitmq_resources = {
+  requests = {
+    cpu    = "500m"
+    memory = "1Gi"
+  }
+  limits = {
+    cpu    = "2000m"
+    memory = "2Gi"
+  }
+}
+
+# Namespace para RabbitMQ
+messaging_namespace = "messaging"
+
 
 ############
 ### SQS ####

@@ -1,0 +1,184 @@
+# ========================================================================
+# RabbitMQ Helm Chart Values
+# ========================================================================
+# Official Bitnami RabbitMQ Helm Chart
+# Repository: https://charts.bitnami.com/bitnami
+# Documentation: https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq
+# ========================================================================
+
+# ========================================================================
+# CLUSTER CONFIGURATION
+# ========================================================================
+replicaCount: ${replicas}
+
+# Auth configuration (using existing secret)
+auth:
+  username: ${rabbitmq_username}
+  # password: configured via existingPasswordSecret
+  # erlangCookie: configured via existingErlangSecret
+  
+# Virtual host
+vhost: ${rabbitmq_vhost}
+
+# ========================================================================
+# PLUGINS CONFIGURATION
+# ========================================================================
+plugins: "${enable_plugins}"
+
+# ========================================================================
+# NODE SELECTOR - DEDICATED NODE GROUP
+# ========================================================================
+# Forces RabbitMQ to run only on dedicated nodes
+nodeSelector:
+  ${node_selector_key}: ${node_selector_value}
+
+# Tolerations to match the taint on the dedicated node group
+tolerations:
+  - key: "${node_selector_key}"
+    operator: "Equal"
+    value: ${node_selector_value}
+    effect: "NoSchedule"
+
+# Anti-affinity to spread pods across nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: rabbitmq
+          topologyKey: kubernetes.io/hostname
+
+# ========================================================================
+# PERSISTENCE
+# ========================================================================
+persistence:
+  enabled: true
+  storageClass: "${storage_class}"
+  size: ${storage_size}
+  accessModes:
+    - ReadWriteOnce
+
+# ========================================================================
+# RESOURCE MANAGEMENT
+# ========================================================================
+resources:
+  requests:
+    cpu: ${resources.requests.cpu}
+    memory: ${resources.requests.memory}
+  limits:
+    cpu: ${resources.limits.cpu}
+    memory: ${resources.limits.memory}
+
+# ========================================================================
+# SERVICES CONFIGURATION
+# ========================================================================
+service:
+  type: ClusterIP
+  ports:
+    amqp: ${amqp_port}
+    amqpTls: 5671
+    dist: 25672
+    manager: ${management_port}
+    epmd: 4369
+    metrics: 9419
+
+# ========================================================================
+# MANAGEMENT INTERFACE
+# ========================================================================
+%{ if enable_management }
+# Management plugin enabled
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+%{ else }
+# Management plugin disabled
+metrics:
+  enabled: false
+%{ endif }
+
+# ========================================================================
+# INGRESS (Disabled - using ClusterIP for internal communication)
+# ========================================================================
+ingress:
+  enabled: false
+
+# ========================================================================
+# SECURITY CONTEXT
+# ========================================================================
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# ========================================================================
+# PROBES
+# ========================================================================
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  timeoutSeconds: 20
+  successThreshold: 1
+  failureThreshold: 6
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 20
+  successThreshold: 1
+  failureThreshold: 3
+
+# ========================================================================
+# CLUSTERING
+# ========================================================================
+clustering:
+  enabled: true
+  addressType: hostname
+  rebalance: false
+
+# ========================================================================
+# MEMORY CONFIGURATION
+# ========================================================================
+memoryHighWatermark:
+  enabled: true
+  type: "relative"
+  value: 0.4
+
+# ========================================================================
+# ADVANCED CONFIGURATION
+# ========================================================================
+extraConfiguration: |
+  # Consumer timeout (30 minutes)
+  consumer_timeout = 1800000
+  
+  # Disk free limit (50MB)
+  disk_free_limit.absolute = 50MB
+  
+  # Log level
+  log.console.level = info
+  
+  # Queue master locator
+  queue_master_locator = min-masters
+
+# ========================================================================
+# RBAC
+# ========================================================================
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true

@@ -78,6 +78,16 @@ resource "aws_eks_node_group" "main" {
 
   labels = lookup(each.value, "labels", {})
 
+  # Support for taints (for dedicated workloads like RabbitMQ)
+  dynamic "taint" {
+    for_each = lookup(each.value, "taints", [])
+    content {
+      key    = taint.value.key
+      value  = taint.value.value
+      effect = taint.value.effect
+    }
+  }
+
   tags = merge(
     {
       Name        = "${var.cluster_name}-${each.key}"

@@ -540,3 +540,69 @@ variable "monitoring_namespace" {
   type        = string
   default     = "monitoring"
 }
+
+######################
+# RabbitMQ Configuration #
+######################
+
+variable "rabbitmq_username" {
+  description = "RabbitMQ admin username"
+  type        = string
+  default     = "admin"
+}
+
+variable "rabbitmq_password" {
+  description = "RabbitMQ admin password"
+  type        = string
+  sensitive   = true
+  default     = "OptimusFrame@2025"
+}
+
+variable "rabbitmq_erlang_cookie" {
+  description = "RabbitMQ Erlang cookie for clustering (must be a secret string)"
+  type        = string
+  sensitive   = true
+  default     = "OPTIMUSFRAMECOOKIE2025"
+}
+
+variable "rabbitmq_storage_size" {
+  description = "Size of the persistent volume for RabbitMQ"
+  type        = string
+  default     = "20Gi"
+}
+
+variable "rabbitmq_storage_class" {
+  description = "Storage class for RabbitMQ persistent volume"
+  type        = string
+  default     = "gp2"
+}
+
+variable "rabbitmq_resources" {
+  description = "Resource requests and limits for RabbitMQ"
+  type = object({
+    requests = object({
+      cpu    = string
+      memory = string
+    })
+    limits = object({
+      cpu    = string
+      memory = string
+    })
+  })
+  default = {
+    requests = {
+      cpu    = "500m"
+      memory = "1Gi"
+    }
+    limits = {
+      cpu    = "2000m"
+      memory = "2Gi"
+    }
+  }
+}
+
+variable "messaging_namespace" {
+  description = "Kubernetes namespace for messaging infrastructure (RabbitMQ)"
+  type        = string
+  default     = "messaging"
+}

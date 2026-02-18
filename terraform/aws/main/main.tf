@@ -101,6 +101,25 @@ module "eks" {
         "role" = "worker"
       }
     }
+    # Dedicated node group for RabbitMQ
+    rabbitmq = {
+      desired_size   = 3
+      max_size       = 5
+      min_size       = 3
+      instance_types = ["t3.medium"]
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 40
+      labels = {
+        "workload" = "rabbitmq"
+      }
+      taints = [
+        {
+          key    = "workload"
+          value  = "rabbitmq"
+          effect = "NO_SCHEDULE"
+        }
+      ]
+    }
   }
 
   # Configurações de acesso remoto
@@ -311,42 +330,6 @@ module "nginx-ingress-public" {
 
   namespace     = "ingress-nginx-public"
   chart_version = var.nginx_ingress_version
-}
-
-# Lambda Functions
-module "lambda" {
-  for_each   = var.lambda_functions
-  source     = "../modules/lambda/"
-  depends_on = [module.vpc]
-
-  # General Settings
-  function_name = each.key
-  description   = each.value.description
-  environment   = var.environment
-  tags          = var.tags
-
-  # Bucket para armazenar artefatos da Lambda
-  bucket_name = "OptimusFrame-lambda-artifacts-${random_id.bucket_id.hex}"
-
-  # Code and Runtime - condicionalmente baseado no package_type
-  package_type     = each.value.package_type
-  runtime          = try(each.value.runtime, "dotnet8")
-  handler          = each.value.handler
-  filename         = try(each.value.filename, null)
-  source_code_hash = try(each.value.source_code_hash, null)
-  image_uri        = each.value.image_uri
-
-  # Network Settings (VPC)
-  vpc_id     = each.value.vpc_access ? module.vpc.vpc_id : null
-  subnet_ids = each.value.vpc_access ? module.vpc.private_subnet_ids : []
-
-  # Function Configuration
-  memory_size           = each.value.memory_size
-  timeout               = each.value.timeout
-  environment_variables = each.value.environment_variables
-
-  # IAM Role Settings
-  lambda_role_name = var.lambda_role_name
 }
 
 # API Gateway HTTP (v2)
@@ -576,4 +559,59 @@ module "loki" {
   storage_size       = "10Gi"
 
   depends_on = [module.eks, module.nginx-ingress]
+}
+
+# RabbitMQ Module - Message Broker on Dedicated Node Group
+module "rabbitmq" {
+  source = "../modules/kubernetes/rabbitmq/"
+
+  # Basic configuration
+  environment   = var.environment
+  namespace     = "messaging"
+  chart_version = "14.0.0"
+
+  # Cluster configuration
+  replicas = 3
+
+  # Authentication
+  rabbitmq_username      = var.rabbitmq_username
+  rabbitmq_password      = var.rabbitmq_password
+  rabbitmq_erlang_cookie = var.rabbitmq_erlang_cookie
+  rabbitmq_vhost         = "/"
+
+  # Node selector for dedicated RabbitMQ node group
+  node_selector_key   = "workload"
+  node_selector_value = "rabbitmq"
+
+  # Storage configuration
+  storage_size  = "20Gi"
+  storage_class = "gp2"
+
+  # Plugins
+  enable_plugins     = "rabbitmq_management rabbitmq_peer_discovery_k8s rabbitmq_prometheus"
+  enable_management  = true
+  
+  # Ports
+  amqp_port       = 5672
+  management_port = 15672
+
+  # Resource configuration
+  rabbitmq_resources = {
+    requests = {
+      cpu    = "500m"
+      memory = "1Gi"
+    }
+    limits = {
+      cpu    = "2000m"
+      memory = "2Gi"
+    }
+  }
+
+  # Tags
+  tags = var.tags
+
+  depends_on = [
+    module.eks,
+    module.nginx-ingress
+  ]
 }

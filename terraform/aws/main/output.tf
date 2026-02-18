@@ -140,3 +140,28 @@ output "sqs_queues" {
     }
   }
 }
+
+# ============================================
+# RabbitMQ Outputs
+# ============================================
+
+output "rabbitmq_access_info" {
+  description = "RabbitMQ connection and access information"
+  value = {
+    namespace       = module.rabbitmq.namespace
+    service_name    = module.rabbitmq.service_name
+    management_url  = module.rabbitmq.management_url
+    amqp_port       = 5672
+    management_port = 15672
+    username        = var.rabbitmq_username
+    vhost           = "/"
+    connection_info = module.rabbitmq.connection_info
+  }
+  sensitive = true
+}
+
+output "rabbitmq_connection_string" {
+  description = "RabbitMQ AMQP connection URL for applications"
+  value       = module.rabbitmq.amqp_url
+  sensitive   = true
+}
